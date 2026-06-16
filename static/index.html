@@ -719,6 +719,21 @@ select.hb{padding:5px 9px}
 .pj-b.stop{color:var(--red);border-color:rgba(210,85,46,.4)}.pj-b.stop:hover{border-color:var(--red)}
 .pj-b.rm{margin-left:auto;color:var(--text-ghost)}.pj-b.rm:hover{color:var(--red);border-color:var(--red)}
 .pj-log{font-family:var(--mono);font-size:9px;color:var(--text-dim);background:var(--bg3);border-radius:5px;padding:7px;margin-top:8px;max-height:90px;overflow:auto;white-space:pre-wrap}
+/* left-panel Projects (top, above Operatives) */
+.pj-plabel{display:flex;align-items:center;justify-content:space-between}
+.pj-mini-add{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:18px;height:18px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pj-mini-add:hover{border-color:var(--teal);color:var(--teal)}
+#pj-mini{display:flex;flex-direction:column;gap:2px;padding:0 8px 4px;max-height:148px;overflow-y:auto}
+.pjm-empty{font-size:9px;color:var(--text-ghost);font-style:italic;padding:2px 6px 6px}
+.pjm-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s}
+.pjm-row:hover{background:rgba(26,28,34,.04)}
+.pjm-row.active{background:var(--teal-soft);box-shadow:inset 2px 0 0 var(--teal)}
+.pjm-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
+.pjm-dot.up{background:var(--teal);animation:dotPulse 1.8s infinite}.pjm-dot.starting{background:var(--amber)}
+.pjm-name{flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjm-go{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:4px;flex-shrink:0}
+.pjm-go:hover{color:var(--teal)}.pjm-go.stop:hover{color:var(--red)}
+.pjm-ic{width:12px;height:12px;fill:currentColor}
 .rl-note{font-size:11px;color:var(--text-soft);line-height:1.55;margin-bottom:9px}
 .rl-row{display:flex;align-items:center;gap:8px;margin-top:8px}
 .rl-stat{display:flex;align-items:center;gap:8px}
@@ -789,6 +804,11 @@ select.hb{padding:5px 9px}
 
 <div id="main">
   <div id="lpanel">
+    <div class="plabel pj-plabel" data-tip="Projects — repos &amp; their runnable servers">
+      <span>Projects</span>
+      <button class="pj-mini-add" onclick="openProjects()" data-tip="Add or manage projects">+</button>
+    </div>
+    <div id="pj-mini"></div>
     <div class="plabel" data-tip="Active LLM operatives and live metrics">Operatives</div>
     <div id="agent-cards"></div>
     <div id="aem">
@@ -2262,7 +2282,22 @@ function closeProjects(){document.getElementById('pjdrawer').classList.remove('o
 function togglePjNew(){const e=document.getElementById('pj-new');if(e.hasAttribute('hidden')){e.removeAttribute('hidden');document.getElementById('pj-name').focus()}else e.setAttribute('hidden','')}
 async function loadProjects(){
   let j;try{j=await fetch('/v1/projects').then(r=>r.ok?r.json():null)}catch(_){j=null}
-  S.projects=(j&&j.projects)||[];renderProjects();updateProjectsBtn();
+  S.projects=(j&&j.projects)||[];renderProjects();renderProjectsMini();updateProjectsBtn();
+}
+const _PJ_PLAY='<svg viewBox="0 0 16 16" class="pjm-ic"><path d="M5 3.4l7.5 4.6L5 12.6z"/></svg>';
+const _PJ_STOP='<svg viewBox="0 0 16 16" class="pjm-ic"><rect x="4.3" y="4.3" width="7.4" height="7.4" rx="1.2"/></svg>';
+function renderProjectsMini(){
+  const el=document.getElementById('pj-mini');if(!el)return;
+  const ps=S.projects||[];
+  if(!ps.length){el.innerHTML='<div class="pjm-empty">No projects yet — tap +</div>';return}
+  el.innerHTML=ps.map(p=>{
+    const active=S.cwd&&S.cwd===p.path;
+    const dot=p.running?(p.port_up?'up':'starting'):'';
+    const open=(p.running&&p.url)?`<button class="pjm-go" title="Open ↗" onclick="event.stopPropagation();openProjectUrl('${p.url}')">↗</button>`:'';
+    const go=p.running?`<button class="pjm-go stop" title="Stop" onclick="event.stopPropagation();stopProject('${p.id}')">${_PJ_STOP}</button>`
+            :(p.start?`<button class="pjm-go" title="Launch" onclick="event.stopPropagation();launchProject('${p.id}')">${_PJ_PLAY}</button>`:'');
+    return `<div class="pjm-row ${active?'active':''}" onclick="activateProject('${p.id}')" data-tip="${escH(p.name)} — ${escH(p.path)}${active?' · active':''}"><span class="pjm-dot ${dot}"></span><span class="pjm-name">${escH(p.name)}</span>${open}${go}</div>`;
+  }).join('');
 }
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
 function renderProjects(){
@@ -2311,7 +2346,7 @@ async function activateProject(id){
   S.cwd=p.path;S.activeProject=p.name;
   try{document.getElementById('cli-cwd').textContent=S.cwd}catch(_){}
   try{loadStanding()}catch(_){}; try{fetchArtStatus()}catch(_){}
-  renderProjects();updateProjectsBtn();
+  renderProjects();renderProjectsMini();updateProjectsBtn();
   artToast('Working in '+p.name+' — the agent now operates here','ok');
 }
 async function removeProject(id,name){
@@ -2726,6 +2761,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 loadPref(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
 loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects();
+setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 if(!obState().done)setTimeout(()=>openOnboard(true),700);   // first-run onboarding wizard
 fetch('/v1/model').then(r=>r.json()).then(j=>{document.getElementById('model-lbl').textContent=j.primary||'unknown';renderAISInfo()}).catch(()=>{});
 </script>
