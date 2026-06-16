@@ -930,7 +930,7 @@ select.hb{padding:5px 9px}
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'Delegated',humo:'On-the-loop',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'Advisory',humo:'In-the-loop',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
+const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
 const AGENT_KEYS=['primary','critic'];
 
 // ─── BACKGROUND PARTICLE WAVE ─────────────────────────────────────────────────
@@ -1251,9 +1251,19 @@ function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;const budget=S.tok
 }
 function resetAgentMetrics(){AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],{tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,hm:50}));S.govFlagged=false}
 const AIS_POLICY={burnWatch:75,burnMax:95,errWatch:1,errMax:3,errRate:0.34,iterMax:12};
-// AGMO / HUMO — Agent Autonomy & Human Oversight Modes (Agentic Experience Manual)
-const _AGMO={Advisory:'Recommends only — never executes',Assisted:'Acts on your explicit step-by-step direction',Supervised:'Executes but pauses for approval on risk',Delegated:'Executes tools & edits this session; Stop always available',Autonomous:'Self-directs end-to-end'};
-const _HUMO={'In-command':'You drive; it waits for each instruction','In-the-loop':'You approve or dismiss each step before it counts','On-the-loop':'You monitor live and can intervene (Stop / governance)','Out-of-loop':'Runs unattended; reviewed after the fact'};
+// AGMO / HUMO — Agent Autonomy & Human Oversight Modes (Agentic Experience Manual v16, ch.3–4)
+const _AGMO={
+  'A1 Advisory':'Observes, analyzes, recommends — takes no action without your command',
+  'A2 Constrained Execution':'Acts only within a pre-defined envelope; beyond it needs approval',
+  'A3 Supervised Autonomy':'Acts autonomously under active human supervision',
+  'A4 Collaborative Autonomy':'Plans and acts as a partner, sharing decisions with you',
+  'A5 Strategic Autonomy':'Self-directs toward goals (no safety-critical deployment yet)'};
+const _HUMO={
+  'H1 Passive Awareness':'Knows it runs; relies on alarms — no active monitoring',
+  'H2 Active Monitoring':'Reviews outputs on a schedule; holds a general mental model',
+  'H3 Active Engagement':'Continuously watches and intervenes as needed',
+  'H4 Collaborative Partnership':'Decides jointly with the agent, output by output',
+  'H5 Direct Supervision':'Verifies and approves every decision before it counts'};
 function _rank(l){return l==='intervene'?2:l==='watch'?1:0}
 function _worse(a,b){return _rank(b)>_rank(a)?b:a}
 function aisGovern(){

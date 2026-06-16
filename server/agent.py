@@ -58,10 +58,45 @@ def _model():
     return m[0] if m else None
 
 
+_mem_tuned = False
+
+
+def _tune_memory() -> None:
+    """Keep MLX under the GPU's recommended working set so a command buffer never
+    fails mid-generation — that failure throws on a Metal queue and aborts the
+    whole process (SIGABRT, 'Services quit unexpectedly'). Can't be caught; only
+    prevented."""
+    global _mem_tuned
+    if _mem_tuned or mx is None:
+        return
+    try:
+        _di = getattr(mx, "device_info", None) or getattr(getattr(mx, "metal", None), "device_info", None)
+        info = _di() if _di else {}
+        rec = int(info.get("max_recommended_working_set_size", 0))
+        if rec:
+            # evict cache before crossing the safe ceiling; allow wiring up to it
+            for setter in ("set_memory_limit", "set_wired_limit"):
+                fn = getattr(mx, setter, None)
+                if fn:
+                    try:
+                        fn(rec)
+                    except Exception:
+                        pass
+            # keep the reusable cache modest so it doesn't crowd out live tensors
+            try:
+                (getattr(mx, "set_cache_limit", None) or (lambda *_: None))(int(rec * 0.25))
+            except Exception:
+                pass
+        _mem_tuned = True
+    except Exception:
+        _mem_tuned = True
+
+
 def load_model(model_path: str, slot: str = "primary") -> None:
     if slot not in _registry:
         print(f"[mlx:{slot}] Loading {model_path} …", flush=True)
         _registry[slot] = mlx_lm.load(model_path)
+        _tune_memory()
         print(f"[mlx:{slot}] Ready.", flush=True)
 
 
@@ -167,6 +202,27 @@ def _strip_think(text: str) -> str:
     return _THINK_RE.sub("", text).strip()
 
 
+_HISTORY_CHAR_BUDGET = 48_000   # ~12k tokens — keeps activation/KV memory well under the GPU ceiling
+_TOOL_OUTPUT_CAP = 6_000        # a single huge file read must not balloon the context
+
+
+def _trim_history(history: list[dict]) -> list[dict]:
+    """Drop the oldest non-system turns once the running context exceeds the budget.
+    Unbounded tool loops are the usual path to a Metal OOM abort."""
+    if not history:
+        return history
+    has_sys = history[0].get("role") == "system"
+    head = history[:1] if has_sys else []
+    rest = history[len(head):]
+
+    def total(msgs):
+        return sum(len(m.get("content", "") or "") for m in msgs)
+
+    while total(head + rest) > _HISTORY_CHAR_BUDGET and len(rest) > 2:
+        rest.pop(0)
+    return head + rest
+
+
 def run_agent(
     messages: list[dict],
     cwd: str,
@@ -179,12 +235,15 @@ def run_agent(
 ) -> Generator[AgentEvent, None, None]:
     """Synchronous generator — yields AgentEvent objects, runs inference on calling thread."""
     model, tokenizer = _get_slot(slot)
+    _tune_memory()
+    max_tokens = max(256, min(int(max_tokens), 4096))  # bound generation KV so Metal can't OOM-abort
 
     sys_prompt = system_prompt or SYSTEM_PROMPT
     history = [{"role": "system", "content": sys_prompt}] + messages
     total_tokens = 0
 
     for iteration in range(max_iterations):
+        history = _trim_history(history)           # keep the working set bounded across tool loops
         prompt = _build_prompt(history, tools=tools, slot=slot)
         response_text = ""
         suppress = False  # stop streaming once a tool-call begins — never surface code/JSON to the chat
@@ -261,10 +320,13 @@ def run_agent(
 
             yield ToolResultEvent(id=call_id, name=name, output=output, error=error)
 
+            hist_out = output
+            if len(hist_out) > _TOOL_OUTPUT_CAP:  # full output already streamed to the UI; cap what re-enters context
+                hist_out = hist_out[:_TOOL_OUTPUT_CAP] + f"\n…[truncated {len(output) - _TOOL_OUTPUT_CAP} chars]"
             history.append(
                 {
                     "role": "tool",
-                    "content": output,
+                    "content": hist_out,
                     "tool_call_id": call_id,
                     "name": name,
                 }
