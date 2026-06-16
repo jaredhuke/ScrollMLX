@@ -60,6 +60,15 @@ final class ServerManager: ObservableObject {
         setStep("update", .done)
 
         setStep("services", .running)
+        // If a healthy Scroll server is already on the port (a previous instance, a
+        // manual `uvicorn`, or the relay's server), reuse it instead of launching a
+        // second one and failing with "address already in use".
+        if probeHealthSync() {
+            log("A Scroll server is already running on :\(port) — reusing it.")
+            setStep("services", .done); setStep("model", .done)
+            DispatchQueue.main.async { self.state = .ready }
+            return
+        }
         do {
             try launchServer(uvPath: uvPath)
             setStep("services", .done)
@@ -71,6 +80,20 @@ final class ServerManager: ObservableObject {
 
         setStep("model", .running)
         pollHealth()               // model finishes loading in the server's lifespan
+    }
+
+    /// Blocking health probe (runs on the boot thread) — true if a server already answers on the port.
+    private func probeHealthSync(timeout: TimeInterval = 1.5) -> Bool {
+        guard let url = URL(string: "http://127.0.0.1:\(port)/health") else { return false }
+        let sem = DispatchSemaphore(value: 0)
+        var ok = false
+        let task = URLSession.shared.dataTask(with: url) { _, resp, _ in
+            if let r = resp as? HTTPURLResponse, r.statusCode == 200 { ok = true }
+            sem.signal()
+        }
+        task.resume()
+        _ = sem.wait(timeout: .now() + timeout)
+        return ok
     }
 
     private func locateUV() -> String? {
@@ -106,18 +129,23 @@ final class ServerManager: ObservableObject {
                 self.process = nil
                 let why = self.logs.suffix(3).joined(separator: " ⏎ ")
                 self.log("Services stopped (exit \(p.terminationStatus)).")
-                guard self.state == .ready else { return }
-                // One automatic restart — the usual cause is a Metal out-of-memory abort mid-generation.
+
+                // Port already taken by a non-Scroll process (the reuse-probe ruled out a healthy Scroll server).
+                if why.localizedCaseInsensitiveContains("address already in use") {
+                    self.state = .error("Port \(self.port) is already in use by another app. Quit it, or run:  lsof -ti:\(self.port) | xargs kill  — then reopen Scroll.")
+                    return
+                }
+                // One automatic restart for transient deaths (e.g. a Metal OOM abort mid-generation).
                 if !self.didAutoRestart {
                     self.didAutoRestart = true
                     self.log("Restarting services once…")
                     self.boot()
-                } else {
-                    let hint = why.localizedCaseInsensitiveContains("memory")
-                        ? " — looks like the model ran out of memory; try a shorter request."
-                        : ""
-                    self.state = .error("Services exited unexpectedly\(hint) See ~/.scroll/server.log. Last: \(why)")
+                    return
                 }
+                let hint = why.localizedCaseInsensitiveContains("memory")
+                    ? " — the model ran out of memory; try a shorter request."
+                    : ""
+                self.state = .error("Services exited unexpectedly\(hint) See ~/.scroll/server.log. Last: \(why)")
             }
         }
         try proc.run()
