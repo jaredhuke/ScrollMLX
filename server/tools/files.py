@@ -35,6 +35,10 @@ def read_data(path: str, cwd: str, max_rows: int = 20) -> str:
     p = _resolve(path, cwd)
     if not p.exists():
         return f"ERROR: {path} does not exist"
+    from .media import describe_media  # image/binary guard
+    media = describe_media(p)
+    if media:
+        return media
     ext = p.suffix.lower()
     raw = p.read_text(encoding="utf-8", errors="replace")
     try:

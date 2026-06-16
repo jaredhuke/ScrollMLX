@@ -24,3 +24,7 @@ Screenshot*.png
 
 # Nested clone of the GitHub repo — not part of this tree
 ScrollMLX/
+
+# Xcode per-user state
+**/xcuserdata/
+*.xcuserstate

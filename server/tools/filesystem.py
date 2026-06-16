@@ -14,6 +14,10 @@ def read_file(path: str, cwd: str, start_line: int | None = None, end_line: int 
         return f"ERROR: file not found: {p}"
     if not p.is_file():
         return f"ERROR: not a file: {p}"
+    from server.tools.media import describe_media  # image/binary guard — never dump bytes
+    media = describe_media(p)
+    if media:
+        return media
     try:
         text = p.read_text(encoding="utf-8", errors="replace")
     except Exception as e:
