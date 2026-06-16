@@ -8,9 +8,9 @@
     <path d="M32 12v24"/>
     <!-- bottom roll -->
     <ellipse cx="24" cy="36" rx="8" ry="2.6"/>
-    <!-- vertical ribbon -->
-    <path d="M21.3 9v30"/>
-    <path d="M26.7 9v30"/>
+    <!-- vertical ribbon — long tails past both rolls -->
+    <path d="M21.3 4v40"/>
+    <path d="M26.7 4v40"/>
     <!-- teal wax seal -->
     <circle cx="24" cy="24" r="3" stroke="#2d8c8c"/>
   </g>

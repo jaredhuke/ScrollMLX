@@ -617,6 +617,34 @@ async def projects_logs(id: str = "", n: int = 80):
     return {"logs": projects.logs(id, n)}
 
 
+# ── Phone relay — start/stop from a UI button (no terminal) ─────────────────────
+
+@app.get("/v1/relay/status")
+async def relay_status():
+    import relay
+    return relay.ctl_status()
+
+
+@app.post("/v1/relay/clone")
+async def relay_clone(payload: dict):
+    import relay
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, relay.ctl_clone, payload.get("url", ""))
+
+
+@app.post("/v1/relay/start")
+async def relay_start(payload: dict):
+    import relay
+    return relay.ctl_start(payload.get("repo", ""), PORT,
+                           payload.get("cwd", "."), int(payload.get("interval") or 20))
+
+
+@app.post("/v1/relay/stop")
+async def relay_stop():
+    import relay
+    return relay.ctl_stop()
+
+
 # ── Deep local context engine (fed by the native macOS app) ────────────────────
 
 _LATEST_CONTEXT: dict = {}
