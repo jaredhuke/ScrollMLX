@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Bubble Tea Shop</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #ffcc00;
+            color: #fff;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        h1, h2 {
+            margin: 0;
+        }
+        nav {
+            background-color: #fff;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+        nav a {
+            color: #333;
+            margin: 0 20px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            color: #ffcc00;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        .menu {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 15px;
+            padding: 20px;
+            width: 250px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        .item h2 {
+            margin: 10px 0 5px;
+            font-size: 1.5em;
+        }
+        .item p {
+            margin: 5px 0;
+        }
+        footer {
+            background-color: #ffcc00;
+            color: #fff;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .item {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Pokémon Bubble Tea Shop</h1>
+    </header>
+    <nav>
+        <a href="#about">About</a>
+        <a href="#menu">Menu</a>
+        <a href="#contact">Contact</a>
+    </nav>
+    <div class="container" id="about">
+        <h2>About Us</h2>
+        <p>Welcome to Pokémon Bubble Tea Shop, where every sip is a journey through the world of Pokémon! Our shop is dedicated to bringing you the most delicious and fun bubble tea flavors inspired by your favorite Pokémon characters.</p>
+    </div>
+    <div class="container" id="menu">
+        <h2>Menu</h2>
+        <div class="menu">
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Eevee Bubble Tea">
+                <h2>Eevee Bubble Tea</h2>
+                <p>Our classic Eevee flavor, perfect for those who love a touch of mystery!</p>
+            </div>
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Pikachu Bubble Tea">
+                <h2>Pikachu Bubble Tea</h2>
+                <p>Sparkling with energy, this Pikachu flavor will leave you feeling electrified!</p>
+            </div>
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Eeveelutions Bubble Tea">
+                <h2>Eeveelutions Bubble Tea</h2>
+                <p>Choose your favorite Eeveelution flavor and let your taste buds evolve!</p>
+            </div>
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Jigglypuff Bubble Tea">
+                <h2>Jigglypuff Bubble Tea</h2>
+                <p>As soft and cuddly as Jigglypuff, this flavor is sure to make you feel all warm and fuzzy!</p>
+            </div>
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Snorlax Bubble Tea">
+                <h2>Snorlax Bubble Tea</h2>
+                <p>Indulge in the ultimate comfort with our Snorlax flavor, perfect for a lazy afternoon!</p>
+            </div>
+            <div class="item">
+                <img src="https://i.imgur.com/6QJZJZJ.png" alt="Dragonite Bubble Tea">
+                <h2>Dragonite Bubble Tea</h2>
+                <p>Experience the power of the skies with our Dragonite flavor, a true dragon of flavors!</p>
+            </div>
+        </div>
+    </div>
+    <div class="container" id="contact">
+        <h2>Contact Us</h2>
+        <p>If you have any questions or want to place an order, feel free to contact us:</p>
+        <p>Email: contact@pokemonbubbleteashop.com</p>
+        <p>Phone: (123) 456-7890</p>
+        <p>Address: 123 Pokémon Street, Poké City</p>
+    </div>
+    <footer>
+        <p>&copy; 2023 Pokémon Bubble Tea Shop. All rights reserved.</p>
+    </footer>
+</body>
+</html>

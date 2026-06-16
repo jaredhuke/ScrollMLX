@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# macOS / editor cruft
+.DS_Store
+**/.DS_Store
+*.swp
+
+# Runtime data & backups (live in home or are regenerated)
+.mlx-backups/
+Scroll/build/
+**/build/Build/
+
+# Stray local captures
+Screenshot*.png
+
+# Nested clone of the GitHub repo — not part of this tree
+ScrollMLX/

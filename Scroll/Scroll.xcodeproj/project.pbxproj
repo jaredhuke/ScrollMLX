@@ -1,0 +1,406 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0028D69187240F18E71E496E /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B688CF409F99FAD33C64EE5D /* AppState.swift */; };
+		124E1E33FAE297BF055EBB84 /* SecurityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C65EC941A0AA868942ED0A9 /* SecurityGate.swift */; };
+		229A34CCED036BF311A119D2 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44691C0A4F77BCB9E001DA25 /* Colors.xcassets */; };
+		3177F26A1FD79C803124043D /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD9A12FE8D2700A0F967A45 /* Theme.swift */; };
+		601E086BE5FC72AEC7F67AF7 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEBFEE8BB50888216255BCC /* Keychain.swift */; };
+		85307992FBED72640AE396FE /* ContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291213B3FEA6EE44BD4ADE8F /* ContextEngine.swift */; };
+		988ECA419E71D2BC668077B2 /* ScrollApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5569102D4B1FB72D75732435 /* ScrollApp.swift */; };
+		9B2AECCAC2E4770044A75238 /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E11C2FC70B2044D068B332 /* ServerManager.swift */; };
+		C9969F5B4D17A626636BCB46 /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DFD09340F0077085AE6CDF4 /* ProjectModels.swift */; };
+		CA6AD3547811A898F19C4918 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0366F3F2A79BD5D8CD8AE483 /* ProjectStore.swift */; };
+		CF79055D45F19DF225F7AA88 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFAE28C82DC9CCF22E0591DD /* AuthManager.swift */; };
+		F13525A1C54AE64CF3AC5353 /* WebHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEC9ACAC1ECDE58920740E27 /* WebHostView.swift */; };
+		F6F7449661E88CD920B6E26B /* BootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F70B67360E75D6EE13E4D471 /* BootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0366F3F2A79BD5D8CD8AE483 /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
+		291213B3FEA6EE44BD4ADE8F /* ContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextEngine.swift; sourceTree = "<group>"; };
+		3C65EC941A0AA868942ED0A9 /* SecurityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityGate.swift; sourceTree = "<group>"; };
+		3DD9A12FE8D2700A0F967A45 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		44691C0A4F77BCB9E001DA25 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
+		5569102D4B1FB72D75732435 /* ScrollApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollApp.swift; sourceTree = "<group>"; };
+		5AEBFEE8BB50888216255BCC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		8DFD09340F0077085AE6CDF4 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
+		AEC9ACAC1ECDE58920740E27 /* WebHostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebHostView.swift; sourceTree = "<group>"; };
+		B688CF409F99FAD33C64EE5D /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		E9D13E77370F7848374BE9CC /* Scroll.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scroll.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EFAE28C82DC9CCF22E0591DD /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		F70B67360E75D6EE13E4D471 /* BootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootView.swift; sourceTree = "<group>"; };
+		F9E11C2FC70B2044D068B332 /* ServerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		790ED047CC45903E8DD38FCD /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				44691C0A4F77BCB9E001DA25 /* Colors.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		92133C74FBC94528B6458D23 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F70B67360E75D6EE13E4D471 /* BootView.swift */,
+				AEC9ACAC1ECDE58920740E27 /* WebHostView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		988441279C266DC00EC379F3 = {
+			isa = PBXGroup;
+			children = (
+				A8709AB3A764300B7AE79EF2 /* Scroll */,
+				DB47CF3FBED832ABAC5CA443 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A8709AB3A764300B7AE79EF2 /* Scroll */ = {
+			isa = PBXGroup;
+			children = (
+				B688CF409F99FAD33C64EE5D /* AppState.swift */,
+				5569102D4B1FB72D75732435 /* ScrollApp.swift */,
+				3DD9A12FE8D2700A0F967A45 /* Theme.swift */,
+				AD20DA46F63C8B04CA20A0BB /* Models */,
+				790ED047CC45903E8DD38FCD /* Resources */,
+				B0DF2CF818F301C4141FF87F /* Services */,
+				92133C74FBC94528B6458D23 /* Views */,
+			);
+			name = Scroll;
+			path = Sources/Scroll;
+			sourceTree = "<group>";
+		};
+		AD20DA46F63C8B04CA20A0BB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8DFD09340F0077085AE6CDF4 /* ProjectModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B0DF2CF818F301C4141FF87F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				EFAE28C82DC9CCF22E0591DD /* AuthManager.swift */,
+				291213B3FEA6EE44BD4ADE8F /* ContextEngine.swift */,
+				5AEBFEE8BB50888216255BCC /* Keychain.swift */,
+				0366F3F2A79BD5D8CD8AE483 /* ProjectStore.swift */,
+				3C65EC941A0AA868942ED0A9 /* SecurityGate.swift */,
+				F9E11C2FC70B2044D068B332 /* ServerManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		DB47CF3FBED832ABAC5CA443 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E9D13E77370F7848374BE9CC /* Scroll.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F211857390FED8CF1B9F8E8E /* Scroll */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D7B8A56F67DF1A09AF083670 /* Build configuration list for PBXNativeTarget "Scroll" */;
+			buildPhases = (
+				4F3B9DDCAE21D4ED8735CC82 /* Sources */,
+				662B14C69175B52947673349 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Scroll;
+			packageProductDependencies = (
+			);
+			productName = Scroll;
+			productReference = E9D13E77370F7848374BE9CC /* Scroll.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		95042B896A863739F667A0AD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					F211857390FED8CF1B9F8E8E = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F63CA8479CB12B943E010A9E /* Build configuration list for PBXProject "Scroll" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 988441279C266DC00EC379F3;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DB47CF3FBED832ABAC5CA443 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F211857390FED8CF1B9F8E8E /* Scroll */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		662B14C69175B52947673349 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				229A34CCED036BF311A119D2 /* Colors.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4F3B9DDCAE21D4ED8735CC82 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0028D69187240F18E71E496E /* AppState.swift in Sources */,
+				CF79055D45F19DF225F7AA88 /* AuthManager.swift in Sources */,
+				F6F7449661E88CD920B6E26B /* BootView.swift in Sources */,
+				85307992FBED72640AE396FE /* ContextEngine.swift in Sources */,
+				601E086BE5FC72AEC7F67AF7 /* Keychain.swift in Sources */,
+				C9969F5B4D17A626636BCB46 /* ProjectModels.swift in Sources */,
+				CA6AD3547811A898F19C4918 /* ProjectStore.swift in Sources */,
+				988ECA419E71D2BC668077B2 /* ScrollApp.swift in Sources */,
+				124E1E33FAE297BF055EBB84 /* SecurityGate.swift in Sources */,
+				9B2AECCAC2E4770044A75238 /* ServerManager.swift in Sources */,
+				3177F26A1FD79C803124043D /* Theme.swift in Sources */,
+				F13525A1C54AE64CF3AC5353 /* WebHostView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		07B6DCEA32FCAC6F0F698BA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9CF5F23A3D34C498C454AA99 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_SANDBOX_ENABLED = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Scroll;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Scroll reads your current Finder selection to give the agent useful local context.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Scroll reads today's calendar to give the agent useful local context. Stays on your Mac.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Scroll reads today's calendar to give the agent useful local context.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Scroll reads your reminders to give the agent useful local context. Stays on your Mac.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "Scroll reads your reminders to give the agent useful local context.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scroll.Scroll;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		C1252377521E8B66DD438BBB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E8EF81E1DFD5BC827F8DBDE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_SANDBOX_ENABLED = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Scroll;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Scroll reads your current Finder selection to give the agent useful local context.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Scroll reads today's calendar to give the agent useful local context. Stays on your Mac.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Scroll reads today's calendar to give the agent useful local context.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "Scroll reads your reminders to give the agent useful local context. Stays on your Mac.";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "Scroll reads your reminders to give the agent useful local context.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scroll.Scroll;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D7B8A56F67DF1A09AF083670 /* Build configuration list for PBXNativeTarget "Scroll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8EF81E1DFD5BC827F8DBDE1 /* Debug */,
+				9CF5F23A3D34C498C454AA99 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F63CA8479CB12B943E010A9E /* Build configuration list for PBXProject "Scroll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1252377521E8B66DD438BBB /* Debug */,
+				07B6DCEA32FCAC6F0F698BA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 95042B896A863739F667A0AD /* Project object */;
+}

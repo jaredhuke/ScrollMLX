@@ -1,0 +1,23 @@
+[project]
+name = "scroll"
+version = "0.1.0"
+description = "100% local coding agent powered by MLX on Apple Silicon"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.4.1",
+    "fastapi>=0.137.0",
+    "httpx>=0.28.1",
+    "mlx-lm>=0.31.3",
+    "openai>=2.41.1",
+    "pydantic>=2.13.4",
+    "rich>=15.0.0",
+    "uvicorn[standard]>=0.49.0",
+]
+
+[project.scripts]
+scroll     = "cli:main"
+mlx-server    = "server.main:app"
+
+[dependency-groups]
+dev = []
