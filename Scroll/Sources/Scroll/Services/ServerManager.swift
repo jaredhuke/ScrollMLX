@@ -100,15 +100,30 @@ final class ServerManager: ObservableObject {
             guard !data.isEmpty, let line = String(data: data, encoding: .utf8) else { return }
             DispatchQueue.main.async { self?.log(line.trimmingCharacters(in: .whitespacesAndNewlines)) }
         }
-        proc.terminationHandler = { [weak self] _ in
+        proc.terminationHandler = { [weak self] p in
             DispatchQueue.main.async {
-                self?.log("Services stopped.")
-                if self?.state == .ready { self?.state = .error("Services exited unexpectedly.") }
+                guard let self else { return }
+                self.process = nil
+                let why = self.logs.suffix(3).joined(separator: " ⏎ ")
+                self.log("Services stopped (exit \(p.terminationStatus)).")
+                guard self.state == .ready else { return }
+                // One automatic restart — the usual cause is a Metal out-of-memory abort mid-generation.
+                if !self.didAutoRestart {
+                    self.didAutoRestart = true
+                    self.log("Restarting services once…")
+                    self.boot()
+                } else {
+                    let hint = why.localizedCaseInsensitiveContains("memory")
+                        ? " — looks like the model ran out of memory; try a shorter request."
+                        : ""
+                    self.state = .error("Services exited unexpectedly\(hint) See ~/.scroll/server.log. Last: \(why)")
+                }
             }
         }
         try proc.run()
         self.process = proc
     }
+    private var didAutoRestart = false
 
     private func pollHealth(attempts: Int = 0) {
         guard attempts < 120 else { setStep("model", .failed); fail("Model did not finish loading in time."); return }
