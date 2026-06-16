@@ -1,14 +1,17 @@
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scroll">
   <title>Scroll</title>
-  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- top roll of the scroll -->
-    <path d="M17 11h13a4 4 0 0 1 0 8H17a4 4 0 0 1 0-8z"/>
-    <!-- body sides -->
-    <path d="M17 19v10M30 19v10"/>
-    <!-- bottom roll -->
-    <path d="M30 37H17a4 4 0 0 1 0-8h13a4 4 0 0 1 0 8z"/>
-    <!-- ink lines in the open leaf: one teal accent (the active mark), one ink -->
-    <path d="M21 22.5h5.5" stroke="#2d8c8c"/>
-    <path d="M21 26h4"/>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- parchment sheet: gently sagging top and bottom edges -->
+    <path d="M15 17 C 22 15, 26 15, 33 17"/>
+    <path d="M15 31 C 22 33, 26 33, 33 31"/>
+    <!-- left rolled end: outer curl + inner curl -->
+    <path d="M15 17 C 9.5 18, 9.5 30, 15 31"/>
+    <path d="M15 20 C 12 21, 12 27, 15 28"/>
+    <!-- right rolled end -->
+    <path d="M33 17 C 38.5 18, 38.5 30, 33 31"/>
+    <path d="M33 20 C 36 21, 36 27, 33 28"/>
+    <!-- writing: one teal accent line, one ink line -->
+    <path d="M19 22.5 h9.5" stroke="#2d8c8c"/>
+    <path d="M19 26 h6.5"/>
   </g>
 </svg>

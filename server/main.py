@@ -68,10 +68,11 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
     def _run():
         try:
             messages = [m.model_dump(exclude_none=True) for m in req.messages]
-            from server import learn
-            notes = learn.learned(req.cwd)
-            if notes:  # corrections the user accepted from the critic — PRIMARY honors them
-                messages = [{"role": "system", "content": "Corrections & preferences learned from the user (always honor):\n- " + "\n- ".join(notes[-12:])}] + messages
+            from server import steering
+            steer = steering.as_system_text(req.cwd)  # standing context file: user section + learned
+            if steer:
+                messages = [{"role": "system", "content": steer}] + messages
+            # (the client also sends the user section so /v1/dual and /v1/escalate honor it)
             ctx = _context_system_msg()  # live macOS context from the native app
             if ctx:
                 messages = [ctx] + messages
@@ -471,6 +472,74 @@ async def repo_clone(payload: dict):
     return {"ok": True, "name": name, "path": str(dest)}
 
 
+# ── Vision: the local model is text-only, so route images to a multimodal model ─
+
+def _vision_call(provider: str, b64: str, mime: str, prompt: str) -> str:
+    """Send one image + prompt to a multimodal cloud model and return its text."""
+    import base64 as _b64
+    raw = _b64.b64decode(b64)
+    if provider == "gemini":
+        from google import genai
+        from google.genai import types
+        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not key:
+            raise RuntimeError("GEMINI_API_KEY not set")
+        client = genai.Client(api_key=key)
+        img = types.Part.from_bytes(data=raw, mime_type=mime)
+        r = client.models.generate_content(model="gemini-2.0-flash", contents=[prompt, img])
+        return r.text or "(no description returned)"
+    if provider in ("openai", "openrouter"):
+        import openai
+        if provider == "openai":
+            key = os.environ.get("OPENAI_API_KEY"); base = None; model = "gpt-4o"
+        else:
+            key = os.environ.get("OPENROUTER_API_KEY"); base = "https://openrouter.ai/api/v1"
+            model = "google/gemini-2.0-flash-exp:free"
+        if not key:
+            raise RuntimeError(f"{provider.upper()}_API_KEY not set")
+        client = openai.OpenAI(api_key=key, base_url=base)
+        r = client.chat.completions.create(
+            model=model, max_tokens=1024,
+            messages=[{"role": "user", "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+            ]}],
+        )
+        return r.choices[0].message.content or "(no description returned)"
+    raise RuntimeError(f"{provider} has no vision support — use gemini, openai or openrouter")
+
+
+VISION_PROVIDERS = ("gemini", "openai", "openrouter")
+
+
+@app.post("/v1/vision")
+async def vision(payload: dict):
+    """Read an image with a multimodal model (image leaves the machine — user-initiated)."""
+    provider = (payload.get("provider") or "gemini").lower()
+    if provider not in VISION_PROVIDERS:
+        return {"ok": False, "error": f"{provider} can't see images; use {', '.join(VISION_PROVIDERS)}"}
+    prompt = payload.get("prompt") or "Describe this image in detail. If it contains text, transcribe it verbatim."
+    b64 = payload.get("image_b64")
+    mime = payload.get("mime") or "image/jpeg"
+    if not b64 and payload.get("path"):
+        from server.tools.filesystem import _resolve
+        import base64 as _b64
+        import mimetypes
+        p = _resolve(payload["path"], payload.get("cwd") or ".")
+        if not p.exists() or not p.is_file():
+            return {"ok": False, "error": "image not found"}
+        b64 = _b64.b64encode(p.read_bytes()).decode()
+        mime = mimetypes.guess_type(str(p))[0] or "image/jpeg"
+    if not b64:
+        return {"ok": False, "error": "no image supplied"}
+    loop = asyncio.get_event_loop()
+    try:
+        text = await loop.run_in_executor(None, _vision_call, provider, b64, mime, prompt)
+        return {"ok": True, "provider": provider, "text": text}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 # ── Deep local context engine (fed by the native macOS app) ────────────────────
 
 _LATEST_CONTEXT: dict = {}
@@ -488,6 +557,28 @@ async def set_context(payload: dict):
 async def get_context():
     """Latest local-context snapshot (UI reads CPU/mem/thermal etc. from here)."""
     return _LATEST_CONTEXT
+
+
+# ── Standing context — a persistent, incremental file the agent always honors ───
+
+@app.get("/v1/standing")
+async def standing_get(project: str = "."):
+    from server import steering
+    return steering.view(project)
+
+
+@app.post("/v1/standing")
+async def standing_post(payload: dict):
+    """add: append one user line · set: replace user section · remove: drop by index."""
+    from server import steering
+    project = payload.get("project") or "."
+    if "set" in payload:
+        steering.set_user(project, payload.get("set") or "")
+    elif payload.get("remove") is not None:
+        steering.remove_user(project, int(payload["remove"]))
+    elif payload.get("add"):
+        steering.add_user(project, payload["add"])
+    return steering.view(project)
 
 
 # ── Access barriers (crystal-clear, enforced) ──────────────────────────────────
