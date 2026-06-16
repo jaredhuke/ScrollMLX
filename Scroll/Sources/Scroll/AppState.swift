@@ -7,6 +7,7 @@ final class AppState: ObservableObject {
     let server: ServerManager
     let context: ContextEngine
     @Published var cwd: String
+    @Published var showKeys = false
 
     private let projectRoot: URL
     private var bag = Set<AnyCancellable>()

@@ -12,6 +12,7 @@
 		229A34CCED036BF311A119D2 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44691C0A4F77BCB9E001DA25 /* Colors.xcassets */; };
 		3177F26A1FD79C803124043D /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD9A12FE8D2700A0F967A45 /* Theme.swift */; };
 		601E086BE5FC72AEC7F67AF7 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEBFEE8BB50888216255BCC /* Keychain.swift */; };
+		73532E90B18C2907F9DC7D2F /* KeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB63D19CE322E181D91B506 /* KeysView.swift */; };
 		85307992FBED72640AE396FE /* ContextEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291213B3FEA6EE44BD4ADE8F /* ContextEngine.swift */; };
 		988ECA419E71D2BC668077B2 /* ScrollApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5569102D4B1FB72D75732435 /* ScrollApp.swift */; };
 		9B2AECCAC2E4770044A75238 /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E11C2FC70B2044D068B332 /* ServerManager.swift */; };
@@ -24,6 +25,7 @@
 
 /* Begin PBXFileReference section */
 		0366F3F2A79BD5D8CD8AE483 /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
+		1FB63D19CE322E181D91B506 /* KeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeysView.swift; sourceTree = "<group>"; };
 		291213B3FEA6EE44BD4ADE8F /* ContextEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextEngine.swift; sourceTree = "<group>"; };
 		3C65EC941A0AA868942ED0A9 /* SecurityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityGate.swift; sourceTree = "<group>"; };
 		3DD9A12FE8D2700A0F967A45 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -52,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				F70B67360E75D6EE13E4D471 /* BootView.swift */,
+				1FB63D19CE322E181D91B506 /* KeysView.swift */,
 				AEC9ACAC1ECDE58920740E27 /* WebHostView.swift */,
 			);
 			path = Views;
@@ -185,6 +188,7 @@
 				F6F7449661E88CD920B6E26B /* BootView.swift in Sources */,
 				85307992FBED72640AE396FE /* ContextEngine.swift in Sources */,
 				601E086BE5FC72AEC7F67AF7 /* Keychain.swift in Sources */,
+				73532E90B18C2907F9DC7D2F /* KeysView.swift in Sources */,
 				C9969F5B4D17A626636BCB46 /* ProjectModels.swift in Sources */,
 				CA6AD3547811A898F19C4918 /* ProjectStore.swift in Sources */,
 				988ECA419E71D2BC668077B2 /* ScrollApp.swift in Sources */,
