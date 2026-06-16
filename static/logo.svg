@@ -1,20 +1,17 @@
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scroll">
   <title>Scroll</title>
   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- top rod + knob finials -->
-    <path d="M13 13h22"/>
-    <circle cx="11.3" cy="13" r="1.5"/>
-    <circle cx="36.7" cy="13" r="1.5"/>
-    <!-- bowed parchment sides -->
-    <path d="M16 13c-1.6 7-1.6 15 0 22"/>
-    <path d="M32 13c1.6 7 1.6 15 0 22"/>
-    <!-- bottom rod + knob finials -->
-    <path d="M13 35h22"/>
-    <circle cx="11.3" cy="35" r="1.5"/>
-    <circle cx="36.7" cy="35" r="1.5"/>
-    <!-- writing: one teal accent, two ink -->
-    <path d="M20 21h9" stroke="#2d8c8c"/>
-    <path d="M20 25h9"/>
-    <path d="M20 29h6"/>
+    <!-- top roll -->
+    <ellipse cx="24" cy="12" rx="8" ry="2.6"/>
+    <!-- furled body -->
+    <path d="M16 12v24"/>
+    <path d="M32 12v24"/>
+    <!-- bottom roll -->
+    <ellipse cx="24" cy="36" rx="8" ry="2.6"/>
+    <!-- vertical ribbon -->
+    <path d="M21.3 9v30"/>
+    <path d="M26.7 9v30"/>
+    <!-- teal wax seal -->
+    <circle cx="24" cy="24" r="3" stroke="#2d8c8c"/>
   </g>
 </svg>

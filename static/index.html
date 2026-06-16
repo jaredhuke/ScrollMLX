@@ -190,6 +190,10 @@ select.hb{padding:5px 9px}
 #add-btn:hover{color:var(--teal);border-color:var(--teal)}
 #add-btn.on{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
 #add-btn .ic{width:16px;height:16px}
+#term-btn{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);width:40px;height:40px;flex-shrink:0;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;align-self:flex-end;transition:color .15s,border-color .15s,background .15s}
+#term-btn:hover{color:var(--teal);border-color:var(--teal)}
+#term-btn.on{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
+#term-btn .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 #models-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);min-width:46px;height:40px;flex-shrink:0;border-radius:var(--r);cursor:pointer;align-self:flex-end;transition:color .15s,border-color .15s,background .15s}
 #models-btn:hover{color:var(--teal);border-color:var(--teal)}
 #models-btn.multi{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
@@ -758,7 +762,7 @@ select.hb{padding:5px 9px}
 <div id="ais-tip"></div>
 
 <div id="hdr">
-  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg>SCROLL</span>
+  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg>SCROLL</span>
   <span id="model-lbl" data-tip="Primary LLM loaded in memory">loading…</span>
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
@@ -769,7 +773,6 @@ select.hb{padding:5px 9px}
     <button class="hb" id="projects-btn" onclick="openProjects()" data-tip="Projects — repos &amp; their runnable servers; launch and manage">Projects</button>
     <button class="hb" id="dual-btn" onclick="toggleDual()" data-tip="PRIMARY → CRITIC → REVISION pipeline">Dual</button>
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — lineage &amp; recovery">Artifacts</button>
-    <button class="hb" onclick="toggleCli()" data-tip="Run shell commands in the working directory">Terminal</button>
     <button class="hb" onclick="openDrawer()" data-tip="Skills &amp; plugins">Skills</button>
     <button class="hb" onclick="openSettings()" data-tip="Models, API keys, git">Settings</button>
   </div>
@@ -804,7 +807,7 @@ select.hb{padding:5px 9px}
     </div>
     <div id="goal-banner"></div>
     <div id="timeline">
-      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
+      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
     </div>
     <div id="add-panel" hidden>
       <div class="ap-row">
@@ -829,6 +832,7 @@ select.hb{padding:5px 9px}
     <div id="ctx-tray"></div>
     <div id="input-row">
       <button id="add-btn" onclick="toggleAdd()" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
+      <button id="term-btn" onclick="toggleCli()" data-tip="Terminal — run shell commands in the working directory"><svg viewBox="0 0 16 16" class="ic"><path d="M3.5 5l3 3-3 3M8.5 11h4"/></svg></button>
       <button id="models-btn" onclick="toggleModels()" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
       <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…"></textarea>
       <button id="send-btn" onclick="send()" data-tip="Send (Enter)">Send</button>
@@ -1926,7 +1930,7 @@ async function escalate(){
 }
 
 // ─── EMBEDDED TERMINAL ─────────────────────────────────────────────────────────
-function toggleCli(){const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');document.getElementById('cli-cwd').textContent=S.cwd;if(open)setTimeout(()=>document.getElementById('cli-in').focus(),60)}
+function toggleCli(){const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');document.getElementById('cli-cwd').textContent=S.cwd;const b=document.getElementById('term-btn');if(b)b.classList.toggle('on',open);if(open)setTimeout(()=>document.getElementById('cli-in').focus(),60)}
 async function cliRun(cmd){
   const out=document.getElementById('cli-out');
   const c=document.createElement('div');c.className='cli-cmd';c.textContent=cmd;out.appendChild(c);
@@ -2304,7 +2308,7 @@ const timeline=document.getElementById('timeline'),sendBtn=document.getElementBy
 function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('stop');sendBtn.onclick=stopStream;sendBtn.disabled=false}else{sendBtn.textContent='Send';sendBtn.classList.remove('stop');sendBtn.onclick=send;sendBtn.disabled=false}}
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual)}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
