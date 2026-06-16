@@ -21,8 +21,10 @@ import argparse
 import json
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
+from collections import deque
 from pathlib import Path
 
 DEFAULT_REPO = Path.home() / ".scroll" / "relay"
@@ -114,6 +116,73 @@ def process_once(repo: Path, port: int, default_cwd: str) -> int:
         r = git(repo, "push")
         print(f"[relay] pushed {handled} answer(s)" + ("" if r.returncode == 0 else f" · push error: {r.stderr.strip()[:160]}"), flush=True)
     return handled
+
+
+# ── In-process control, so the UI can run the relay from a button (no terminal) ─
+_CTL = {"thread": None, "stop": False, "running": False, "repo": "",
+        "interval": 20, "answered": 0, "logs": deque(maxlen=120)}
+
+
+def ctl_status() -> dict:
+    repo = _CTL["repo"] or str(DEFAULT_REPO)
+    return {
+        "running": _CTL["running"], "repo": repo,
+        "exists": (Path(repo).expanduser() / ".git").exists(),
+        "interval": _CTL["interval"], "answered": _CTL["answered"],
+        "logs": list(_CTL["logs"])[-40:],
+    }
+
+
+def ctl_clone(url: str) -> dict:
+    DEFAULT_REPO.parent.mkdir(parents=True, exist_ok=True)
+    if (DEFAULT_REPO / ".git").exists():
+        return {"ok": True, "already": True, "repo": str(DEFAULT_REPO)}
+    if not url:
+        return {"ok": False, "error": "no repo URL"}
+    r = subprocess.run(["git", "clone", url, str(DEFAULT_REPO)],
+                       capture_output=True, text=True, timeout=300)
+    if r.returncode != 0:
+        return {"ok": False, "error": (r.stderr or r.stdout).strip()[:300]}
+    return {"ok": True, "repo": str(DEFAULT_REPO)}
+
+
+def ctl_start(repo: str, port: int, cwd: str = ".", interval: int = 20) -> dict:
+    if _CTL["running"]:
+        return {"ok": True, "already": True}
+    rp = Path(repo or DEFAULT_REPO).expanduser()
+    if not (rp / ".git").exists():
+        return {"ok": False, "error": f"{rp} is not a git repo — clone your relay repo first"}
+    (rp / "inbox").mkdir(parents=True, exist_ok=True)
+    (rp / "outbox").mkdir(parents=True, exist_ok=True)
+    _CTL.update(stop=False, running=True, repo=str(rp), interval=int(interval or 20))
+
+    def _loop():
+        _CTL["logs"].append("relay started")
+        while not _CTL["stop"]:
+            try:
+                n = process_once(rp, int(port), cwd)
+                if n:
+                    _CTL["answered"] += n
+                    _CTL["logs"].append(f"answered {n} prompt(s)")
+            except Exception as exc:
+                _CTL["logs"].append(f"error: {exc}")
+            for _ in range(int(_CTL["interval"]) * 2):
+                if _CTL["stop"]:
+                    break
+                time.sleep(0.5)
+        _CTL["running"] = False
+        _CTL["logs"].append("relay stopped")
+
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+    _CTL["thread"] = t
+    return {"ok": True, **ctl_status()}
+
+
+def ctl_stop() -> dict:
+    _CTL["stop"] = True
+    _CTL["running"] = False
+    return {"ok": True}
 
 
 def main() -> int:

@@ -719,6 +719,15 @@ select.hb{padding:5px 9px}
 .pj-b.stop{color:var(--red);border-color:rgba(210,85,46,.4)}.pj-b.stop:hover{border-color:var(--red)}
 .pj-b.rm{margin-left:auto;color:var(--text-ghost)}.pj-b.rm:hover{color:var(--red);border-color:var(--red)}
 .pj-log{font-family:var(--mono);font-size:9px;color:var(--text-dim);background:var(--bg3);border-radius:5px;padding:7px;margin-top:8px;max-height:90px;overflow:auto;white-space:pre-wrap}
+.rl-note{font-size:11px;color:var(--text-soft);line-height:1.55;margin-bottom:9px}
+.rl-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.rl-stat{display:flex;align-items:center;gap:8px}
+.rl-dot{width:7px;height:7px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
+.rl-dot.on{background:var(--teal);animation:dotPulse 1.8s infinite}
+.rl-state{font-size:12px;font-weight:600;color:var(--text)}
+.rl-meta{font-size:9.5px;color:var(--text-dim);margin-left:auto}
+.rl-path{font-size:9px;color:var(--text-ghost);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rl-log{font-family:var(--mono);font-size:9px;color:var(--text-dim);background:var(--bg3);border-radius:5px;padding:7px;margin-top:8px;max-height:80px;overflow:auto;white-space:pre-wrap}
 .set-active-card{background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r);padding:11px 13px}
 .sm-label{font-size:12px;color:var(--text);font-weight:600}
 .sm-host{font-size:9px;color:var(--text-ghost);margin-top:2px;letter-spacing:.02em}
@@ -762,7 +771,7 @@ select.hb{padding:5px 9px}
 <div id="ais-tip"></div>
 
 <div id="hdr">
-  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg>SCROLL</span>
+  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg>SCROLL</span>
   <span id="model-lbl" data-tip="Primary LLM loaded in memory">loading…</span>
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
@@ -807,7 +816,7 @@ select.hb{padding:5px 9px}
     </div>
     <div id="goal-banner"></div>
     <div id="timeline">
-      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
+      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
     </div>
     <div id="add-panel" hidden>
       <div class="ap-row">
@@ -903,6 +912,7 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">Model directory <span class="ds-sub">local &amp; cloud</span></div><div id="set-models"></div></div>
     <div><div class="ds-title">API keys <span class="ds-sub">stored in the Keychain, never in the browser</span></div><div id="set-keys"></div></div>
     <div><div class="ds-title">Git</div><div id="set-git"></div></div>
+    <div><div class="ds-title">Phone relay <span class="ds-sub">drive Scroll from your phone</span></div><div id="set-relay"></div></div>
   </div>
 </div>
 
@@ -2209,7 +2219,40 @@ const MODELS=[
 ];
 const KEYLINKS={groq:'https://console.groq.com/keys',openrouter:'https://openrouter.ai/keys',cerebras:'https://cloud.cerebras.ai',gemini:'https://aistudio.google.com/apikey',anthropic:'https://console.anthropic.com/settings/keys',openai:'https://platform.openai.com/api-keys'};
 const SET={active:'mlx',cloud:'anthropic'};
-async function openSettings(){document.getElementById('sdrawer').classList.add('open');document.getElementById('soverlay').classList.add('open');renderSettings();await refreshKeys();await fetchArtStatus();renderSettings()}
+async function openSettings(){document.getElementById('sdrawer').classList.add('open');document.getElementById('soverlay').classList.add('open');renderSettings();await refreshKeys();await fetchArtStatus();renderSettings();renderRelay()}
+// ─── PHONE RELAY — a button, not a terminal script ─────────────────────────────
+async function renderRelay(){
+  const el=document.getElementById('set-relay');if(!el)return;
+  let s;try{s=await fetch('/v1/relay/status').then(r=>r.ok?r.json():null)}catch(_){s=null}
+  if(!s){el.innerHTML='<div class="rl-note">Restart the server to enable the relay.</div>';return}
+  S.relay=s;
+  if(!s.exists){
+    el.innerHTML=`<div class="rl-note">Drive Scroll from your phone via a <b>private</b> GitHub repo. Paste its URL to set up — then drop prompts in <b>inbox/</b> from the GitHub app and watch for the answer commit.</div>
+      <div class="rl-row"><input id="rl-url" class="pj-in" style="margin:0;flex:1" placeholder="git URL of your relay repo"><button class="pj-b primary" onclick="relayClone()">Clone</button></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="rl-stat"><span class="rl-dot ${s.running?'on':''}"></span><span class="rl-state">${s.running?'Running':'Stopped'}</span><span class="rl-meta">${s.answered} answered${s.running?` · every ${s.interval}s`:''}</span></div>
+    <div class="rl-path" title="${escH(s.repo)}">${escH(s.repo)}</div>
+    <div class="rl-row">
+      ${s.running?'<button class="pj-b stop" onclick="relayStop()">Stop relay</button>':'<button class="pj-b primary" onclick="relayStart()">Start relay</button>'}
+      <input id="rl-int" class="pj-in" style="margin:0;width:84px" value="${s.interval}" inputmode="numeric" title="poll seconds" ${s.running?'disabled':''}>
+    </div>
+    ${s.logs&&s.logs.length?`<pre class="rl-log">${escH(s.logs.slice(-6).join('\n'))}</pre>`:''}`;
+}
+async function relayClone(){
+  const u=(document.getElementById('rl-url')||{}).value?.trim();if(!u){artToast('Paste the relay repo URL','err');return}
+  artToast('Cloning relay repo…','run');
+  let r;try{r=await fetch('/v1/relay/clone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){artToast('Relay repo ready','ok')}else artToast('Clone failed · '+((r&&r.error)||'unknown'),'err');
+  renderRelay();
+}
+async function relayStart(){
+  const int=parseInt((document.getElementById('rl-int')||{}).value)||20;
+  let r;try{r=await fetch('/v1/relay/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interval:int,cwd:S.cwd})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+  if(r&&r.ok)artToast('Relay running — drop prompts in inbox/ from your phone','ok');else artToast('Could not start · '+((r&&r.error)||'unknown'),'err');
+  renderRelay();
+}
+async function relayStop(){await fetch('/v1/relay/stop',{method:'POST'}).catch(()=>{});artToast('Relay stopped','ok');renderRelay()}
 function closeSettings(){document.getElementById('sdrawer').classList.remove('open');document.getElementById('soverlay').classList.remove('open')}
 
 // ─── PROJECTS — a repo + its runnable product; launch & manage from here ────────
@@ -2308,7 +2351,7 @@ const timeline=document.getElementById('timeline'),sendBtn=document.getElementBy
 function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('stop');sendBtn.onclick=stopStream;sendBtn.disabled=false}else{sendBtn.textContent='Send';sendBtn.classList.remove('stop');sendBtn.onclick=send;sendBtn.disabled=false}}
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 9v30"/><path d="M26.7 9v30"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual)}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
