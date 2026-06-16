@@ -686,6 +686,35 @@ select.hb{padding:5px 9px}
 #soverlay.open{display:block}
 #sdrawer{position:fixed;top:0;right:0;bottom:0;width:340px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 #sdrawer.open{transform:none}
+#pjoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
+#pjoverlay.open{display:block}
+#pjdrawer{position:fixed;top:0;right:0;bottom:0;width:380px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#pjdrawer.open{transform:none}
+#projects-btn.live{color:var(--teal);border-color:var(--teal-line)}
+#pj-active{font-size:10px;color:var(--text-dim)}
+.pj-in{width:100%;background:var(--bg);border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:12px;padding:9px 11px;border-radius:var(--r);outline:none;margin-bottom:7px}
+.pj-in:focus{border-color:var(--teal)}
+.pj-empty{font-size:11px;color:var(--text-ghost);font-style:italic;padding:10px 2px;line-height:1.5}
+.pj-row{border:1px solid var(--border);border-radius:var(--r);padding:11px;margin-bottom:9px;background:var(--bg);transition:border-color .15s}
+.pj-row.on{border-color:var(--teal-line)}
+.pj-row.active{box-shadow:inset 2px 0 0 var(--teal)}
+.pj-top{display:flex;align-items:center;gap:8px}
+.pj-dot{width:7px;height:7px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
+.pj-dot.up{background:var(--teal);animation:dotPulse 1.8s infinite}.pj-dot.starting{background:var(--amber)}.pj-dot.gone{background:var(--red)}
+.pj-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-tag{font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);border:1px solid var(--teal-line);border-radius:8px;padding:1px 6px}
+.pj-port{font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums}
+.pj-path{font-size:9.5px;color:var(--text-ghost);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-cmd{font-size:10px;color:var(--text-soft);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-cmd.warn{color:var(--amber)}
+.pj-acts{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
+.pj-b{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:10px;padding:5px 11px;border-radius:6px;cursor:pointer;transition:color .15s,border-color .15s}
+.pj-b:hover{color:var(--teal);border-color:var(--teal)}
+.pj-b.primary{background:var(--teal);color:#fff;border-color:var(--teal)}.pj-b.primary:hover{opacity:.88;color:#fff}
+.pj-b.primary:disabled{background:var(--border-mid);border-color:var(--border-mid);color:var(--text-ghost);cursor:not-allowed}
+.pj-b.stop{color:var(--red);border-color:rgba(210,85,46,.4)}.pj-b.stop:hover{border-color:var(--red)}
+.pj-b.rm{margin-left:auto;color:var(--text-ghost)}.pj-b.rm:hover{color:var(--red);border-color:var(--red)}
+.pj-log{font-family:var(--mono);font-size:9px;color:var(--text-dim);background:var(--bg3);border-radius:5px;padding:7px;margin-top:8px;max-height:90px;overflow:auto;white-space:pre-wrap}
 .set-active-card{background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r);padding:11px 13px}
 .sm-label{font-size:12px;color:var(--text);font-weight:600}
 .sm-host{font-size:9px;color:var(--text-ghost);margin-top:2px;letter-spacing:.02em}
@@ -737,6 +766,7 @@ select.hb{padding:5px 9px}
   </div>
   <div id="hdr-right">
     <select class="hb" id="prov-sel" data-tip="Switch LLM provider"></select>
+    <button class="hb" id="projects-btn" onclick="openProjects()" data-tip="Projects — repos &amp; their runnable servers; launch and manage">Projects</button>
     <button class="hb" id="dual-btn" onclick="toggleDual()" data-tip="PRIMARY → CRITIC → REVISION pipeline">Dual</button>
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — lineage &amp; recovery">Artifacts</button>
     <button class="hb" onclick="toggleCli()" data-tip="Run shell commands in the working directory">Terminal</button>
@@ -869,6 +899,24 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">Model directory <span class="ds-sub">local &amp; cloud</span></div><div id="set-models"></div></div>
     <div><div class="ds-title">API keys <span class="ds-sub">stored in the Keychain, never in the browser</span></div><div id="set-keys"></div></div>
     <div><div class="ds-title">Git</div><div id="set-git"></div></div>
+  </div>
+</div>
+
+<div id="pjoverlay" onclick="closeProjects()"></div>
+<div id="pjdrawer">
+  <div class="dh"><span class="dt">Projects</span><button class="dc" onclick="closeProjects()">✕</button></div>
+  <div class="dbody">
+    <div id="pj-active"></div>
+    <div><button class="dbtn ghost" id="pj-new-btn" onclick="togglePjNew()">+ New project</button></div>
+    <div id="pj-new" hidden>
+      <input id="pj-name" class="pj-in" placeholder="Project name">
+      <input id="pj-path" class="pj-in" placeholder="Local path  (or leave blank + paste a git URL)">
+      <input id="pj-repo" class="pj-in" placeholder="git URL to clone  (optional)">
+      <input id="pj-start" class="pj-in" placeholder="Start command  (auto-detected if blank, e.g. npm run dev)">
+      <input id="pj-port" class="pj-in" placeholder="Port  (e.g. 3000)" inputmode="numeric">
+      <button class="dbtn" onclick="addProject()">Add project</button>
+    </div>
+    <div id="pj-list"></div>
   </div>
 </div>
 
@@ -2159,6 +2207,72 @@ const KEYLINKS={groq:'https://console.groq.com/keys',openrouter:'https://openrou
 const SET={active:'mlx',cloud:'anthropic'};
 async function openSettings(){document.getElementById('sdrawer').classList.add('open');document.getElementById('soverlay').classList.add('open');renderSettings();await refreshKeys();await fetchArtStatus();renderSettings()}
 function closeSettings(){document.getElementById('sdrawer').classList.remove('open');document.getElementById('soverlay').classList.remove('open')}
+
+// ─── PROJECTS — a repo + its runnable product; launch & manage from here ────────
+let _pjPoll=null;
+function openProjects(){document.getElementById('pjdrawer').classList.add('open');document.getElementById('pjoverlay').classList.add('open');loadProjects();clearInterval(_pjPoll);_pjPoll=setInterval(loadProjects,3000)}
+function closeProjects(){document.getElementById('pjdrawer').classList.remove('open');document.getElementById('pjoverlay').classList.remove('open');clearInterval(_pjPoll);_pjPoll=null}
+function togglePjNew(){const e=document.getElementById('pj-new');if(e.hasAttribute('hidden')){e.removeAttribute('hidden');document.getElementById('pj-name').focus()}else e.setAttribute('hidden','')}
+async function loadProjects(){
+  let j;try{j=await fetch('/v1/projects').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  S.projects=(j&&j.projects)||[];renderProjects();updateProjectsBtn();
+}
+function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
+function renderProjects(){
+  const el=document.getElementById('pj-list');if(!el)return;
+  const ps=S.projects||[];
+  if(!ps.length){el.innerHTML='<div class="pj-empty">No projects yet. Add one above — a local path or a git URL to clone.</div>';return}
+  el.innerHTML=ps.map(p=>{
+    const active=S.cwd&&S.cwd===p.path;
+    const dot=p.running?(p.port_up?'up':'starting'):(p.exists?'':'gone');
+    return `<div class="pj-row ${p.running?'on':''} ${active?'active':''}">
+      <div class="pj-top"><span class="pj-dot ${dot}"></span><span class="pj-name">${escH(p.name)}</span>${active?'<span class="pj-tag">active</span>':''}${p.port?`<span class="pj-port">:${p.port}</span>`:''}</div>
+      <div class="pj-path" title="${escH(p.path)}">${escH(p.path)}${p.exists?'':' · missing'}</div>
+      <div class="pj-cmd ${p.start?'':'warn'}">${p.start?escH(p.start):'no start command — edit to add one'}</div>
+      <div class="pj-acts">
+        ${p.running
+          ? `<button class="pj-b stop" onclick="stopProject('${p.id}')">${ICON.check?'':''}Stop</button>${p.url?`<button class="pj-b" onclick="openProjectUrl('${p.url}')">Open ↗</button>`:''}`
+          : `<button class="pj-b primary" onclick="launchProject('${p.id}')" ${p.start?'':'disabled'}>Launch</button>`}
+        <button class="pj-b" onclick="activateProject('${p.id}')">${active?'Active here':'Use here'}</button>
+        <button class="pj-b rm" title="Remove from list (keeps files)" onclick="removeProject('${p.id}','${escH(p.name)}')">✕</button>
+      </div>
+      ${p.running&&p.logs_open?`<pre class="pj-log" id="pjlog-${p.id}">…</pre>`:''}
+    </div>`;
+  }).join('');
+}
+async function addProject(){
+  const body={name:document.getElementById('pj-name').value.trim(),path:document.getElementById('pj-path').value.trim(),repo:document.getElementById('pj-repo').value.trim(),start:document.getElementById('pj-start').value.trim(),port:parseInt(document.getElementById('pj-port').value)||0};
+  if(!body.name&&!body.path&&!body.repo){artToast('Give it a name, a path, or a git URL','err');return}
+  if(body.repo)artToast('Cloning '+body.repo.split('/').pop()+' …','run');
+  let r;try{r=await fetch('/v1/projects/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){['pj-name','pj-path','pj-repo','pj-start','pj-port'].forEach(i=>document.getElementById(i).value='');document.getElementById('pj-new').setAttribute('hidden','');artToast('Added '+(r.project&&r.project.name||'project'),'ok');loadProjects()}
+  else artToast('Could not add · '+((r&&r.error)||'unknown'),'err');
+}
+async function launchProject(id){
+  artToast('Launching…','run');
+  let r;try{r=await fetch('/v1/projects/launch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){artToast(r.already?'Already running':'Started · '+(r.url||''),'ok')}else artToast('Launch failed · '+((r&&r.error)||'unknown'),'err');
+  setTimeout(loadProjects,800);
+}
+async function stopProject(id){
+  await fetch('/v1/projects/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});
+  artToast('Stopped','ok');setTimeout(loadProjects,400);
+}
+function openProjectUrl(url){window.open(url,'_blank','noopener')}
+async function activateProject(id){
+  const p=(S.projects||[]).find(x=>x.id===id);if(!p)return;
+  S.cwd=p.path;S.activeProject=p.name;
+  try{document.getElementById('cli-cwd').textContent=S.cwd}catch(_){}
+  try{loadStanding()}catch(_){}; try{fetchArtStatus()}catch(_){}
+  renderProjects();updateProjectsBtn();
+  artToast('Working in '+p.name+' — the agent now operates here','ok');
+}
+async function removeProject(id,name){
+  if(!confirm('Remove "'+name+'" from the list? Files on disk are kept.'))return;
+  await fetch('/v1/projects/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});
+  if((S.projects||[]).find(p=>p.id===id&&p.path===S.cwd)){S.activeProject=null}
+  loadProjects();
+}
 function renderSettings(){
   const keys=window.CLOUD||{};
   const act=SET.active==='mlx'?MODELS[0]:MODELS.find(m=>m.provider===SET.active)||MODELS[0];
@@ -2564,7 +2678,7 @@ window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 loadPref(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
-loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount();
+loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects();
 if(!obState().done)setTimeout(()=>openOnboard(true),700);   // first-run onboarding wizard
 fetch('/v1/model').then(r=>r.json()).then(j=>{document.getElementById('model-lbl').textContent=j.primary||'unknown';renderAISInfo()}).catch(()=>{});
 </script>

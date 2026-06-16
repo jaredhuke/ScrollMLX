@@ -562,6 +562,61 @@ async def vision(payload: dict):
         return {"ok": False, "error": str(exc)}
 
 
+# ── Projects — a git repo + a runnable "product"; launch & manage from here ─────
+
+@app.get("/v1/projects")
+async def projects_list():
+    from server import projects
+    return {"projects": projects.list_projects()}
+
+
+@app.post("/v1/projects/add")
+async def projects_add(payload: dict):
+    from server import projects
+    if not (payload.get("name") or payload.get("repo") or payload.get("path")):
+        raise HTTPException(400, "need a name, path, or repo")
+    try:
+        return {"ok": True, "project": projects.add(
+            name=payload.get("name", ""), path=payload.get("path", ""),
+            repo=payload.get("repo", ""), start=payload.get("start", ""),
+            port=int(payload.get("port") or 0))}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+@app.post("/v1/projects/update")
+async def projects_update(payload: dict):
+    from server import projects
+    p = projects.update(payload.get("id", ""), **payload)
+    return {"ok": bool(p), "project": p}
+
+
+@app.post("/v1/projects/launch")
+async def projects_launch(payload: dict):
+    from server import projects
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, projects.launch, payload.get("id", ""))
+
+
+@app.post("/v1/projects/stop")
+async def projects_stop(payload: dict):
+    from server import projects
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, projects.stop, payload.get("id", ""))
+
+
+@app.post("/v1/projects/remove")
+async def projects_remove(payload: dict):
+    from server import projects
+    return {"ok": projects.remove(payload.get("id", ""))}
+
+
+@app.get("/v1/projects/logs")
+async def projects_logs(id: str = "", n: int = 80):
+    from server import projects
+    return {"logs": projects.logs(id, n)}
+
+
 # ── Deep local context engine (fed by the native macOS app) ────────────────────
 
 _LATEST_CONTEXT: dict = {}
