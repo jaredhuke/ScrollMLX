@@ -260,6 +260,9 @@ select.hb{padding:5px 9px}
 .ais-c-dot.git.on{color:var(--teal);animation:gitPulse 1.1s ease-in-out infinite}
 @keyframes gitPulse{0%,100%{opacity:.45}50%{opacity:1}}
 .ais-c-badge.on{color:var(--teal)}
+.ais-c-dot.cloud{background:var(--amber)}
+.ais-c-badge.cloud{color:var(--amber)}
+.ais-c-row.git,.ais-c-row[onclick]{cursor:pointer}
 .ais-a-name{font-size:9px;font-weight:600;color:var(--text);letter-spacing:.07em;text-transform:uppercase}
 .ais-a-sz{font-size:8px;color:var(--text-ghost);font-family:var(--mono);margin-left:2px}
 .ais-a-bar{flex:1;height:2px;background:var(--border);border-radius:1px;overflow:hidden;position:relative;margin-left:4px}
@@ -1012,7 +1015,7 @@ select.hb{padding:5px 9px}
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
+const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
 const AGENT_KEYS=['primary','critic'];
 
 // ─── BACKGROUND PARTICLE WAVE ─────────────────────────────────────────────────
@@ -1180,6 +1183,15 @@ function meshMetrics(){
   const vigilance=Math.max(0,Math.min(1,0.45+0.55*(1-errorRate)-drift*0.25+(typeof PREF!=='undefined'?PREF.bias:0)));
   return{completion,errorRate,drift,vigilance,interactions:tc,sources:Object.keys(_srcMap()).length+1};
 }
+// Cloud operative — present when an escalation provider has a key. Code-only access.
+const _CLOUD_META={anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
+function syncCloudAgent(){
+  const id=(typeof SET!=='undefined'&&SET.cloud)?SET.cloud:'anthropic';
+  const keyed=!!(window.CLOUD&&window.CLOUD[id]);
+  const ca=S.agents.cloud;ca.present=keyed;
+  if(keyed){const m=_CLOUD_META[id]||[id.toUpperCase(),id];ca.label=m[0];ca.tech=m[1];ca.provider=id}
+  return keyed;
+}
 // ── Inline radial instrument (light "astrolabe" mesh) ──
 let meshHits=[];
 function drawAIS(){
@@ -1243,6 +1255,21 @@ function drawAIS(){
    AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=gAct?'#2f9c8b':'rgba(26,28,34,.4)';
    AC.fillText(gAct?(gg.op||'git'):'git',gx,gy+13);
    meshHits.push({x:gx,y:gy,r:10,key:'__git__'});}
+  // ── Cloud operative — sits BEYOND a visible access barrier (code-only) ──
+  if(syncCloudAgent()){
+    const ca=S.agents.cloud, cbusy=ca.status==='working', clx=w-15, cly=cy, bx=w-33;
+    AC.save();AC.setLineDash([3,4]);AC.beginPath();AC.moveTo(bx,16);AC.lineTo(bx,h-16);
+    AC.strokeStyle='rgba(176,122,16,.4)';AC.lineWidth=1;AC.stroke();AC.setLineDash([]);AC.restore();
+    if(cbusy){const br=.5+.5*Math.sin(t*4);AC.beginPath();AC.arc(clx,cly,6+br*5,0,Math.PI*2);AC.strokeStyle=`rgba(47,156,139,${.34*(1-br)})`;AC.lineWidth=1;AC.stroke();}
+    AC.beginPath();AC.arc(clx,cly,6,0,Math.PI*2);AC.fillStyle=cbusy?'rgba(47,156,139,.16)':'rgba(26,28,34,.05)';AC.fill();
+    AC.strokeStyle=cbusy?'rgba(47,156,139,.85)':'rgba(26,28,34,.28)';AC.lineWidth=1.4;AC.stroke();
+    AC.beginPath();AC.arc(clx,cly,2.4,0,Math.PI*2);AC.fillStyle=cbusy?'#2f9c8b':'rgba(26,28,34,.4)';AC.fill();
+    AC.font='600 7px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=cbusy?'#2f9c8b':'rgba(26,28,34,.5)';
+    AC.fillText(ca.label,clx,cly-11);
+    AC.font='500 6px -apple-system,system-ui,sans-serif';AC.fillStyle='rgba(176,122,16,.7)';
+    AC.fillText('code only',clx,cly+15);
+    meshHits.push({x:clx,y:cly,r:12,key:'cloud'});
+  }
   // ── clean center well: nothing crosses the completion circle ──
   const vigR=coreR+4; // still — no bouncing (ch'an)
   const cg=AC.createRadialGradient(cx,cy,0,cx,cy,vigR+8);
@@ -1269,6 +1296,7 @@ AIS.addEventListener('mousemove',e=>{
   const mx=e.clientX-rect.left,my=e.clientY-rect.top;
   let hit=null;for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){hit=hh;break}}
   if(hit&&hit.key==='__git__'){const g=S.git||{};aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;return}
+  if(hit&&hit.key==='cloud'){const ca=S.agents.cloud;aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`${ca.label}  ·  cloud\n${ca.tech}\nStatus: ${ca.status.toUpperCase()}\nAccess: CODE ONLY (no personal context)\nUsed via Escalate · click for details`;return}
   if(hit){const ag=S.agents[hit.key],hmc=hmClass(ag.hm);
     aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';
     aisTip.textContent=`${ag.label}  ·  ${ag.size}\nStatus: ${ag.status.toUpperCase()}\nBurn:   ${ag.burn}%\nDrift:  ${ag.hm.toFixed(0)}%  (${hmLabel(hmc)})\nTasks:  ${S.taskLog.filter(t=>!t.error).length} done`;}
@@ -1470,10 +1498,12 @@ function renderAISInfo(){
   const g=S.git||{},gitAct=g.active||(Date.now()-(g.last||0)<1600),gitUsed=(g.reads||0)+(g.writes||0);
   const gitBadge=gitAct?((g.op||'sync').toUpperCase()):(gitUsed?`${g.reads||0}r · ${g.writes||0}w`:'IDLE');
   const gitRow=`<div class="ais-c-row git" onclick="openGitHub()" data-tip="GitHub / git — ${g.reads||0} read${(g.reads||0)!==1?'s':''} · ${g.writes||0} write/PR${g.op?' · last: '+escH(g.op):''}"><div class="ais-c-dot git ${gitAct?'on':gitUsed?'live':''}">${ICON.git}</div><span class="ais-c-name">GitHub</span><span class="ais-c-badge ${gitAct?'on':gitUsed?'live':''}">${gitBadge}</span></div>`;
-  document.getElementById('ais-conn-list').innerHTML=`<div class="ais-c-row" data-tip="Local MLX — no network required"><div class="ais-c-dot live"></div><span class="ais-c-name">${mdl}</span><span class="ais-c-badge live">LOCAL</span></div>`
+  const ca=S.agents.cloud, cloudRow=syncCloudAgent()?`<div class="ais-c-row" onclick="openAgentDetail('cloud')" data-tip="${escH(ca.tech)} — escalation operative · code-only access (no personal context) · click for details"><div class="ais-c-dot ${ca.status==='working'?'on':'cloud'}"></div><span class="ais-c-name">${escH(ca.label)}</span><span class="ais-c-badge cloud">CLOUD · CODE</span></div>`:'';
+  document.getElementById('ais-conn-list').innerHTML=`<div class="ais-c-row" data-tip="Local MLX — full context (code + personal), no network"><div class="ais-c-dot live"></div><span class="ais-c-name">${mdl}</span><span class="ais-c-badge live">LOCAL · FULL</span></div>`
+    +cloudRow
     +gitRow
     +Object.values(sources).map(s=>`<div class="ais-c-row" data-tip="${s.n} — ${s.en}/${s.tot} enabled"><div class="ais-c-dot ${s.en>0?'live':'warn'}"></div><span class="ais-c-name">${s.n}</span><span class="ais-c-badge ${s.en>0?'live':''}">${s.en}/${s.tot}</span></div>`).join('');
-  document.getElementById('ais-conn-ct').textContent=Object.keys(sources).length+2;
+  document.getElementById('ais-conn-ct').textContent=Object.keys(sources).length+2+(ca.present?1:0);
   document.getElementById('ais-goals-list').innerHTML=S.goals.length?S.goals.slice(-5).reverse().map(g=>`<div class="ais-g-row" data-tip="${g.active?'Active':'Done'}"><span class="ais-g-ic ${g.active?'active':g.done?'done':''}">${g.active?'→':g.done?'✓':'·'}</span><span class="ais-g-txt ${g.active?'active':''}">${escH(g.text)}</span></div>`).join(''):'<div class="ais-empty">No active goal</div>';
   const recent=S.taskLog.slice(-8).reverse();
   document.getElementById('ais-tasks-list').innerHTML=recent.length?recent.map(t=>`<div class="ais-t-row ${t.error?'err':''}" data-tip="${t.name} — ${t.error?'failed':'ok'} ${_relTime(t.ts)} ago"><span class="ais-t-ic">${t.error?'✕':'✓'}</span><span class="ais-t-name">${t.name}</span><span class="ais-t-time">${_relTime(t.ts)}</span></div>`).join(''):'<div class="ais-empty">No tasks yet</div>';
@@ -1937,6 +1967,7 @@ async function escalate(){
   const dest=lastThreadBody();
   dest.appendChild(buildMsgEl({type:'phase',phase:'escalation',model:provName}));
   S.streaming=true;setSending(true);setStatus(true);
+  syncCloudAgent();S.agents.cloud.status='working';S.agents.cloud.calls++;S.agents.cloud.startMs=Date.now();S.agents.cloud.turnTokens=0;renderAISInfo();
   const aEl=document.createElement('div');aEl.className='msg assistant escalated';
   const roleEl=document.createElement('div');roleEl.className='msg-role';roleEl.textContent=provName.toLowerCase()+' · cloud';
   const bodyEl=document.createElement('div');bodyEl.className='msg-body';const cur=document.createElement('span');cur.className='cursor';
@@ -1950,14 +1981,15 @@ async function escalate(){
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const ls=buf.split('\n');buf=ls.pop();
       for(const ln of ls){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')break;
         let evt;try{evt=JSON.parse(raw)}catch(_){continue}
-        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;if(S.totalTok%15===0)updateAEM()}
+        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents.cloud;cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;cc.burn=Math.min(Math.round((cc.turnTokens/(S.tokenBudget||16384))*100),100);if(S.totalTok%15===0){updateAEM();renderAISInfo()}}
         else if(evt.type==='error'){throw new Error(evt.message)}}}
   }catch(e){cur.remove();bodyEl.innerHTML=`<span style="color:var(--red);font-weight:500">Escalation failed.</span> <span style="color:var(--text-ghost);font-size:12px">${escH(e.message)}</span>`;
-    S.streaming=false;setSending(false);setStatus(false);return;}
+    _cloudIdle();S.streaming=false;setSending(false);setStatus(false);return;}
   cur.remove();
   if(txt){renderAssistantBody(bodyEl,txt);S.msgs.push({role:'assistant',content:txt});addMsgActions(aEl,txt)}
-  S.streaming=false;setSending(false);setStatus(false);updateAEM();
+  _cloudIdle();S.streaming=false;setSending(false);setStatus(false);updateAEM();
 }
+function _cloudIdle(){const c=S.agents.cloud;if(c.startMs){c.ms+=Date.now()-c.startMs;c.startMs=0}c.status='idle';renderAISInfo()}
 
 // ─── EMBEDDED TERMINAL ─────────────────────────────────────────────────────────
 function toggleCli(){const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');document.getElementById('cli-cwd').textContent=S.cwd;const b=document.getElementById('term-btn');if(b)b.classList.toggle('on',open);if(open)setTimeout(()=>document.getElementById('cli-in').focus(),60)}
