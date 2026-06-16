@@ -6,12 +6,34 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
+import sys
 from contextlib import asynccontextmanager
+from logging.handlers import RotatingFileHandler
 from typing import AsyncGenerator
 
 from pathlib import Path
+
+# Persistent log so an unexpected exit ("Services quit unexpectedly") leaves a trail.
+_LOG_DIR = Path.home() / ".scroll"
+try:
+    _LOG_DIR.mkdir(parents=True, exist_ok=True)
+    _fh = RotatingFileHandler(_LOG_DIR / "server.log", maxBytes=2_000_000, backupCount=2)
+    _fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    _root = logging.getLogger()
+    if not any(isinstance(h, RotatingFileHandler) for h in _root.handlers):
+        _root.addHandler(_fh)
+        _root.setLevel(logging.INFO)
+    _log = logging.getLogger("scroll")
+
+    def _excepthook(t, v, tb):
+        _log.error("uncaught exception", exc_info=(t, v, tb))
+        sys.__excepthook__(t, v, tb)
+    sys.excepthook = _excepthook
+except Exception:
+    _log = logging.getLogger("scroll")
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

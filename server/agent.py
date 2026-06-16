@@ -13,7 +13,25 @@ from typing import Generator, Any
 
 import mlx_lm
 from mlx_lm.sample_utils import make_sampler
+try:
+    import mlx.core as mx  # noqa: PLC0415
+except Exception:  # pragma: no cover
+    mx = None
 from server.config import SYSTEM_PROMPT
+
+
+def free_mem() -> None:
+    """Release the KV/Metal cache between generations — the main guard against the
+    Metal out-of-memory abort that shows up as 'Services quit unexpectedly'."""
+    if mx is None:
+        return
+    for fn in ("clear_cache", "reset_peak_memory"):
+        f = getattr(mx, fn, None) or getattr(getattr(mx, "metal", None), fn, None)
+        try:
+            if f:
+                f()
+        except Exception:
+            pass
 from server.schemas import (
     AgentEvent,
     TokenEvent,
@@ -172,28 +190,35 @@ def run_agent(
         suppress = False  # stop streaming once a tool-call begins — never surface code/JSON to the chat
 
         # Stream tokens from mlx-lm (0.31+ uses sampler= not temperature=)
-        for chunk in mlx_lm.stream_generate(
-            model,
-            tokenizer,
-            prompt=prompt,
-            max_tokens=max_tokens,
-            sampler=make_sampler(temp=temperature),
-        ):
-            # stream_generate yields str chunks
-            tok = chunk if isinstance(chunk, str) else getattr(chunk, "text", str(chunk))
-            response_text += tok
-            total_tokens += 1
+        try:
+            for chunk in mlx_lm.stream_generate(
+                model,
+                tokenizer,
+                prompt=prompt,
+                max_tokens=max_tokens,
+                sampler=make_sampler(temp=temperature),
+            ):
+                # stream_generate yields str chunks
+                tok = chunk if isinstance(chunk, str) else getattr(chunk, "text", str(chunk))
+                response_text += tok
+                total_tokens += 1
 
-            # Once a tool call (tagged or bare JSON) appears, suppress the rest of the visible stream
-            if not suppress and ("<tool_call>" in response_text or _BARE_TOOL_RE.search(response_text)):
-                suppress = True
-            if suppress:
-                continue
+                # Once a tool call (tagged or bare JSON) appears, suppress the rest of the visible stream
+                if not suppress and ("<tool_call>" in response_text or _BARE_TOOL_RE.search(response_text)):
+                    suppress = True
+                if suppress:
+                    continue
 
-            # Strip internal <think> before streaming visible tokens
-            visible = _THINK_RE.sub("", tok)
-            if visible:
-                yield TokenEvent(content=visible)
+                # Strip internal <think> before streaming visible tokens
+                visible = _THINK_RE.sub("", tok)
+                if visible:
+                    yield TokenEvent(content=visible)
+        except Exception as exc:
+            free_mem()
+            yield ErrorEvent(message=f"Generation failed ({type(exc).__name__}: {exc}). Memory was cleared — try again or shorten the request.")
+            return
+        finally:
+            free_mem()  # release this turn's KV cache before the next iteration
 
         # Clean up internal reasoning tokens from stored history
         clean_response = _strip_think(response_text)

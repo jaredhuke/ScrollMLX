@@ -190,6 +190,25 @@ select.hb{padding:5px 9px}
 #add-btn:hover{color:var(--teal);border-color:var(--teal)}
 #add-btn.on{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
 #add-btn .ic{width:16px;height:16px}
+#models-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);min-width:46px;height:40px;flex-shrink:0;border-radius:var(--r);cursor:pointer;align-self:flex-end;transition:color .15s,border-color .15s,background .15s}
+#models-btn:hover{color:var(--teal);border-color:var(--teal)}
+#models-btn.multi{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
+#models-btn #models-ct{font-size:13px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+#models-btn .mb-cap{font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost)}
+#models-pop{border-top:1px solid var(--border);background:var(--bg2);padding:8px;display:flex;flex-direction:column;gap:2px;animation:apIn .25s ease}
+.mp-hd{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);padding:4px 8px 7px;display:flex;align-items:center;gap:8px}
+.mp-hd .mp-sub{text-transform:none;letter-spacing:.02em;color:var(--text-ghost);font-weight:400}
+.mp-row{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r);cursor:pointer;transition:background .12s}
+.mp-row:hover{background:rgba(26,28,34,.04)}
+.mp-row.on{background:var(--teal-soft)}
+.mp-row.dis{opacity:.55}
+.mp-check{width:14px;height:14px;flex-shrink:0;border:1px solid var(--border-mid);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--teal)}
+.mp-row.on .mp-check{border-color:var(--teal)}
+.mp-check .ic{width:11px;height:11px}
+.mp-meta{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.mp-name{font-size:12px;color:var(--text)}
+.mp-osub{font-size:9px;color:var(--text-dim)}
+.mp-need{font-size:8px;color:var(--amber);border:1px solid rgba(176,121,26,.3);border-radius:8px;padding:2px 7px;flex-shrink:0}
 #add-panel{border-top:1px solid var(--border);background:var(--bg2);padding:12px 12px 4px;display:flex;flex-direction:column;gap:10px;animation:apIn .3s ease}
 @keyframes apIn{from{opacity:0}to{opacity:1}}
 .ap-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -387,6 +406,11 @@ select.hb{padding:5px 9px}
 .prose-more:hover{opacity:1}
 .prose-more .ic{width:12px;height:12px;transition:transform .25s}
 .prose.clamp.open .prose-more .ic{transform:rotate(180deg)}
+.prose .md-h{display:block;font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--teal);margin:13px 0 4px;opacity:.92}
+.prose .md-h:first-child{margin-top:0}
+.prose strong{font-weight:600;color:var(--text)}
+.prose em{font-style:italic;color:var(--text-mid)}
+.prose code.md-ic{font-family:var(--mono);font-size:.92em;background:var(--bg3);color:var(--text);padding:1px 5px;border-radius:4px}
 .msg.assistant{gap:5px}
 .msg-steps{display:flex;flex-direction:column;gap:3px;margin:1px 0 3px}
 .step-line{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);transition:opacity .3s,color .3s}
@@ -553,6 +577,11 @@ select.hb{padding:5px 9px}
 .ad-gov.watch{color:var(--amber);background:rgba(176,121,26,.09)}
 .ad-gov.intervene{color:var(--red);background:rgba(210,85,46,.09)}
 .ad-gov .gv-lbl{font-weight:600;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
+.ad-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.ad-mode{border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;background:var(--bg2)}
+.adm-k{display:block;font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
+.adm-v{display:block;font-size:13px;color:var(--teal);font-weight:500;margin-top:3px}
+.adm-d{display:block;font-size:9.5px;color:var(--text-dim);line-height:1.4;margin-top:3px}
 .ad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .ad-cell{background:var(--bg);padding:10px 11px;text-align:center}
 .ad-cell .k{font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
@@ -606,7 +635,11 @@ select.hb{padding:5px 9px}
 .gb-crumb:hover .ed{opacity:.7}
 .gb-crumb-sep{font-size:10px;color:var(--text-ghost);opacity:.5}
 .gb-label{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:6px;opacity:.85}
-.gb-goal{font-size:18px;color:var(--text);font-weight:600;line-height:1.3;border-left:3px solid var(--red);padding-left:13px;margin-bottom:11px;letter-spacing:-.01em}
+.gb-goal{font-size:18px;color:var(--text);font-weight:600;line-height:1.3;border-left:3px solid var(--red);padding-left:13px;margin-bottom:11px;letter-spacing:-.01em;cursor:text}
+.gb-goal:hover{color:var(--text)}
+.gb-edit{width:100%;font-size:18px;font-weight:600;line-height:1.3;color:var(--text);background:var(--bg);border:1px solid var(--teal-line);border-radius:var(--r);padding:8px 11px;resize:none;outline:none;font-family:var(--font);letter-spacing:-.01em}
+.gb-edit:focus{border-color:var(--teal)}
+.gb-edit-hint{font-size:9px;color:var(--text-ghost);margin:5px 0 11px;padding-left:2px;letter-spacing:.04em}
 .gb-chips{display:flex;gap:6px;flex-wrap:wrap;padding-left:15px}
 .gb-chip{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-dim);background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 11px}
 .gb-chip b{color:var(--text);font-weight:600}
@@ -696,7 +729,7 @@ select.hb{padding:5px 9px}
 <div id="ais-tip"></div>
 
 <div id="hdr">
-  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17 C 22 15, 26 15, 33 17"/><path d="M15 31 C 22 33, 26 33, 33 31"/><path d="M15 17 C 9.5 18, 9.5 30, 15 31"/><path d="M15 20 C 12 21, 12 27, 15 28"/><path d="M33 17 C 38.5 18, 38.5 30, 33 31"/><path d="M33 20 C 36 21, 36 27, 33 28"/><path d="M19 22.5 h9.5" stroke="#2d8c8c"/><path d="M19 26 h6.5"/></svg>SCROLL</span>
+  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg>SCROLL</span>
   <span id="model-lbl" data-tip="Primary LLM loaded in memory">loading…</span>
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
@@ -741,7 +774,7 @@ select.hb{padding:5px 9px}
     </div>
     <div id="goal-banner"></div>
     <div id="timeline">
-      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17 C 22 15, 26 15, 33 17"/><path d="M15 31 C 22 33, 26 33, 33 31"/><path d="M15 17 C 9.5 18, 9.5 30, 15 31"/><path d="M15 20 C 12 21, 12 27, 15 28"/><path d="M33 17 C 38.5 18, 38.5 30, 33 31"/><path d="M33 20 C 36 21, 36 27, 33 28"/><path d="M19 22.5 h9.5" stroke="#2d8c8c"/><path d="M19 26 h6.5"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
+      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
     </div>
     <div id="add-panel" hidden>
       <div class="ap-row">
@@ -762,9 +795,11 @@ select.hb{padding:5px 9px}
         <button class="act vision" id="act-vision" hidden onclick="runVision()" data-tip="Read the image with a multimodal model (image leaves your Mac)"><i data-icon="eye"></i><span>Read image</span></button>
       </div>
     </div>
+    <div id="models-pop" hidden></div>
     <div id="ctx-tray"></div>
     <div id="input-row">
       <button id="add-btn" onclick="toggleAdd()" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
+      <button id="models-btn" onclick="toggleModels()" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
       <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…"></textarea>
       <button id="send-btn" onclick="send()" data-tip="Send (Enter)">Send</button>
     </div>
@@ -895,7 +930,7 @@ select.hb{padding:5px 9px}
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0}};
+const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'Delegated',humo:'On-the-loop',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'Advisory',humo:'In-the-loop',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
 const AGENT_KEYS=['primary','critic'];
 
 // ─── BACKGROUND PARTICLE WAVE ─────────────────────────────────────────────────
@@ -1216,6 +1251,9 @@ function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;const budget=S.tok
 }
 function resetAgentMetrics(){AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],{tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,hm:50}));S.govFlagged=false}
 const AIS_POLICY={burnWatch:75,burnMax:95,errWatch:1,errMax:3,errRate:0.34,iterMax:12};
+// AGMO / HUMO — Agent Autonomy & Human Oversight Modes (Agentic Experience Manual)
+const _AGMO={Advisory:'Recommends only — never executes',Assisted:'Acts on your explicit step-by-step direction',Supervised:'Executes but pauses for approval on risk',Delegated:'Executes tools & edits this session; Stop always available',Autonomous:'Self-directs end-to-end'};
+const _HUMO={'In-command':'You drive; it waits for each instruction','In-the-loop':'You approve or dismiss each step before it counts','On-the-loop':'You monitor live and can intervene (Stop / governance)','Out-of-loop':'Runs unattended; reviewed after the fact'};
 function _rank(l){return l==='intervene'?2:l==='watch'?1:0}
 function _worse(a,b){return _rank(b)>_rank(a)?b:a}
 function aisGovern(){
@@ -1264,6 +1302,10 @@ function openAgentDetail(k){
       <div class="ad-ident">${escH(ag.tech)} · ${escH(ag.host)} · ${escH(ag.size)}<br>
         <span class="scope ${full?'full':'code'}">${full?'Full context — code + personal':'Code only — sandboxed'}</span></div>
       <div class="ad-gov ${g.level}"><span class="gv-lbl">${govLabel(g.level)}</span><span>${g.why.length?escH(g.why.join(' · ')):'within all policy thresholds'}</span></div>
+      <div class="ad-modes">
+        <div class="ad-mode" data-tip="AGMO — Agent Autonomy Mode (Agentic Experience Manual)"><span class="adm-k">AGMO · autonomy</span><span class="adm-v">${escH(ag.agmo||'—')}</span><span class="adm-d">${escH(_AGMO[ag.agmo]||'')}</span></div>
+        <div class="ad-mode" data-tip="HUMO — Human Oversight Mode (Agentic Experience Manual)"><span class="adm-k">HUMO · oversight</span><span class="adm-v">${escH(ag.humo||'—')}</span><span class="adm-d">${escH(_HUMO[ag.humo]||'')}</span></div>
+      </div>
       <div class="ad-grid">
         ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok / call',fmtPlain(tpc))}
         ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
@@ -1520,13 +1562,24 @@ function _renderProseAndCode(bodyEl,txt){
   if(!any)bodyEl.appendChild(_proseEl(txt));
   else if(tail.trim())bodyEl.appendChild(_proseEl(tail.trim()));
 }
+// Light, safe markdown: escape first, then style headings (### → small elegant teal),
+// bold, and inline code. Headings no longer show as literal "###".
+function _mdLite(t){
+  let s=escH(t);
+  s=s.replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm,(_,h)=>`${h}`);  // placeholder dodges the pre-wrap newline
+  s=s.replace(/\*\*(?!\s)([^*]+?)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
+  s=s.replace(/`([^`]+?)`/g,'<code class="md-ic">$1</code>');
+  s=s.replace(/([^]*)\n?/g,'<span class="md-h">$1</span>');
+  return s;
+}
 // Long prose collapses to a skimmable preview; the rest is one click away (text = the gist, content discoverable).
 function _proseEl(text){
   const t=(text||'').trim();
   const wrap=document.createElement('div');wrap.className='prose';
-  if(t.length<=240 && t.split('\n').length<=4){wrap.textContent=t;return wrap}
+  if(t.length<=240 && t.split('\n').length<=4){wrap.innerHTML=_mdLite(t);return wrap}
   wrap.classList.add('clamp');
-  const span=document.createElement('div');span.className='prose-txt';span.textContent=t;wrap.appendChild(span);
+  const span=document.createElement('div');span.className='prose-txt';span.innerHTML=_mdLite(t);wrap.appendChild(span);
   const btn=document.createElement('button');btn.className='prose-more';btn.innerHTML=ICON.chev+'<span>more</span>';
   btn.addEventListener('click',()=>{const open=wrap.classList.toggle('open');btn.querySelector('span').textContent=open?'less':'more'});
   wrap.appendChild(btn);
@@ -1840,7 +1893,7 @@ function renderGoal(){
     `${i?'<span class="gb-crumb-sep">›</span>':''}<span class="gb-crumb ${i===last?'active':''}" onclick="editPrompt(${i})" title="${escH(q.text)} — click to edit">${escH(q.text.slice(0,46))}${i!==last?'<span class="ed">✎</span>':''}</span>`
   ).join('')+`</div>`:'';
   el.innerHTML=lineage+`<div class="gb-label">Active goal · ${escH(state)}</div>
-    <div class="gb-goal">${escH(g.text)}</div>
+    <div class="gb-goal" onclick="editPrompt(${last})" title="Click to edit this prompt and resend">${escH(g.text)}</div>
     <div class="gb-chips">
       <div class="gb-chip ${op?'live':''}"><span class="gb-chip-dot"></span>${op?escH(op.label):'idle'}${op&&op.task?' · '+escH(op.task.slice(0,28)):''}</div>
       <div class="gb-chip"><b>${S.iterations}</b> loops</div>
@@ -1849,13 +1902,23 @@ function renderGoal(){
       <div class="gb-chip"><b>${arts}</b> artifacts</div>
     </div>`;
 }
-// jump back to a prior prompt: load it into the composer to revise, and reveal its thread
+// jump back to a prior prompt and edit it IN PLACE — Enter here commits it (not the composer below)
 function editPrompt(i){
   const g=S.goals[i];if(!g)return;
-  msgIn.value=g.text;msgIn.focus();msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px';
   const th=timeline.querySelector(`.thread[data-goal="${i}"]`);
   if(th){timeline.querySelectorAll('.thread.open').forEach(t=>t.classList.remove('open'));th.classList.add('open');th.scrollIntoView({behavior:'smooth',block:'center'})}
-  artToast('Loaded into the composer — revise and send','ok');
+  const goalEl=document.querySelector('#goal-banner .gb-goal');
+  if(!goalEl){msgIn.value=g.text;msgIn.focus();return}
+  goalEl.innerHTML='<textarea class="gb-edit" rows="1" spellcheck="false"></textarea><div class="gb-edit-hint">Enter to send · Esc to cancel</div>';
+  const ta=goalEl.querySelector('.gb-edit');ta.value=g.text;
+  const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,160)+'px'};
+  ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);grow();
+  ta.addEventListener('input',grow);
+  ta.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopPropagation();const v=ta.value.trim();if(!v)return;ta._done=true;msgIn.value=v;send();}
+    else if(e.key==='Escape'){e.preventDefault();ta._done=true;renderGoal();}
+  });
+  ta.addEventListener('blur',()=>{if(!ta._done)setTimeout(()=>{if(document.body.contains(ta))renderGoal()},150)});
 }
 
 // ─── CONTEXT TRAY — always add standing context + queue follow-ups ─────────────
@@ -2117,10 +2180,10 @@ const timeline=document.getElementById('timeline'),sendBtn=document.getElementBy
 function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('stop');sendBtn.onclick=stopStream;sendBtn.disabled=false}else{sendBtn.textContent='Send';sendBtn.classList.remove('stop');sendBtn.onclick=send;sendBtn.disabled=false}}
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17 C 22 15, 26 15, 33 17"/><path d="M15 31 C 22 33, 26 33, 33 31"/><path d="M15 17 C 9.5 18, 9.5 30, 15 31"/><path d="M15 20 C 12 21, 12 27, 15 28"/><path d="M33 17 C 38.5 18, 38.5 30, 33 31"/><path d="M33 20 C 36 21, 36 27, 33 28"/><path d="M19 22.5 h9.5" stroke="#2d8c8c"/><path d="M19 26 h6.5"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 13h22"/><circle cx="11.3" cy="13" r="1.5"/><circle cx="36.7" cy="13" r="1.5"/><path d="M16 13c-1.6 7-1.6 15 0 22"/><path d="M32 13c1.6 7 1.6 15 0 22"/><path d="M13 35h22"/><circle cx="11.3" cy="35" r="1.5"/><circle cx="36.7" cy="35" r="1.5"/><path d="M20 21h9" stroke="#2d8c8c"/><path d="M20 25h9"/><path d="M20 29h6"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual)}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
-function stopStream(){if(S.ctrl)S.ctrl.abort()}
+function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
 msgIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
 msgIn.addEventListener('input',()=>{msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px'});
 function fadeMsgs(){
@@ -2179,11 +2242,75 @@ function threadTokens(th,tok){if(!th||!th.meta)return;let t=th.meta.querySelecto
 function lastThreadBody(){return timeline.querySelector('.thread:last-child .thread-body')||timeline}
 async function send(){const text=msgIn.value.trim();if(!text)return;
   if(S.streaming){S.queue.push(text);msgIn.value='';msgIn.style.height='';renderCtx();artToast('Queued — sends after the current run','ok');return}
+  const models=fanoutModels();
+  if(models.length>1||(models.length===1&&models[0].id!=='mlx')){msgIn.value='';msgIn.style.height='';return sendMulti(text,models)}
   msgIn.value='';msgIn.style.height='';S.msgs.push({role:'user',content:text});S.goals.forEach(g=>g.active=false);S.goals.push({text,active:true,done:false,ts:Date.now()});renderAISInfo();
   const th=newThread(text);
   th.el.dataset.goal=S.goals.length-1;   // link thread ↔ prompt for the lineage crumbs
   renderGoal();
   await streamRun(text,th);
+}
+// ─── MULTI-MODEL — tag several models, get a response from each, side by side ───
+function fanoutModels(){
+  const sel=S.fanout&&S.fanout.length?S.fanout:['mlx'];
+  const label={mlx:'Local · 32B',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
+  return sel.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id])).map(id=>({id,label:label[id]||id}));
+}
+function _modelCatalog(){
+  const out=[{id:'mlx',label:'Local · Qwen 32B',sub:'on-device · full context',avail:true}];
+  [['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','paid'],['openai','GPT-4o','paid']]
+    .forEach(([id,label,sub])=>out.push({id,label,sub,avail:!!(window.CLOUD&&window.CLOUD[id])}));
+  return out;
+}
+function toggleModels(){const p=document.getElementById('models-pop');if(!p)return;if(p.hasAttribute('hidden')){renderModelsPop();p.removeAttribute('hidden')}else p.setAttribute('hidden','')}
+function renderModelsPop(){
+  const p=document.getElementById('models-pop');if(!p)return;
+  const sel=new Set(S.fanout&&S.fanout.length?S.fanout:['mlx']);
+  p.innerHTML='<div class="mp-hd">Models to answer<span class="mp-sub">tag more than one for parallel replies</span></div>'+
+    _modelCatalog().map(m=>{const checked=sel.has(m.id),dis=!m.avail;
+      return `<div class="mp-row ${checked?'on':''} ${dis?'dis':''}" onclick="${dis?`keyDialog('${m.id}')`:`toggleFanout('${m.id}')`}"><span class="mp-check">${checked?ICON.check:''}</span><span class="mp-meta"><span class="mp-name">${escH(m.label)}</span><span class="mp-osub">${escH(m.sub)}</span></span>${dis?'<span class="mp-need">add key</span>':''}</div>`;
+    }).join('');
+}
+function toggleFanout(id){
+  const s=new Set(S.fanout&&S.fanout.length?S.fanout:['mlx']);
+  if(s.has(id))s.delete(id);else s.add(id);
+  if(s.size===0)s.add('mlx');
+  S.fanout=_modelCatalog().map(m=>m.id).filter(x=>s.has(x));
+  updateModelsCount();renderModelsPop();
+}
+function updateModelsCount(){const el=document.getElementById('models-ct');if(el)el.textContent=(S.fanout&&S.fanout.length)||1;const b=document.getElementById('models-btn');if(b)b.classList.toggle('multi',(S.fanout||[]).length>1)}
+async function _streamModel(th,model,text){
+  const aEl=document.createElement('div');aEl.className='msg assistant';
+  aEl.innerHTML=`<div class="msg-role">${escH(model.label.toLowerCase())}</div><div class="msg-body"><div class="prose"><span class="cursor"></span></div></div>`;
+  th.body.appendChild(aEl);
+  const proseEl=aEl.querySelector('.prose'),cur=proseEl.querySelector('.cursor'),bodyEl=aEl.querySelector('.msg-body');
+  let txt='';const ctrl=new AbortController();(S._multiCtrls=S._multiCtrls||[]).push(ctrl);
+  const ep=model.id==='mlx'?'/v1/agent':'/v1/escalate';
+  const msgs=[...(S.context.length?[{role:'system',content:'Standing user context (always honor):\n- '+S.context.join('\n- ')}]:[]),...S.msgs.map(m=>({role:m.role,content:m.content||''}))];
+  const body=model.id==='mlx'?{messages:msgs,cwd:S.cwd,stream:true,max_tokens:4096,temperature:.15}:{messages:msgs,cwd:S.cwd,provider:model.id,max_tokens:4096};
+  try{const resp=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+    const reader=resp.body.getReader(),dec=new TextDecoder();let buf='';
+    while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
+      for(const ln of lines){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')continue;let evt;try{evt=JSON.parse(raw)}catch(_){continue}
+        if(evt.type==='token'){txt+=evt.content||'';proseEl.textContent=_liveProse(txt).prose;proseEl.appendChild(cur)}
+        else if(evt.type==='error')txt+='\n⚠ '+(evt.message||'error');}}
+  }catch(e){if(e.name!=='AbortError')txt+='\n⚠ request failed';}
+  cur.remove();
+  if(txt.trim()){renderAssistantBody(bodyEl,txt)}else bodyEl.innerHTML='<div class="prose" style="color:var(--text-ghost)">(no response)</div>';
+  S.msgs.push({role:'assistant',content:`[${model.label}]\n${_cleanProse(txt)}`});
+  threadSummary(th,model.label+' · '+_cleanProse(txt));
+}
+async function sendMulti(text,models){
+  S.msgs.push({role:'user',content:text});S.goals.forEach(g=>g.active=false);S.goals.push({text,active:true,done:false,ts:Date.now()});renderGoal();
+  S.streaming=true;setSending(true);setStatus(true);S._multiCtrls=[];
+  artToast('Fanning out to '+models.length+' models…','run');
+  const threads=models.map(m=>{const th=newThread(`${m.label} · ${text}`);th.el.dataset.model=m.id;th.el.querySelector('.thread-summary').textContent='working…';return th});
+  await Promise.all(models.map((m,i)=>_streamModel(threads[i],m,text).catch(()=>{})));
+  threads.forEach(th=>th.el.classList.remove('live'));
+  S.streaming=false;setSending(false);setStatus(false);
+  const g=S.goals[S.goals.length-1];if(g){g.active=false;g.done=true}
+  renderGoal();renderAISInfo();
+  if(S.queue.length){const next=S.queue.shift();renderCtx();msgIn.value=next;setTimeout(send,300)}
 }
 async function streamRun(text,th){
   S.streaming=true;setSending(true);setStatus(true);patchAgent('primary',{status:'working',task:text.slice(0,60)});
@@ -2427,7 +2554,7 @@ window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 loadPref(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
-loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX();
+loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount();
 if(!obState().done)setTimeout(()=>openOnboard(true),700);   // first-run onboarding wizard
 fetch('/v1/model').then(r=>r.json()).then(j=>{document.getElementById('model-lbl').textContent=j.primary||'unknown';renderAISInfo()}).catch(()=>{});
 </script>
