@@ -17,6 +17,9 @@ struct ScrollApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandMenu("Agent") {
+                Button("API Keys…") { app.showKeys = true }
+                    .keyboardShortcut("k", modifiers: .command)
+                Divider()
                 Button("Restart Services") { app.server.restart() }
                 Button("Check for Updates") { app.server.checkForUpdates() }
                 Divider()
@@ -26,7 +29,9 @@ struct ScrollApp: App {
         }
 
         MenuBarExtra("MLX", systemImage: "brain.head.profile") {
-            MenuContent(server: app.server) { app.shutdown(); NSApplication.shared.terminate(nil) }
+            MenuContent(server: app.server, openKeys: { app.showKeys = true }) {
+                app.shutdown(); NSApplication.shared.terminate(nil)
+            }
         }
     }
 }
@@ -50,11 +55,15 @@ struct RootView: View {
                 BootView(server: server)
             }
         }
+        .sheet(isPresented: $app.showKeys) {
+            KeysView(port: app.server.port)
+        }
     }
 }
 
 struct MenuContent: View {
     @ObservedObject var server: ServerManager
+    var openKeys: () -> Void = {}
     let quit: () -> Void
 
     var body: some View {
@@ -64,6 +73,7 @@ struct MenuContent: View {
             Text(u).font(.caption)
         }
         Divider()
+        Button("API Keys…") { openKeys() }
         Button("Restart services") { server.restart() }
         Button("Quit Scroll") { quit() }
     }
