@@ -56,7 +56,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #spill-dot.on{background:var(--teal);animation:dotPulse 2s infinite}
 #spill-dot.err{background:#8a2818}
 #spill-lbl{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;font-weight:500}
-#hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+#hdr-right{display:flex;align-items:center;gap:8px}
+#sysbar{margin-left:auto;display:flex;align-items:center;gap:15px}
+.sg{display:flex;flex-direction:column;gap:2px;width:56px}
+.sg-spark{width:56px;height:15px;display:block}
+.sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
+.sg-k{font-size:7px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
+.sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
+.sg-v.warn{color:var(--amber)}.sg-v.alert{color:var(--red)}.sg-v.na{color:var(--text-ghost);font-weight:400}
+@media(max-width:1200px){#sysbar{display:none}}
 .hb{background:transparent;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:500;padding:5px 13px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;transition:all .18s}
 .hb:hover{color:var(--text);border-color:rgba(26,28,34,.28);background:rgba(26,28,34,.04)}
 .hb.on{background:rgba(200,75,49,.07);color:var(--red);border-color:rgba(200,75,49,.28)}
@@ -877,6 +885,12 @@ select.hb{padding:5px 9px}
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
     <div id="spill-dot"></div><span id="spill-lbl">Idle</span>
+  </div>
+  <div id="sysbar" data-tip="This Mac — live CPU · memory · thermal · fan">
+    <div class="sg" id="sg-cpu"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">CPU</span><span class="sg-v na">—</span></div></div>
+    <div class="sg" id="sg-mem"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">MEM</span><span class="sg-v na">—</span></div></div>
+    <div class="sg" id="sg-temp"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">TEMP</span><span class="sg-v na">—</span></div></div>
+    <div class="sg" id="sg-fan"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">FAN</span><span class="sg-v na">—</span></div></div>
   </div>
   <div id="hdr-right">
     <button class="hb" id="dual-btn" onclick="toggleDual()" data-tip="PRIMARY → CRITIC → REVISION pipeline">Dual</button>
@@ -3101,6 +3115,37 @@ resizeAIS(); resizeBuild(); drawBuildGraph();
 loadPref(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
 loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects();
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
+// ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
+const SYS={cpu:[],mem:[],temp:[],fan:[]};
+function _sgPush(k,v){SYS[k].push(v==null?null:v);if(SYS[k].length>30)SYS[k].shift()}
+function drawSG(id,vals,text,level){
+  const cell=document.getElementById(id);if(!cell)return;
+  const cv=cell.querySelector('.sg-spark'),vEl=cell.querySelector('.sg-v');
+  vEl.textContent=text;vEl.className='sg-v'+(text==='—'?' na':level>=.9?' alert':level>=.7?' warn':'');
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth||56,H=cv.clientHeight||15;
+  cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const clean=vals.filter(v=>v!=null);
+  if(clean.length<2){c.strokeStyle='rgba(26,28,34,.16)';c.beginPath();c.moveTo(1,H-2);c.lineTo(W-1,H-2);c.stroke();return}
+  const mx=Math.max(...clean,1),n=vals.length;
+  const x=i=>1+i*(W-2)/Math.max(n-1,1),y=v=>H-1.5-(v/mx)*(H-3);
+  const col=level>=.9?'rgba(200,75,49,.9)':level>=.7?'rgba(176,121,26,.9)':'rgba(47,156,139,.9)';
+  c.beginPath();let started=false,lastX=0,lastY=0;
+  vals.forEach((v,i)=>{if(v==null)return;const xx=x(i),yy=y(v);if(!started){c.moveTo(xx,yy);started=true}else c.lineTo(xx,yy);lastX=xx;lastY=yy});
+  c.strokeStyle=col;c.lineWidth=1.4;c.lineJoin='round';c.stroke();
+  if(started){c.beginPath();c.arc(lastX,lastY,1.7,0,Math.PI*2);c.fillStyle=col;c.fill()}
+}
+async function pollSys(){
+  let j;try{j=await fetch('/v1/sys').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  if(!j)return;
+  _sgPush('cpu',j.cpu);_sgPush('mem',j.mem_pct);
+  const tnum=j.temp_c!=null?j.temp_c:(j.thermal?({nominal:30,fair:55,serious:80,critical:95}[String(j.thermal).toLowerCase()]||null):null);
+  _sgPush('temp',tnum);_sgPush('fan',j.fan_rpm);
+  drawSG('sg-cpu',SYS.cpu,j.cpu!=null?Math.round(j.cpu)+'%':'—',(j.cpu||0)/100);
+  drawSG('sg-mem',SYS.mem,j.mem_pct!=null?Math.round(j.mem_pct)+'%':'—',(j.mem_pct||0)/100);
+  drawSG('sg-temp',SYS.temp,j.temp_c!=null?Math.round(j.temp_c)+'°':(j.thermal?String(j.thermal):'—'),(tnum||0)/100);
+  drawSG('sg-fan',SYS.fan,j.fan_rpm!=null?Math.round(j.fan_rpm):'—',(j.fan_rpm||0)/6000);
+}
+pollSys();setInterval(pollSys,2500);
 if(!obState().done)setTimeout(()=>openOnboard(true),700);   // first-run onboarding wizard
 fetch('/v1/model').then(r=>r.json()).then(j=>{document.getElementById('model-lbl').textContent=j.primary||'unknown';renderAISInfo()}).catch(()=>{});
 </script>
