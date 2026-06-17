@@ -686,6 +686,9 @@ async def standing_post(payload: dict):
         steering.remove_user(project, int(payload["remove"]))
     elif payload.get("add"):
         steering.add_user(project, payload["add"])
+    elif payload.get("learn"):
+        from server import learn
+        learn.note(project, payload["learn"])  # edit/challenge friction → learned correction
     return steering.view(project)
 
 
