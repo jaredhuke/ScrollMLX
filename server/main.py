@@ -90,10 +90,13 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
     def _run():
         try:
             messages = [m.model_dump(exclude_none=True) for m in req.messages]
-            from server import steering
+            from server import steering, skills as skills_mod
             steer = steering.as_system_text(req.cwd)  # standing context file: user section + learned
             if steer:
                 messages = [{"role": "system", "content": steer}] + messages
+            sk = skills_mod.as_system_text()  # enabled skill .md files
+            if sk:
+                messages = [{"role": "system", "content": sk}] + messages
             # (the client also sends the user section so /v1/dual and /v1/escalate honor it)
             ctx = _context_system_msg()  # live macOS context from the native app
             if ctx:
@@ -684,6 +687,43 @@ async def standing_post(payload: dict):
     elif payload.get("add"):
         steering.add_user(project, payload["add"])
     return steering.view(project)
+
+
+# ── Skill files — drop-in .md instructions the agent follows ───────────────────
+
+@app.get("/v1/skills")
+async def skills_list():
+    from server import skills
+    return {"skills": skills.list_skills()}
+
+
+@app.get("/v1/skills/get")
+async def skills_get(name: str = ""):
+    from server import skills
+    return {"name": name, "content": skills.get(name)}
+
+
+@app.post("/v1/skills/add")
+async def skills_add(payload: dict):
+    from server import skills
+    name = (payload.get("name") or "").strip()
+    if not name:
+        return {"ok": False, "error": "name required"}
+    return {"ok": True, "name": skills.add(name, payload.get("content", ""))}
+
+
+@app.post("/v1/skills/toggle")
+async def skills_toggle(payload: dict):
+    from server import skills
+    skills.set_enabled(payload.get("name", ""), bool(payload.get("enabled", True)))
+    return {"ok": True}
+
+
+@app.post("/v1/skills/remove")
+async def skills_remove(payload: dict):
+    from server import skills
+    skills.remove(payload.get("name", ""))
+    return {"ok": True}
 
 
 # ── Access barriers (crystal-clear, enforced) ──────────────────────────────────
