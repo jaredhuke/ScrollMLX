@@ -49,6 +49,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .tip-down[data-tip]:hover::after{transform:translateX(-50%) translateY(0)}
 
 /* header */
+#net-banner{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;gap:11px;padding:9px 16px;background:#fbeae4;border-bottom:1px solid rgba(210,85,46,.4);box-shadow:0 2px 10px rgba(26,28,34,.08)}
+#net-banner[hidden]{display:none!important}
+.nb-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0}
+.nb-txt{font-size:12px;color:var(--text);line-height:1.4}
+.nb-cmd{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:6px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.nb-x{margin-left:auto;background:none;border:none;color:var(--text-soft);font-size:14px;cursor:pointer;flex-shrink:0;min-width:26px;min-height:26px}
+.nb-x:hover{color:var(--red)}
 #hdr{height:var(--hh);flex-shrink:0;position:relative;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px}
 #logo{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;user-select:none;color:var(--text);cursor:default}
 #logo .r{color:var(--red)}
@@ -987,6 +994,12 @@ select.hb{padding:5px 9px}
 <body>
 <canvas id="bg-canvas"></canvas>
 <div id="ais-tip"></div>
+<div id="net-banner" hidden role="alert">
+  <span class="nb-dot"></span>
+  <span class="nb-txt">Scroll's local engine isn't responding — it may be loading, stopped, or have crashed. Actions like adding skills won't work until it's back.</span>
+  <code class="nb-cmd">cd ~/scroll &amp;&amp; uv run uvicorn server.main:app --port 8080</code>
+  <button class="nb-x" onclick="dismissNetBanner()" aria-label="Dismiss">✕</button>
+</div>
 
 <div id="hdr">
   <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg>SCROLL</span>
@@ -2268,6 +2281,16 @@ async function applyCode(path,code,card,orig){
 }
 
 // ─── ESCALATE TO CLOUD (Claude) — second pass when local isn't good enough ─────
+// ─── HEALTH HEARTBEAT — the real reason "nothing works" is usually a stopped engine ──
+let _netDown=false,_netDismissed=false;
+function dismissNetBanner(){_netDismissed=true;const b=document.getElementById('net-banner');if(b)b.setAttribute('hidden','')}
+async function checkHealth(){
+  let ok=false;
+  try{const c=new AbortController();const t=setTimeout(()=>c.abort(),3500);const r=await fetch('/health',{signal:c.signal,cache:'no-store'});clearTimeout(t);ok=!!r&&r.ok}catch(_){ok=false}
+  const b=document.getElementById('net-banner');if(!b)return;
+  if(ok){if(_netDown){_netDown=false;_netDismissed=false}b.setAttribute('hidden','')}
+  else{_netDown=true;if(!_netDismissed)b.removeAttribute('hidden')}
+}
 window.CLOUD={};
 async function refreshKeys(){try{const j=await fetch('/v1/keys').then(r=>r.json());window.CLOUD=j.providers||{}}catch(_){window.CLOUD={}}
   // If the chosen cloud model has no key but another does, prefer a keyed one (free first).
@@ -2793,8 +2816,9 @@ async function addSkillFull(){
   const name=document.getElementById('sf-name').value.trim(),body=document.getElementById('sf-body').value;
   if(!name){artToast('Give the skill a name','err');document.getElementById('sf-name').focus();return}
   if(!body.trim()){artToast('Add some markdown content','err');document.getElementById('sf-body').focus();return}
-  let r;try{r=await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content:body})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  let r;try{r=await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content:body})}).then(x=>x.ok?x.json():{ok:false,error:'the local engine route is missing — restart the server'})}catch(_){r={ok:false,error:'NET'}}
   if(r&&r.ok){document.getElementById('sf-name').value='';document.getElementById('sf-body').value='';artToast('Skill added — the agent will follow it','ok');renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
+  else if(r&&r.error==='NET'){checkHealth();artToast('Can’t reach the local engine — is the server running?','err')}
   else artToast('Could not add · '+((r&&r.error)||'unknown'),'err');
 }
 // ─── IMPORT SKILLS — point at a file or folder; name comes from the filename ────
@@ -2803,9 +2827,10 @@ function importSkills(ev){const fl=ev.target.files;ev.target.value='';if(fl&&fl.
 async function importSkillPath(){
   const inp=document.getElementById('sf-path');const path=(inp&&inp.value||'').trim();
   if(!path){artToast('Paste a file or folder path','err');if(inp)inp.focus();return}
-  let r;try{r=await fetch('/v1/skills/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
+  let r,neterr=false;try{const x=await fetch('/v1/skills/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})});r=x.ok?await x.json():null}catch(_){neterr=true;r=null}
   if(r&&r.ok){if(inp)inp.value='';artToast('Imported '+r.added+' skill'+(r.added>1?'s':'')+(r.skipped?' · '+r.skipped+' skipped':''),'ok');renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
-  else artToast('Import failed · '+((r&&r.error)||'check the path'),'err');
+  else if(neterr){checkHealth();artToast('Can’t reach the local engine — is the server running?','err')}
+  else artToast('Import failed · '+((r&&r.error)||'check the path & restart the server'),'err');
 }
 async function _importSkillFiles(files){
   const md=[...files].filter(f=>_SKILL_EXT.test(f.name));
@@ -3493,7 +3518,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
-loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge();
+loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
 const SYS={cpu:[],mem:[],temp:[],fan:[]};
