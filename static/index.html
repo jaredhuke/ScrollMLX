@@ -856,8 +856,6 @@ select.hb{padding:5px 9px}
     <div id="spill-dot"></div><span id="spill-lbl">Idle</span>
   </div>
   <div id="hdr-right">
-    <select class="hb" id="prov-sel" data-tip="Switch LLM provider"></select>
-    <button class="hb" id="projects-btn" onclick="openProjects()" data-tip="Projects — repos &amp; their runnable servers; launch and manage">Projects</button>
     <button class="hb" id="dual-btn" onclick="toggleDual()" data-tip="PRIMARY → CRITIC → REVISION pipeline">Dual</button>
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — lineage &amp; recovery">Artifacts</button>
     <button class="hb" onclick="openDrawer()" data-tip="Skills &amp; plugins">Skills</button>
@@ -1612,8 +1610,8 @@ function renderAISInfo(){
 }
 
 // ─── PROVIDERS / TOOLS ────────────────────────────────────────────────────────
-async function loadProviders(){try{const{providers}=await fetch('/v1/providers').then(r=>r.json());document.getElementById('prov-sel').innerHTML=providers.map(p=>`<option value="${p.id}" ${p.active?'selected':''} ${!p.available?'disabled':''}>${p.display_name}${!p.available?' (—)':''}</option>`).join('');document.getElementById('d-provs').innerHTML=providers.map(p=>`<div class="prov-row" onclick="selProv('${p.id}')" data-tip="${p.available?'Ready':'Needs API key'}"><div class="pdot ${p.active?'active':p.available?'ready':''}"></div><span class="prov-name">${p.display_name}</span><span class="pbadge ${p.available?'ready':''}">${p.available?'READY':'NEEDS KEY'}</span></div>`).join('');}catch(e){}}
-document.getElementById('prov-sel').addEventListener('change',function(){selProv(this.value)});
+async function loadProviders(){try{const{providers}=await fetch('/v1/providers').then(r=>r.json());const ps=document.getElementById('prov-sel');if(ps)ps.innerHTML=providers.map(p=>`<option value="${p.id}" ${p.active?'selected':''} ${!p.available?'disabled':''}>${p.display_name}${!p.available?' (—)':''}</option>`).join('');const dp=document.getElementById('d-provs');if(dp)dp.innerHTML=providers.map(p=>`<div class="prov-row" onclick="selProv('${p.id}')" data-tip="${p.available?'Ready':'Needs API key'}"><div class="pdot ${p.active?'active':p.available?'ready':''}"></div><span class="prov-name">${p.display_name}</span><span class="pbadge ${p.available?'ready':''}">${p.available?'READY':'NEEDS KEY'}</span></div>`).join('');}catch(e){}}
+document.getElementById('prov-sel')?.addEventListener('change',function(){selProv(this.value)});
 async function selProv(id){await fetch('/v1/providers/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:id})});await loadProviders()}
 async function loadTools(){try{allTools=(await fetch('/v1/tools').then(r=>r.json())).tools||[];renderToolMini();renderAISInfo();document.getElementById('d-tools').innerHTML=allTools.map(t=>`<div class="dr-row" data-tip="${t.name} (${t.source})"><span class="dr-name">${t.name}</span><span class="dr-src">${t.source}</span><label class="toggle"><input type="checkbox" ${t.enabled?'checked':''} onchange="toggleTool('${t.name}',this.checked)"><div class="ttrack"><div class="tthumb"></div></div></label></div>`).join('');}catch(e){}}
 async function toggleTool(name,en){await fetch(`/v1/tools/${name}/${en?'enable':'disable'}`,{method:'POST'});await loadTools()}
