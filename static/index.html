@@ -749,6 +749,16 @@ select.hb{padding:5px 9px}
 .pjm-go{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:4px;flex-shrink:0}
 .pjm-go:hover{color:var(--teal)}.pjm-go.stop:hover{color:var(--red)}
 .pjm-ic{width:12px;height:12px;fill:currentColor}
+.pjm-tag{font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost);border:1px solid var(--border-mid);border-radius:8px;padding:1px 6px;flex-shrink:0}
+.pjm-row.adhoc .pjm-dot{background:var(--amber)}
+/* per-thread project badge + move menu */
+.thread-proj{font-size:8px;letter-spacing:.04em;color:var(--text-dim);background:var(--teal-soft);border:1px solid var(--teal-line);border-radius:9px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.thread-proj:hover{color:var(--teal)}
+.thread-proj.adhoc{color:var(--amber);background:rgba(176,121,26,.09);border-color:rgba(176,121,26,.3)}
+.thr-move{position:fixed;z-index:400;width:200px;background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r);box-shadow:0 8px 26px rgba(26,28,34,.22);padding:5px;animation:kdIn .14s ease}
+.thr-move-h{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);padding:5px 8px}
+.thr-move-row{font-size:12px;color:var(--text);padding:7px 9px;border-radius:6px;cursor:pointer}
+.thr-move-row:hover{background:var(--teal-soft);color:var(--teal)}
 .rl-note{font-size:11px;color:var(--text-soft);line-height:1.55;margin-bottom:9px}
 .rl-row{display:flex;align-items:center;gap:8px;margin-top:8px}
 .rl-stat{display:flex;align-items:center;gap:8px}
@@ -2574,12 +2584,15 @@ async function loadProjects(){
 }
 const _PJ_PLAY='<svg viewBox="0 0 16 16" class="pjm-ic"><path d="M5 3.4l7.5 4.6L5 12.6z"/></svg>';
 const _PJ_STOP='<svg viewBox="0 0 16 16" class="pjm-ic"><rect x="4.3" y="4.3" width="7.4" height="7.4" rx="1.2"/></svg>';
+const ADHOC_PATH='.';                      // Ad hoc = the default home for non-project work
+function isAdhoc(){return !S.activeProject||S.activeProject==='Ad hoc'||S.cwd===ADHOC_PATH}
+function activateAdhoc(){S.cwd=ADHOC_PATH;S.activeProject='Ad hoc';try{document.getElementById('cli-cwd').textContent=S.cwd}catch(_){}try{loadStanding()}catch(_){}try{fetchArtStatus()}catch(_){}renderProjects();renderProjectsMini();updateProjectsBtn();artToast('Ad hoc — non-project work is tracked here','ok')}
 function renderProjectsMini(){
   const el=document.getElementById('pj-mini');if(!el)return;
   const ps=S.projects||[];
-  if(!ps.length){el.innerHTML='<div class="pjm-empty">No projects yet — tap +</div>';return}
-  el.innerHTML=ps.map(p=>{
-    const active=S.cwd&&S.cwd===p.path;
+  const adhoc=`<div class="pjm-row adhoc ${isAdhoc()?'active':''}" onclick="activateAdhoc()" data-tip="Ad hoc — non-project chats land here; move a thread to a project from its header"><span class="pjm-dot"></span><span class="pjm-name">Ad hoc</span><span class="pjm-tag">default</span></div>`;
+  el.innerHTML=adhoc+ps.map(p=>{
+    const active=S.cwd&&S.cwd===p.path&&!isAdhoc();
     const dot=p.running?(p.port_up?'up':'starting'):'';
     const open=(p.running&&p.url)?`<button class="pjm-go" title="Open ↗" onclick="event.stopPropagation();openProjectUrl('${p.url}')">↗</button>`:'';
     const go=p.running?`<button class="pjm-go stop" title="Stop" onclick="event.stopPropagation();stopProject('${p.id}')">${_PJ_STOP}</button>`
@@ -2724,11 +2737,32 @@ function newThread(promptText){
   timeline.querySelectorAll('.thread.open').forEach(t=>t.classList.remove('open'));
   const emp=document.getElementById('empty');if(emp)emp.remove();
   const th=document.createElement('div');th.className='thread open live';
-  th.innerHTML=`<div class="thread-head"><span class="thread-chev">${ICON.chev}</span><div class="thread-q"><div class="thread-prompt"></div><div class="thread-summary">working…</div></div><div class="thread-meta"></div></div><div class="thread-body"></div>`;
+  const proj=S.activeProject||'Ad hoc';
+  th.innerHTML=`<div class="thread-head"><span class="thread-chev">${ICON.chev}</span><div class="thread-q"><div class="thread-prompt"></div><div class="thread-summary">working…</div></div><div class="thread-meta"><span class="thread-proj${proj==='Ad hoc'?' adhoc':''}" title="Move this thread to a project">${escH(proj)} ⌄</span></div></div><div class="thread-body"></div>`;
   th.querySelector('.thread-prompt').textContent=promptText;
+  th.dataset.project=proj;
   th.querySelector('.thread-head').addEventListener('click',()=>th.classList.toggle('open'));
+  th.querySelector('.thread-proj').addEventListener('click',e=>{e.stopPropagation();moveThreadMenu(th,e.currentTarget)});
   timeline.appendChild(th);timeline.scrollTop=timeline.scrollHeight;
   return {el:th,body:th.querySelector('.thread-body'),summary:th.querySelector('.thread-summary'),meta:th.querySelector('.thread-meta')};
+}
+// move a thread's work into a project (or back to Ad hoc) — re-tags + switches the active project
+function moveThreadMenu(th,anchor){
+  document.getElementById('thr-move')?.remove();
+  const opts=[{id:'__adhoc__',name:'Ad hoc'}].concat((S.projects||[]).map(p=>({id:p.id,name:p.name})));
+  const m=document.createElement('div');m.id='thr-move';m.className='thr-move';
+  m.innerHTML='<div class="thr-move-h">Move thread to</div>'+opts.map(o=>`<div class="thr-move-row" data-id="${o.id}" data-name="${escH(o.name)}">${escH(o.name)}</div>`).join('');
+  document.body.appendChild(m);
+  const r=anchor.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-208))+'px';m.style.top=(r.bottom+4)+'px';
+  m.querySelectorAll('.thr-move-row').forEach(row=>row.addEventListener('click',()=>{moveThread(th,row.dataset.id,row.dataset.name);m.remove()}));
+  const off=e=>{if(!m.contains(e.target)){m.remove();document.removeEventListener('mousedown',off,true)}};
+  setTimeout(()=>document.addEventListener('mousedown',off,true),0);
+}
+function moveThread(th,id,name){
+  th.dataset.project=name;
+  const badge=th.querySelector('.thread-proj');if(badge){badge.textContent=name+' ⌄';badge.classList.toggle('adhoc',name==='Ad hoc')}
+  if(id==='__adhoc__')activateAdhoc();else activateProject(id);
+  artToast('Thread moved to '+name+' — continued work lands there','ok');
 }
 function threadSummary(th,text){if(th&&th.summary)th.summary.textContent=(text||'').replace(/\s+/g,' ').trim().slice(0,120)||'done'}
 function threadVerdict(th,verdict){if(!th||!th.meta)return;th.meta.querySelector('.thread-verdict')?.remove();if(!verdict)return;const v=document.createElement('span');v.className='thread-verdict '+verdict.toLowerCase();v.textContent=verdict;th.meta.prepend(v)}
