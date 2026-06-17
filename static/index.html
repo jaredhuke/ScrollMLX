@@ -363,8 +363,14 @@ select.hb{padding:5px 9px}
 .cc-bar{height:2px;background:rgba(26,28,34,.06)}
 .cc-bar-fill{height:100%;width:100%;background:rgba(200,75,49,.45);transition:width .3s}
 .codecard.applied .cc-bar-fill{background:rgba(60,100,60,.6)}
-.cc-code{display:none;margin:11px;padding:13px 14px;font-family:var(--font);font-size:11.5px;line-height:1.6;color:var(--text-mid);white-space:pre;overflow:auto;max-height:340px;background:var(--bg3);border-radius:7px;box-shadow:inset 0 1px 4px rgba(26,28,34,.08)}
+/* code = a small, inset, recessed slab in a distinct dark "ink" tone + mono font */
+.cc-code{display:none;margin:6px 12px 0;padding:13px 15px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;line-height:1.6;color:#d8d2c6;white-space:pre;overflow:auto;max-height:340px;background:#33302a;border-radius:8px;box-shadow:inset 0 1px 6px rgba(0,0,0,.28)}
 .codecard.open .cc-code{display:block}
+.cc-foot{display:none;justify-content:center;padding:7px 12px 11px}
+.codecard.open .cc-foot{display:flex}
+.cc-collapse{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 14px;border-radius:6px;cursor:pointer;transition:color .15s,border-color .15s}
+.cc-collapse:hover{color:var(--teal);border-color:var(--teal)}
+.cc-collapse .ic{width:11px;height:11px;transform:rotate(180deg)}
 .cc-code,.te-code,.prose{cursor:text}
 .cc-code::selection,.te-code::selection,.prose::selection{background:rgba(45,140,140,.22)}
 /* floating two-squares copy affordance — snaps to a code line on hover, or to a selection */
@@ -1968,8 +1974,9 @@ function buildCodeCard(lang,header,code){
   const fname=path?path.split('/').pop():_suggestName(lang,code);
   const title=path||fname,ext=(fname.split('.').pop()||_langExt(lang));
   const card=document.createElement('div');card.className='codecard';
-  card.innerHTML=`<div class="cc-head">${ICON.file}<span class="cc-title">${escH(title)}</span><span class="cc-meta">${escH(ext)} · ${lines} ${lines===1?'line':'lines'}</span><span class="cc-acts"><button class="icon-btn primary dl">${ICON.download}Download</button><button class="icon-btn apply">${ICON.check}${path?'Apply':'Save'}</button><button class="icon-btn bare copy" title="Copy code">${ICON.copy}</button><button class="icon-btn bare expand" title="Show code">${ICON.chev}</button></span></div><div class="cc-bar"><div class="cc-bar-fill"></div></div><pre class="cc-code">${escH(code)}</pre>`;
+  card.innerHTML=`<div class="cc-head">${ICON.file}<span class="cc-title">${escH(title)}</span><span class="cc-meta">${escH(ext)} · ${lines} ${lines===1?'line':'lines'}</span><span class="cc-acts"><button class="icon-btn primary dl">${ICON.download}Download</button><button class="icon-btn apply">${ICON.check}${path?'Apply':'Save'}</button><button class="icon-btn bare copy" title="Copy code">${ICON.copy}</button><button class="icon-btn bare expand" title="Show / hide code">${ICON.chev}</button></span></div><div class="cc-bar"><div class="cc-bar-fill"></div></div><pre class="cc-code">${escH(code)}</pre><div class="cc-foot"><button class="cc-collapse">${ICON.chev} Collapse</button></div>`;
   card.querySelector('.expand').addEventListener('click',e=>{e.stopPropagation();card.classList.toggle('open')});
+  card.querySelector('.cc-collapse').addEventListener('click',e=>{e.stopPropagation();card.classList.remove('open');card.scrollIntoView({block:'nearest',behavior:'smooth'})});
   card.querySelector('.copy').addEventListener('click',async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(code);artToast('Copied '+fname,'ok')}catch(_){artToast('Copy failed','err')}});
   card.querySelector('.dl').addEventListener('click',e=>{e.stopPropagation();downloadFile(fname,code,_mimeFor(ext))});
   card.querySelector('.apply').addEventListener('click',e=>{e.stopPropagation();applyCode(path,code,card)});
