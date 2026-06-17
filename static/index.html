@@ -588,6 +588,28 @@ select.hb{padding:5px 9px}
 .ob-key .cmd{margin-left:auto;font-size:10px;color:var(--text-dim);cursor:pointer;border:1px solid var(--border-mid);border-radius:5px;padding:2px 9px}
 .ob-key .cmd:hover{border-color:var(--teal);color:var(--teal)}
 .ob-key .cmd.add{color:var(--teal);border-color:rgba(45,140,140,.4)}
+/* one-click model install */
+.ob-m{border:1px solid var(--border-mid);border-radius:var(--r2);padding:13px 14px;margin-bottom:10px;background:var(--bg2)}
+.ob-m.rec{border-color:rgba(210,85,46,.45)}
+.ob-m-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.ob-m-name{font-size:14px;font-weight:600;color:var(--text)}
+.ob-m-tag{font-size:8px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--red);border:1px solid rgba(210,85,46,.4);border-radius:8px;padding:1px 7px}
+.ob-m-role{font-size:10px;color:var(--text-ghost);margin-left:auto}
+.ob-m-act{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ob-m-btn{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;font-weight:500;padding:7px 14px;border-radius:7px;cursor:pointer;min-height:30px;transition:color .15s,border-color .15s}
+.ob-m-btn:hover{color:var(--text);border-color:var(--text-soft)}
+.ob-m-btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.ob-m-btn.primary:hover{opacity:.88;color:#fff}
+.ob-m-done{font-size:12px;font-weight:600;color:rgba(60,100,60,.95)}
+.ob-m-bar{flex:1;min-width:120px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.ob-m-fill{height:100%;background:var(--red);border-radius:3px;transition:width .5s ease}
+.ob-m-pct{font-size:11px;color:var(--text-soft);font-variant-numeric:tabular-nums;flex-shrink:0}
+.ob-m-err{font-size:11px;color:var(--red)}
+.ob-alt{font-size:12px;color:var(--text-ghost);margin-top:6px}
+.ob-alt .cmd{color:var(--red);cursor:pointer}.ob-alt .cmd:hover{text-decoration:underline}
+.ob-starts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.ob-start{text-align:left;background:transparent;border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:13px;padding:11px 14px;border-radius:var(--r);cursor:pointer;transition:color .15s,border-color .15s}
+.ob-start:hover{border-color:var(--red);color:var(--red)}
 
 /* secure key dialog */
 .kd-overlay{position:fixed;inset:0;z-index:500;background:rgba(26,28,34,.34);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;animation:kdIn .18s ease}
@@ -2718,18 +2740,19 @@ function appendArtifactCard(path){
 function updateArtBadge(){const b=document.getElementById('art-hdr-ct');if(b){const n=artifactNodes().length;b.textContent=n||'';b.style.display=n?'inline-flex':'none'}}
 
 // ─── ONBOARDING WIZARD — reads the system, recommends agents, remembers state ──
-const OB={step:0,data:null,total:3};
+const OB={step:0,data:null,total:4,models:null,dl:{},_dlT:null};
 function obState(){try{return JSON.parse(localStorage.getItem('scroll-onboard')||'{}')}catch(_){return{}}}
 function obSave(s){try{localStorage.setItem('scroll-onboard',JSON.stringify(s))}catch(_){}}
 async function openOnboard(resume){
   document.getElementById('onboard').classList.add('open');
-  const st=obState();OB.step=(resume&&st.step)?st.step:0;
+  const st=obState();OB.step=(typeof resume==='number')?resume:((resume&&st.step)?st.step:0);
   if(!OB.data){try{OB.data=await fetch('/v1/onboard').then(r=>r.ok?r.json():null)}catch(_){OB.data=null}}
+  if(!OB.models){try{OB.models=await fetch('/v1/models').then(r=>r.ok?r.json():null)}catch(_){OB.models=null}}
   obRender();
 }
-function closeOnboard(){document.getElementById('onboard').classList.remove('open');obSave({step:OB.step,done:true})}
-function obBack(){if(OB.step>0){OB.step--;obRender()}}
-function obNext(){if(OB.step<OB.total-1){OB.step++;obSave({step:OB.step,done:false});obRender()}else{obSave({step:OB.step,done:true});closeOnboard();artToast('Setup complete','ok')}}
+function closeOnboard(){clearInterval(OB._dlT);document.getElementById('onboard').classList.remove('open');obSave({step:OB.step,done:true})}
+function obBack(){if(OB.step>0){clearInterval(OB._dlT);OB.step--;obRender()}}
+function obNext(){if(OB.step<OB.total-1){clearInterval(OB._dlT);OB.step++;obSave({step:OB.step,done:false});obRender()}else{obSave({step:OB.step,done:true});closeOnboard();artToast('You’re set up — ask away','ok')}}
 function obRender(){
   const d=OB.data,b=document.getElementById('ob-body');
   document.getElementById('ob-dots').innerHTML=Array.from({length:OB.total},(_,i)=>`<span class="ob-dot ${i===OB.step?'on':''}"></span>`).join('');
@@ -2749,11 +2772,50 @@ function obRender(){
       <div class="ob-stat"><span class="k">CPU cores</span><span class="v">${s.cpus||'—'}</span></div>
       <div class="ob-h" style="margin-top:18px">Connected cloud models</div>
       ${['groq','cerebras','gemini','anthropic','openai'].map(p=>`<div class="ob-key"><span class="dot ${k[p]?'on':''}"></span>${PROV_LABEL[p]||p}${['groq','cerebras','gemini'].includes(p)?'<span class="sm-free">free</span>':''}<span class="cmd ${k[p]?'':'add'}" onclick="${k[p]?'removeKey(\''+p+'\')':'keyDialog(\''+p+'\')'}">${k[p]?'✓ connected':'+ add key'}</span></div>`).join('')}`;
+  } else if(OB.step===2){
+    sub.textContent='Install your model';
+    b.innerHTML=`<div class="ob-p">Scroll runs the model <b>on your Mac</b> — no account, no cloud. Install it once with one click.</div><div id="ob-models"></div><div class="ob-alt">Tight on space or memory? <span class="cmd add" onclick="keyDialog('groq')">use a free cloud model instead →</span></div>`;
+    renderObModels();obStartPoll();
   } else {
-    sub.textContent='Recommended agents';
-    if(!d){b.innerHTML='<div class="ob-p">No recommendations — restart the server.</div>';return}
-    b.innerHTML='<div class="ob-h">Which agent for what</div>'+(d.recommendations||[]).map(r=>`<div class="ob-rec"><div class="ob-rec-h"><span class="ob-rec-agent">${escH(r.agent)}</span><span class="ob-rec-model">${escH(r.model)}</span></div><div class="ob-rec-role">${escH(r.role)}</div><div class="ob-rec-why">${escH(r.why)}</div></div>`).join('');
+    sub.textContent='Make your first thing';
+    b.innerHTML=`<div class="ob-p">Describe what you want and Scroll builds it. Start with one of these, or just type your own.</div><div class="ob-starts">${STARTERS.map((s,i)=>`<button class="ob-start" onclick="obStart(${i})">${escH(s)}</button>`).join('')}</div>`;
   }
+}
+function obStart(i){closeOnboard();if(typeof useStarter==='function')useStarter(STARTERS[i])}
+function renderObModels(){
+  const el=document.getElementById('ob-models');if(!el)return;
+  const ms=(OB.models&&OB.models.models)||[],rec=OB.models&&OB.models.recommended;
+  if(!ms.length){el.innerHTML='<div class="ob-p" style="color:var(--text-ghost)">Couldn’t reach the local engine — is the server running?</div>';return}
+  const order=ms.slice().sort((a,b)=>(a.repo===rec?0:1)-(b.repo===rec?0:1));
+  el.innerHTML=order.map(m=>{
+    const live=OB.dl[m.repo]||{},cached=m.cached||live.status==='done',isRec=m.repo===rec;
+    let act;
+    if(cached)act='<span class="ob-m-done">✓ Installed</span>';
+    else if(live.status==='downloading')act=`<div class="ob-m-bar"><div class="ob-m-fill" style="width:${live.pct||0}%"></div></div><span class="ob-m-pct">${live.pct||0}% · ${(live.downloaded_gb||0)} / ${m.size_gb} GB</span>`;
+    else if(live.status==='error')act=`<span class="ob-m-err">Failed — ${escH(live.error||'check the engine')}</span><button class="ob-m-btn" onclick="obDownloadModel('${m.repo}')">Retry</button>`;
+    else act=`<button class="ob-m-btn ${isRec?'primary':''}" onclick="obDownloadModel('${m.repo}')">Download &amp; install · ~${m.size_gb} GB</button>`;
+    return `<div class="ob-m ${isRec?'rec':''}"><div class="ob-m-top"><span class="ob-m-name">${escH(m.label)}</span>${isRec?'<span class="ob-m-tag">recommended</span>':`<span class="ob-m-role">${escH(m.role)}</span>`}</div><div class="ob-m-act">${act}</div></div>`;
+  }).join('');
+}
+async function obDownloadModel(repo){
+  OB.dl[repo]={status:'downloading',pct:0,downloaded_gb:0};renderObModels();
+  try{await fetch('/v1/models/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repo})})}
+  catch(_){OB.dl[repo]={status:'error',error:'can’t reach the engine — is the server running?'};renderObModels();return}
+  obStartPoll();
+}
+function obStartPoll(){
+  clearInterval(OB._dlT);
+  const tick=async()=>{
+    const ms=(OB.models&&OB.models.models)||[];let downloading=false;
+    for(const m of ms){
+      if(m.cached||!OB.dl[m.repo])continue;
+      let p;try{p=await fetch('/v1/models/progress?repo='+encodeURIComponent(m.repo)).then(r=>r.ok?r.json():null)}catch(_){p=null}
+      if(p){OB.dl[m.repo]=p;if(p.status==='done')m.cached=true;else if(p.status==='downloading')downloading=true}
+    }
+    renderObModels();
+    if(!downloading)clearInterval(OB._dlT);
+  };
+  OB._dlT=setInterval(tick,1500);tick();
 }
 
 // ─── LEDGER — per-project per-prompt burn + AIS efficiency analysis ────────────
@@ -3616,7 +3678,18 @@ async function pollSys(){
   drawSG('sg-fan',SYS.fan,j.fan_rpm!=null?Math.round(j.fan_rpm):'—',(j.fan_rpm||0)/6000);
 }
 pollSys();setInterval(pollSys,2500);
-if(!obState().done)setTimeout(()=>openOnboard(true),700);   // first-run onboarding wizard
+// First-run onboarding — and always open straight to model-install if there's no usable model yet
+setTimeout(async()=>{
+  let needModel=false;
+  try{
+    const [m,k]=await Promise.all([fetch('/v1/models').then(r=>r.ok?r.json():null),fetch('/v1/keys').then(r=>r.ok?r.json():null)]);
+    const anyLocal=m&&m.models&&m.models.some(x=>x.cached);
+    const anyCloud=k&&k.providers&&Object.values(k.providers).some(Boolean);
+    needModel=!!(m&&!anyLocal&&!anyCloud);
+  }catch(_){}
+  if(needModel)openOnboard(2);
+  else if(!obState().done)openOnboard(true);
+},700);
 fetch('/v1/model').then(r=>r.json()).then(j=>{document.getElementById('model-lbl').textContent=j.primary||'unknown';renderAISInfo()}).catch(()=>{});
 </script>
 </body>
