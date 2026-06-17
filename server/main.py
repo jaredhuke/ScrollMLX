@@ -873,6 +873,22 @@ async def get_ledger(project: str = ""):
     return {"entries": list(reversed(ledger.entries(proj)))[:80], "summary": ledger.summary(proj)}
 
 
+@app.get("/v1/status")
+async def status():
+    """Lightweight live status for the macOS menu-bar thin-line widget."""
+    from server import ledger
+    s = ledger.summary()
+    spark = [int(e.get("tokens", 0)) for e in ledger.entries()][-24:]
+    return {
+        "ready": agent_mod.is_loaded("primary"),
+        "model": MODEL.split("/")[-1],
+        "prompts": s.get("prompts", 0),
+        "total_tokens": s.get("total_tokens", 0),
+        "avg_tokens": s.get("avg_tokens", 0),
+        "spark": spark,
+    }
+
+
 _ANALYZE_SYS = (
     "You are a prompting-efficiency analyst. Given a user's recent prompts and their token "
     "costs, give EXACTLY 3 short, specific, numbered tips to get the same results with fewer "

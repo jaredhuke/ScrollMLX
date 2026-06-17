@@ -6,6 +6,7 @@ import Combine
 final class AppState: ObservableObject {
     let server: ServerManager
     let context: ContextEngine
+    let statusPoller = StatusPoller()
     @Published var cwd: String
     @Published var showKeys = false
 
@@ -28,7 +29,7 @@ final class AppState: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] s in
                 guard let self else { return }
-                if s == .ready { self.context.start(port: self.server.port) }
+                if s == .ready { self.context.start(port: self.server.port); self.statusPoller.start(port: self.server.port) }
             }
             .store(in: &bag)
     }
@@ -39,6 +40,7 @@ final class AppState: ObservableObject {
     }
 
     func shutdown() {
+        statusPoller.stop()
         context.stop()
         server.stop()
     }

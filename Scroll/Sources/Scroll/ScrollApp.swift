@@ -28,10 +28,12 @@ struct ScrollApp: App {
             }
         }
 
-        MenuBarExtra("MLX", systemImage: "brain.head.profile") {
+        MenuBarExtra {
             MenuContent(server: app.server, openKeys: { app.showKeys = true }) {
                 app.shutdown(); NSApplication.shared.terminate(nil)
             }
+        } label: {
+            MenuBarStatusLabel(poller: app.statusPoller)
         }
     }
 }
