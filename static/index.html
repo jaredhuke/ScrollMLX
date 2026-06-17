@@ -1307,6 +1307,7 @@ AIS.style.cursor='pointer';
 AIS.addEventListener('click',e=>{
   const rect=AIS.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
   for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else openAgentDetail(hh.key);return}}
+  openFullAIS();   // click anywhere else on the mesh → expand to the full instrument
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -1851,6 +1852,7 @@ async function refreshKeys(){try{const j=await fetch('/v1/keys').then(r=>r.json(
 // ─── SECURE KEY DIALOG — paste a key once; it goes straight to the OS keychain ──
 const PROV_LABEL={groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
 function keyDialog(provider){
+  if(typeof closeModels==='function')closeModels();   // don't leave the model popover lingering behind the dialog
   provider=(provider||'anthropic').toLowerCase();
   const name=PROV_LABEL[provider]||provider, link=KEYLINKS[provider];
   const free=['groq','openrouter','cerebras','gemini'].includes(provider);
@@ -2500,7 +2502,13 @@ function _modelCatalog(){
     .forEach(([id,label,sub])=>out.push({id,label,sub,avail:!!(window.CLOUD&&window.CLOUD[id])}));
   return out;
 }
-function toggleModels(){const p=document.getElementById('models-pop');if(!p)return;if(p.hasAttribute('hidden')){renderModelsPop();p.removeAttribute('hidden')}else p.setAttribute('hidden','')}
+function _modelsOutside(e){const p=document.getElementById('models-pop'),b=document.getElementById('models-btn');if(p&&!p.contains(e.target)&&!(b&&b.contains(e.target)))closeModels()}
+function _modelsEsc(e){if(e.key==='Escape')closeModels()}
+function closeModels(){const p=document.getElementById('models-pop');if(p)p.setAttribute('hidden','');document.removeEventListener('mousedown',_modelsOutside,true);document.removeEventListener('keydown',_modelsEsc)}
+function toggleModels(){const p=document.getElementById('models-pop');if(!p)return;
+  if(p.hasAttribute('hidden')){renderModelsPop();p.removeAttribute('hidden');setTimeout(()=>{document.addEventListener('mousedown',_modelsOutside,true);document.addEventListener('keydown',_modelsEsc)},0)}
+  else closeModels();
+}
 function renderModelsPop(){
   const p=document.getElementById('models-pop');if(!p)return;
   const sel=new Set(S.fanout&&S.fanout.length?S.fanout:['mlx']);
