@@ -894,6 +894,43 @@ def _recommendations(sysinfo: dict, keys: dict) -> list[dict]:
     return recs
 
 
+try:
+    import psutil as _psutil
+    _psutil.cpu_percent(interval=None)  # prime the non-blocking sampler
+except Exception:
+    _psutil = None
+
+
+@app.get("/v1/sys")
+async def sys_stats():
+    """Live machine stats for the header gauges. CPU/MEM via psutil; temp/fan/thermal
+    come from the native macOS app's context snapshot when it's running."""
+    out = {"cpu": None, "cores": None, "mem_pct": None, "mem_used_gb": None,
+           "mem_total_gb": None, "temp_c": None, "fan_rpm": None, "thermal": None, "load": None}
+    if _psutil is not None:
+        try:
+            out["cpu"] = round(_psutil.cpu_percent(interval=None), 1)
+            out["cores"] = _psutil.cpu_count()
+            vm = _psutil.virtual_memory()
+            out["mem_pct"] = round(vm.percent, 1)
+            out["mem_used_gb"] = round(vm.used / 1e9, 1)
+            out["mem_total_gb"] = round(vm.total / 1e9, 1)
+            out["load"] = round(_psutil.getloadavg()[0], 2)
+        except Exception:
+            pass
+    sysc = (_LATEST_CONTEXT or {}).get("system") or {}
+    out["thermal"] = sysc.get("thermal")
+    out["temp_c"] = sysc.get("temp_c")
+    out["fan_rpm"] = sysc.get("fan_rpm")
+    if out["cpu"] is None and sysc.get("cpu_pct") is not None:
+        out["cpu"] = sysc.get("cpu_pct")
+    if out["mem_pct"] is None and sysc.get("mem_total_gb"):
+        out["mem_used_gb"] = sysc.get("mem_used_gb")
+        out["mem_total_gb"] = sysc.get("mem_total_gb")
+        out["mem_pct"] = round(100 * sysc.get("mem_used_gb", 0) / sysc.get("mem_total_gb", 1), 1)
+    return out
+
+
 @app.get("/v1/onboard")
 async def onboard():
     """System scan + agent recommendations for the onboarding wizard."""
