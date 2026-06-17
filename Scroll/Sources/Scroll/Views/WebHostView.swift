@@ -23,6 +23,7 @@ struct WebHostView: NSViewRepresentable {
         cfg.userContentController = ucc
 
         let wv = WKWebView(frame: .zero, configuration: cfg)
+        wv.uiDelegate = ctx.coordinator   // without this, <input type=file> is silently dead in WKWebView
         wv.load(URLRequest(url: URL(string: "http://127.0.0.1:\(port)/")!))
         ctx.coordinator.webView = wv
         return wv
@@ -31,10 +32,25 @@ struct WebHostView: NSViewRepresentable {
     func updateNSView(_ nsView: WKWebView, context: Context) {}
 
     @MainActor
-    final class Coordinator: NSObject, WKScriptMessageHandlerWithReply {
+    final class Coordinator: NSObject, WKScriptMessageHandlerWithReply, WKUIDelegate {
         let port: Int
         let context: ContextEngine
         weak var webView: WKWebView?
+
+        /// Native file picker for the web UI's <input type=file> (Add files, Skills import,
+        /// folder picker). WKWebView ignores file inputs entirely without this delegate.
+        nonisolated func webView(_ webView: WKWebView,
+                                 runOpenPanelWith parameters: WKOpenPanelParameters,
+                                 initiatedByFrame frame: WKFrameInfo,
+                                 completionHandler: @escaping ([URL]?) -> Void) {
+            DispatchQueue.main.async {
+                let panel = NSOpenPanel()
+                panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+                panel.canChooseDirectories = parameters.allowsDirectories
+                panel.canChooseFiles = true
+                panel.begin { resp in completionHandler(resp == .OK ? panel.urls : nil) }
+            }
+        }
 
         init(port: Int, context: ContextEngine) {
             self.port = port; self.context = context

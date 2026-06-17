@@ -715,6 +715,13 @@ async def skills_add(payload: dict):
     return {"ok": True, "name": skills.add(name, payload.get("content", ""))}
 
 
+@app.post("/v1/skills/import")
+async def skills_import(payload: dict):
+    """Import skill(s) by pointing at a local file or folder; name from the filename."""
+    from server import skills
+    return skills.import_path(payload.get("path", ""))
+
+
 @app.post("/v1/skills/toggle")
 async def skills_toggle(payload: dict):
     from server import skills
