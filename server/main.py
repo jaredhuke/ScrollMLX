@@ -56,7 +56,14 @@ async def lifespan(app: FastAPI):
     loaded = secrets_mod.load_into_env()  # pull cloud keys from Keychain → env
     if loaded:
         print(f"[secrets] loaded keys for: {', '.join(loaded)}")
-    await loop.run_in_executor(None, agent_mod.load_model, MODEL, "primary")
+    # Only preload the local model if it's ALREADY downloaded — otherwise boot would
+    # block on an 18 GB download and the onboarding UI could never appear. When it's
+    # not cached, the server serves immediately and onboarding installs it on demand.
+    from server import models as models_mod
+    if models_mod.is_cached(MODEL):
+        await loop.run_in_executor(None, agent_mod.load_model, MODEL, "primary")
+    else:
+        print("[mlx] primary model not downloaded yet — onboarding will install it; serving now.")
     yield
 
 
@@ -89,6 +96,8 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
 
     def _run():
         try:
+            if not agent_mod.is_loaded("primary"):
+                agent_mod.load_model(req.model or MODEL, "primary")  # lazy load (downloads only if onboarding was skipped)
             messages = [m.model_dump(exclude_none=True) for m in req.messages]
             from server import steering, skills as skills_mod
             steer = steering.as_system_text(req.cwd)  # standing context file: user section + learned
@@ -143,6 +152,8 @@ async def agent_endpoint(req: ChatRequest):
     """SSE stream of AgentEvent objects."""
     if not req.stream:
         # Collect all events and return the final assistant text
+        if not agent_mod.is_loaded("primary"):
+            agent_mod.load_model(req.model or MODEL, "primary")
         messages = [m.model_dump(exclude_none=True) for m in req.messages]
         text_parts = []
         for event in agent_mod.run_agent(
@@ -949,6 +960,34 @@ async def onboard():
     keys = secrets_mod.list_providers_with_keys()
     return {"system": sysinfo, "keys": keys, "loaded": list(agent_mod._registry.keys()),
             "recommendations": _recommendations(sysinfo, keys)}
+
+
+# ── One-click local model install (onboarding) ─────────────────────────────────
+
+@app.get("/v1/models")
+async def models_list():
+    """Local model catalog with download/cache state + the pick for this machine."""
+    from server import models
+    sysinfo = _system_info()
+    return {"models": models.catalog(), "recommended": models.recommended(sysinfo.get("ram_gb")),
+            "ram_gb": sysinfo.get("ram_gb"), "loaded": list(agent_mod._registry.keys())}
+
+
+@app.post("/v1/models/download")
+async def models_download(payload: dict):
+    """Start (or resume) a background download of an MLX model's weights."""
+    from server import models
+    repo = (payload.get("repo") or "").strip()
+    if not repo:
+        return {"ok": False, "error": "repo required"}
+    return {"ok": True, **models.start_download(repo)}
+
+
+@app.get("/v1/models/progress")
+async def models_progress(repo: str = ""):
+    """Download progress for one repo: idle | downloading (pct) | done | error."""
+    from server import models
+    return models.progress(repo)
 
 
 # ── Token/burn ledger + AIS efficiency analysis ────────────────────────────────
