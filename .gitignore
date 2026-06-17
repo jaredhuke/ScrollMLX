@@ -28,3 +28,6 @@ ScrollMLX/
 # Xcode per-user state
 **/xcuserdata/
 *.xcuserstate
+
+# JS test deps
+node_modules/
