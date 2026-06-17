@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}  /* an ID rule like #models-pop{display:flex} would otherwise beat the UA [hidden], so it never hid */
 :root{
   --bg:#f0ece4;--bg2:#e9e4db;--bg3:#e2dcd2;
   --text:#1a1c22;--text-mid:#4a4f5e;--text-soft:#5f6573;--text-dim:#8a909c;--text-ghost:#b4bac6;
