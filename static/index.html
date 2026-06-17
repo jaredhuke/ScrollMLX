@@ -310,6 +310,10 @@ select.hb{padding:5px 9px}
 .dbtn{background:var(--teal);border:none;color:#fff;font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.08em;padding:7px 12px;cursor:pointer;width:100%;text-transform:uppercase;border-radius:7px;transition:opacity .15s}
 .dbtn:hover{opacity:.85}
 .dbtn.ghost{background:none;border:1px solid var(--border-mid);color:var(--text-dim)}.dbtn.ghost:hover{border-color:var(--red);color:var(--red);opacity:1}
+.skill-body{font-family:var(--font);min-height:74px;resize:vertical;line-height:1.5}
+.skill-acts{display:flex;gap:6px}.skill-acts .dbtn{width:auto;flex:1}
+.skill-mini{background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px}.skill-mini:hover{color:var(--teal)}.skill-mini.rm:hover{color:var(--red)}
+.dr-empty{font-size:10px;color:var(--text-ghost);font-style:italic;padding:4px 0 8px}
 
 /* artifacts drawer */
 #aoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
@@ -979,9 +983,17 @@ select.hb{padding:5px 9px}
   <div class="dh"><span class="dt">Skills &amp; Plugins</span><button class="dc" onclick="closeDrawer()">✕</button></div>
   <div class="dbody">
     <div><div class="ds-title">Models</div><div id="d-provs"></div></div>
-    <div><div class="ds-title">Installed Skills</div><div id="d-tools"></div></div>
-    <div><div class="ds-title">+ Add a Skill <span class="ds-sub">Python tool extension</span></div><input class="din" id="ext-path" placeholder="~/path/to/skill.py"/><button class="dbtn" onclick="loadExt()">Add Skill</button></div>
-    <div><div class="ds-title">+ Add a Plugin <span class="ds-sub">MCP connector</span></div><input class="din" id="mcp-url" placeholder="http://localhost:3000"/><button class="dbtn" onclick="loadMCP()">Connect Plugin</button></div>
+    <div>
+      <div class="ds-title">Skill files <span class="ds-sub">.md the agent always follows</span></div>
+      <div id="skill-list"></div>
+      <input class="din" id="skill-name" placeholder="Skill name — e.g. code-style"/>
+      <textarea class="din skill-body" id="skill-body" placeholder="Markdown — capabilities or rules the agent should follow"></textarea>
+      <div class="skill-acts"><button class="dbtn" onclick="addSkill()">Add skill</button><button class="dbtn ghost" onclick="document.getElementById('skill-file').click()">Upload .md</button></div>
+      <input type="file" id="skill-file" accept=".md,.markdown,.txt" hidden onchange="uploadSkill(event)"/>
+    </div>
+    <div><div class="ds-title">Tools <span class="ds-sub">enabled capabilities</span></div><div id="d-tools"></div></div>
+    <div><div class="ds-title">+ Add a tool <span class="ds-sub">Python extension</span></div><input class="din" id="ext-path" placeholder="~/path/to/tool.py"/><button class="dbtn" onclick="loadExt()">Add tool</button></div>
+    <div><div class="ds-title">+ Add a plugin <span class="ds-sub">MCP connector</span></div><input class="din" id="mcp-url" placeholder="http://localhost:3000"/><button class="dbtn" onclick="loadMCP()">Connect plugin</button></div>
   </div>
 </div>
 
@@ -1620,7 +1632,37 @@ async function loadTools(){try{allTools=(await fetch('/v1/tools').then(r=>r.json
 async function toggleTool(name,en){await fetch(`/v1/tools/${name}/${en?'enable':'disable'}`,{method:'POST'});await loadTools()}
 async function loadExt(){const p=document.getElementById('ext-path').value.trim();if(!p)return;await fetch('/v1/extensions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});await loadTools()}
 async function loadMCP(){const u=document.getElementById('mcp-url').value.trim();if(!u)return;await fetch('/v1/connectors/mcp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_url:u})});await loadTools()}
-function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('overlay').classList.add('open');loadTools();loadProviders()}
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('overlay').classList.add('open');loadTools();loadProviders();loadSkills()}
+// ─── SKILL FILES (.md the agent follows) ───────────────────────────────────────
+async function loadSkills(){
+  const el=document.getElementById('skill-list');if(!el)return;
+  let j;try{j=await fetch('/v1/skills').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  const sk=(j&&j.skills)||[];
+  el.innerHTML=sk.length?sk.map(s=>`<div class="dr-row"><span class="dr-name">${escH(s.name)}</span><span class="dr-src">${s.chars} ch</span><button class="skill-mini" onclick="editSkill('${escH(s.name)}')" title="Edit">✎</button><button class="skill-mini rm" onclick="removeSkill('${escH(s.name)}')" title="Remove">✕</button><label class="toggle"><input type="checkbox" ${s.enabled?'checked':''} onchange="toggleSkill('${escH(s.name)}',this.checked)"><div class="ttrack"><div class="tthumb"></div></div></label></div>`).join(''):'<div class="dr-empty">No skill files yet — add one below.</div>';
+}
+async function addSkill(){
+  const name=document.getElementById('skill-name').value.trim(),body=document.getElementById('skill-body').value;
+  if(!name){artToast('Give the skill a name','err');return}
+  if(!body.trim()){artToast('Add some markdown content','err');return}
+  let r;try{r=await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content:body})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){document.getElementById('skill-name').value='';document.getElementById('skill-body').value='';artToast('Skill added — the agent will follow it','ok');loadSkills()}
+  else artToast('Could not add · '+((r&&r.error)||'unknown'),'err');
+}
+async function uploadSkill(ev){
+  const fl=ev.target.files&&ev.target.files[0];if(!fl)return;
+  const name=fl.name.replace(/\.(md|markdown|txt)$/i,'');let content='';try{content=await fl.text()}catch(_){}
+  ev.target.value='';
+  if(!content.trim()){artToast('File looks empty','err');return}
+  await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content})}).catch(()=>{});
+  artToast('Imported '+name,'ok');loadSkills();
+}
+async function editSkill(name){
+  let j;try{j=await fetch('/v1/skills/get?name='+encodeURIComponent(name)).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  document.getElementById('skill-name').value=name;document.getElementById('skill-body').value=(j&&j.content)||'';
+  document.getElementById('skill-body').focus();artToast('Editing — change & Add skill to save','ok');
+}
+async function toggleSkill(name,en){await fetch('/v1/skills/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,enabled:en})}).catch(()=>{});loadSkills()}
+async function removeSkill(name){if(!confirm('Remove skill "'+name+'"?'))return;await fetch('/v1/skills/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}).catch(()=>{});artToast('Removed','ok');loadSkills()}
 function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
 
 // ─── ARTIFACTS: lineage + recoverability (git snapshot / local backup) ─────────
