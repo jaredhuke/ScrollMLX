@@ -12,8 +12,8 @@ enum Parchment {
 enum Ink {
     static let line   = Color(red: 0.102, green: 0.110, blue: 0.133) // #1A1C22 — primary
     static let mid    = Color(red: 0.290, green: 0.310, blue: 0.369)
-    static let soft   = Color(red: 0.541, green: 0.565, blue: 0.612)
-    static let ghost  = Color(red: 0.706, green: 0.729, blue: 0.776)
+    static let soft   = Color(red: 0.373, green: 0.396, blue: 0.451) // #5F6573 — AA (matches web --text-soft)
+    static let ghost  = Color(red: 0.478, green: 0.502, blue: 0.553) // #7A808D — WCAG-bumped to match web --text-ghost (was #B4BAC6, 1.65:1)
     static let red    = Color(red: 0.824, green: 0.333, blue: 0.180) // extremes only
     static let teal   = Color(red: 0.184, green: 0.612, blue: 0.545) // sparing
     static let rule       = Color.black.opacity(0.08)   // hairline
