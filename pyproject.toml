@@ -5,8 +5,10 @@ description = "100% local coding agent powered by MLX on Apple Silicon"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=0.109.2",
     "click>=8.4.1",
     "fastapi>=0.137.0",
+    "google-genai>=2.8.0",
     "httpx>=0.28.1",
     "mlx-lm>=0.31.3",
     "openai>=2.41.1",
