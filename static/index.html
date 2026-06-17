@@ -805,6 +805,16 @@ select.hb{padding:5px 9px}
 .pjm-ic{width:12px;height:12px;fill:currentColor}
 .pjm-tag{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost);border:1px solid var(--border-mid);border-radius:8px;padding:1px 6px;flex-shrink:0}
 .pjm-row.adhoc .pjm-dot{background:var(--amber)}
+.pjm-chev{width:11px;height:11px;flex-shrink:0;fill:none;stroke:var(--text-ghost);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.6;transition:transform .18s}
+.pjm-row.open .pjm-chev{transform:rotate(180deg);stroke:var(--teal);opacity:1}
+.pjm-detail{margin:1px 6px 6px 16px;padding:8px 10px;border-left:1px solid var(--border-mid);display:flex;flex-direction:column;gap:5px}
+.pjm-d-path{font-size:9.5px;color:var(--text-ghost);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+.pjm-d-cmd{font-size:10px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjm-d-cmd.warn{color:var(--amber)}
+.pjm-d-st{font-size:8px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);align-self:center;margin-right:auto}
+.pjm-d-st.on{color:var(--teal)}
+.pjm-d-acts{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:2px}
+.pjm-d-acts .pj-b{font-size:9px;padding:4px 9px;min-height:24px}
 /* per-thread project badge + move menu */
 .thread-proj{font-size:8px;letter-spacing:.04em;color:var(--text-dim);background:var(--teal-soft);border:1px solid var(--teal-line);border-radius:9px;padding:2px 8px;cursor:pointer;white-space:nowrap}
 .thread-proj:hover{color:var(--teal)}
@@ -918,6 +928,7 @@ select.hb{padding:5px 9px}
 .sf-drop-t{font-size:13px;color:var(--text)}
 .sf-drop-s{font-size:11px;color:var(--text-soft)}
 .sf-drop-acts{display:flex;gap:8px;margin-top:6px}
+.sf-pathnote{font-size:10px;color:var(--text-ghost);margin:-2px 0 4px 2px}
 .sf-write{margin-top:4px}
 .sf-write>summary{font-size:11px;color:var(--text-dim);cursor:pointer;list-style:none;padding:6px 2px;user-select:none}
 .sf-write>summary::-webkit-details-marker{display:none}
@@ -1251,6 +1262,8 @@ select.hb{padding:5px 9px}
       </div>
       <input type="file" id="sf-file" accept=".md,.markdown,.txt" multiple hidden onchange="importSkills(event)"/>
       <input type="file" id="sf-folder" webkitdirectory hidden onchange="importSkills(event)"/>
+      <div class="sf-row2"><input class="pj-in" id="sf-path" placeholder="…or paste a file/folder path — e.g. ~/skills" onkeydown="if(event.key==='Enter')importSkillPath()"/><button class="pj-b" onclick="importSkillPath()">Import</button></div>
+      <div class="sf-pathnote">Most reliable on this Mac — the local engine reads the path directly.</div>
       <div id="sf-list" class="sf-list"></div>
       <details class="sf-write">
         <summary>or write one by hand</summary>
@@ -2718,6 +2731,13 @@ async function addSkillFull(){
 // ─── IMPORT SKILLS — point at a file or folder; name comes from the filename ────
 const _SKILL_EXT=/\.(md|markdown|txt)$/i;
 function importSkills(ev){const fl=ev.target.files;ev.target.value='';if(fl&&fl.length)_importSkillFiles(fl)}
+async function importSkillPath(){
+  const inp=document.getElementById('sf-path');const path=(inp&&inp.value||'').trim();
+  if(!path){artToast('Paste a file or folder path','err');if(inp)inp.focus();return}
+  let r;try{r=await fetch('/v1/skills/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
+  if(r&&r.ok){if(inp)inp.value='';artToast('Imported '+r.added+' skill'+(r.added>1?'s':'')+(r.skipped?' · '+r.skipped+' skipped':''),'ok');renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
+  else artToast('Import failed · '+((r&&r.error)||'check the path'),'err');
+}
 async function _importSkillFiles(files){
   const md=[...files].filter(f=>_SKILL_EXT.test(f.name));
   if(!md.length){artToast('No .md, .markdown or .txt files found','err');return}
@@ -2884,13 +2904,25 @@ function renderProjectsMini(){
   const adhoc=`<div class="pjm-row adhoc ${isAdhoc()?'active':''}" onclick="activateAdhoc()" data-tip="Ad hoc — non-project chats land here; move a thread to a project from its header"><span class="pjm-dot"></span><span class="pjm-name">Ad hoc</span><span class="pjm-tag">default</span></div>`;
   el.innerHTML=adhoc+ps.map(p=>{
     const active=S.cwd&&S.cwd===p.path&&!isAdhoc();
+    const isOpen=S.pjOpen===p.id;
     const dot=p.running?(p.port_up?'up':'starting'):'';
-    const open=(p.running&&p.url)?`<button class="pjm-go" title="Open ↗" onclick="event.stopPropagation();openProjectUrl('${p.url}')">↗</button>`:'';
-    const go=p.running?`<button class="pjm-go stop" title="Stop" onclick="event.stopPropagation();stopProject('${p.id}')">${_PJ_STOP}</button>`
+    const quick=p.running?`<button class="pjm-go stop" title="Stop" onclick="event.stopPropagation();stopProject('${p.id}')">${_PJ_STOP}</button>`
             :(p.start?`<button class="pjm-go" title="Launch" onclick="event.stopPropagation();launchProject('${p.id}')">${_PJ_PLAY}</button>`:'');
-    return `<div class="pjm-row ${active?'active':''}" onclick="activateProject('${p.id}')" data-tip="${escH(p.name)} — ${escH(p.path)}${active?' · active':''}"><span class="pjm-dot ${dot}"></span><span class="pjm-name">${escH(p.name)}</span>${open}${go}</div>`;
+    const row=`<div class="pjm-row ${active?'active':''} ${isOpen?'open':''}" role="button" tabindex="0" aria-expanded="${isOpen}" onclick="togglePjDetail('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePjDetail('${p.id}')}" data-tip="${escH(p.name)} — ${escH(p.path)} · click for details"><span class="pjm-dot ${dot}"></span><span class="pjm-name">${escH(p.name)}</span>${quick}<svg class="pjm-chev" viewBox="0 0 16 16"><path d="M4 6.2 8 10.2l4-4"/></svg></div>`;
+    if(!isOpen)return row;
+    const status=p.running?(p.port_up?'running'+(p.port?' · :'+p.port:''):'starting…'):(p.exists===false?'folder missing':'stopped');
+    const acts=p.running
+      ?`<button class="pj-b stop" onclick="event.stopPropagation();stopProject('${p.id}')">Stop</button>${p.url?`<button class="pj-b" onclick="event.stopPropagation();openProjectUrl('${p.url}')">Open ↗</button>`:''}`
+      :`<button class="pj-b primary" onclick="event.stopPropagation();launchProject('${p.id}')" ${p.start?'':'disabled'}>Launch</button>`;
+    const detail=`<div class="pjm-detail">
+      <div class="pjm-d-path" title="${escH(p.path)}">${escH(p.path)}${p.exists===false?' · missing':''}</div>
+      <div class="pjm-d-cmd ${p.start?'':'warn'}" title="${p.start?escH(p.start):''}">${p.start?escH(p.start):'no start command — edit in Projects'}</div>
+      <div class="pjm-d-acts"><span class="pjm-d-st ${p.running?'on':''}">${status}</span>${acts}<button class="pj-b" onclick="event.stopPropagation();activateProject('${p.id}')">${active?'✓ Active':'Use here'}</button><button class="pj-b rm" title="Remove from list (keeps files)" onclick="event.stopPropagation();removeProject('${p.id}','${escH(p.name)}')">Remove</button></div>
+    </div>`;
+    return row+detail;
   }).join('');
 }
+function togglePjDetail(id){S.pjOpen=(S.pjOpen===id?null:id);renderProjectsMini()}
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
 function renderProjects(){
   const el=document.getElementById('pj-list');if(!el)return;

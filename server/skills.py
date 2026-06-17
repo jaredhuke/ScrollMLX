@@ -79,6 +79,44 @@ def remove(name: str) -> None:
     _save_meta(m)
 
 
+_SKILL_EXTS = {".md", ".markdown", ".txt"}
+
+
+def import_path(raw: str) -> dict:
+    """Import skill(s) by pointing at a file OR a folder. Name comes from the filename.
+
+    A local-first alternative to the browser file picker: the server reads the path
+    directly (it already has filesystem access), so it works regardless of the
+    WKWebView/file-dialog plumbing.
+    """
+    p = Path(raw or "").expanduser()
+    if not p.exists():
+        return {"ok": False, "error": f"path not found: {p}"}
+    files: list[Path] = []
+    if p.is_file():
+        files = [p]
+    else:
+        for ext in _SKILL_EXTS:
+            files.extend(p.rglob(f"*{ext}"))
+    files = [f for f in files if f.suffix.lower() in _SKILL_EXTS]
+    added, names, skipped = 0, [], 0
+    for f in sorted(set(files)):
+        try:
+            content = f.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            skipped += 1
+            continue
+        if not content.strip():
+            skipped += 1
+            continue
+        add(f.stem, content)
+        added += 1
+        names.append(f.stem)
+    if added == 0:
+        return {"ok": False, "error": "no non-empty .md/.markdown/.txt files found", "skipped": skipped}
+    return {"ok": True, "added": added, "names": names, "skipped": skipped}
+
+
 def as_system_text() -> str:
     """Combined enabled skills for injection into a run."""
     parts = []
