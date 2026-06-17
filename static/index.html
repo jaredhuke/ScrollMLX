@@ -201,6 +201,7 @@ select.hb{padding:5px 9px}
 #models-btn .mb-cap{font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost)}
 #models-pop{border-top:1px solid var(--border);background:var(--bg2);padding:8px;display:flex;flex-direction:column;gap:2px;animation:apIn .25s ease}
 .mp-hd{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);padding:4px 8px 7px;display:flex;align-items:center;gap:8px}
+.mp-x{margin-left:auto;background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:12px;line-height:1;padding:0 2px}.mp-x:hover{color:var(--text)}
 .mp-hd .mp-sub{text-transform:none;letter-spacing:.02em;color:var(--text-ghost);font-weight:400}
 .mp-row{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r);cursor:pointer;transition:background .12s}
 .mp-row:hover{background:rgba(26,28,34,.04)}
@@ -1506,7 +1507,7 @@ function openAgentDetail(k){
   const ag=S.agents[k];if(!ag)return;recomputeAgent(k);
   const g=(S._gov||aisGovern()).per[k]||{level:'ok',why:[]};
   const full=ag.access!=='code',tpc=ag.calls?Math.round(ag.tokens/ag.calls):0;
-  const cell=(key,val,cls)=>`<div class="ad-cell"><div class="k">${key}</div><div class="v${cls?' '+cls:''}">${val}</div></div>`;
+  const cell=(key,val,cls,tip)=>`<div class="ad-cell"${tip?` data-tip="${tip}"`:''}><div class="k">${key}</div><div class="v${cls?' '+cls:''}">${val}</div></div>`;
   const errCls=ag.errs>=AIS_POLICY.errMax?'alert':ag.errs>0?'warn':'';
   const burnCls=ag.burn>=AIS_POLICY.burnMax?'alert':ag.burn>=AIS_POLICY.burnWatch?'warn':'';
   const critRows=k==='critic'?`${cell('Trust',ag.trust==null?'—':ag.trust)}${cell('Accepted',ag.accepted||0)}${cell('Rejected',ag.rejected||0,ag.rejected>0?'warn':'')}`:'';
@@ -1527,7 +1528,7 @@ function openAgentDetail(k){
       <div class="ad-grid">
         ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok / call',fmtPlain(tpc))}
         ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
-        ${cell('Burn',ag.burn+'%',burnCls)}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',ag.hm.toFixed(0)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'')}
+        ${cell('Burn',ag.burn+'%',burnCls,'Token pressure this turn — tokens generated vs. budget')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Behavioural deviation from baseline · 0% = stable, rises with tool failures ('+hmLabel(hmClass(ag.hm))+')')}
         ${critRows}
       </div>
     </div>
@@ -1538,10 +1539,12 @@ function openAgentDetail(k){
 }
 function closeAgentDetail(){const o=document.getElementById('ad-overlay');if(o)o.remove()}
 
+function cardKeys(){return (typeof syncCloudAgent==='function'&&syncCloudAgent())?['primary','critic','cloud']:['primary','critic']}
+function driftPct(hm){return Math.round(Math.abs((hm==null?50:hm)-50)/50*100)}  // 0% = stable; rises with tool failures
 function renderCards(){
-  document.getElementById('agent-cards').innerHTML=AGENT_KEYS.map(k=>{
+  document.getElementById('agent-cards').innerHTML=cardKeys().map(k=>{
     const ag=S.agents[k],bc=burnClass(ag.burn),hmc=hmClass(ag.hm);
-    const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nContext burn: ${ag.burn}%\nDrift: ${ag.hm.toFixed(0)}% (${hmLabel(hmc)})${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
+    const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.burn}% (token pressure this turn)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
     return`<div class="${cardClass(ag)}" onclick="openAgentDetail('${k}')" data-tip="${tip.replace(/"/g,'&quot;')} · click for details">
       <div class="ac-head"><div class="ac-dot ${ag.status==='working'?'on':ag.status==='error'?'err':''}"></div>
         <span class="ac-name">${ag.label}</span><span class="ac-role">${ag.role}</span>
@@ -1907,10 +1910,10 @@ function buildTriad(tri){
     const h=document.createElement('div');h.className='tr-head';h.innerHTML=ic+label;sec.appendChild(h);
     items.forEach(t=>{
       const row=document.createElement('div');row.className='tr-item';
-      row.innerHTML=`<div class="tr-txt">${escH(t)}</div><div class="tr-acts"><button class="icon-btn bare ok" title="OK / acknowledge">${ICON.check}</button><button class="icon-btn rep">Respond</button></div><div class="tr-reply"><textarea placeholder="Type a response — Enter adds it to your message"></textarea></div>`;
+      row.innerHTML=`<div class="tr-txt">${escH(t)}</div><div class="tr-acts"><button class="icon-btn bare ok" title="OK / acknowledge">${ICON.check}</button><button class="icon-btn rep">Respond</button></div><div class="tr-reply"><textarea placeholder="Type a response — Enter sends it (Shift+Enter for a newline)"></textarea></div>`;
       row.querySelector('.ok').addEventListener('click',()=>{row.classList.toggle('done');row.querySelector('.ok').classList.toggle('on')});
       row.querySelector('.rep').addEventListener('click',()=>{const r=row.querySelector('.tr-reply');r.classList.toggle('open');if(r.classList.contains('open'))r.querySelector('textarea').focus()});
-      row.querySelector('textarea').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=e.target.value.trim();if(!v)return;msgIn.value=(msgIn.value?msgIn.value+'\n':'')+`Re: "${t}" — ${v}`;msgIn.dispatchEvent(new Event('input'));row.classList.add('done');row.querySelector('.tr-reply').classList.remove('open');artToast('Added to your message','ok')}});
+      row.querySelector('textarea').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=e.target.value.trim();if(!v)return;msgIn.value=(msgIn.value?msgIn.value+'\n':'')+`Re: "${t}" — ${v}`;msgIn.dispatchEvent(new Event('input'));row.classList.add('done');row.querySelector('.tr-reply').classList.remove('open');send()}});
       sec.appendChild(row);
     });
     wrap.appendChild(sec);
@@ -2149,11 +2152,12 @@ function editPrompt(i){
 function renderCtx(){
   const el=document.getElementById('ctx-tray');if(!el)return;
   const learnedN=(S.learned||[]).length;
-  el.innerHTML=S.context.map((c,i)=>`<span class="ctx-chip"><span title="${escH(c)}">${escH(c)}</span><button onclick="removeContext(${i})" title="Remove">×</button></span>`).join('')
-    +(learnedN?`<span class="ctx-learned" onclick="openContextFile()" data-tip="${learnedN} learned correction${learnedN>1?'s':''} — auto-added, click to view the file">+${learnedN} learned</span>`:'')
-    +S.queue.map((q,i)=>`<span class="bl-item" title="${escH(q)}"><span class="bl-n">${i+1}</span><span class="t">${escH(q)}</span><button onclick="dequeue(${i})" title="Remove from backlog">×</button></span>`).join('')
-    +`<button class="ctx-add" onclick="addContext()" data-tip="Add a standing instruction (saved to the project context file)">+ context</button>`
-    +`<button class="ctx-add" onclick="openContextFile()" data-tip="Open the standing-context file">edit ↗</button>`;
+  const ctxN=S.context.length;
+  // backlog (queued follow-ups) still shows inline; the standing context is one button → the editor (add/edit/learned all live there)
+  const label=(ctxN||learnedN)?`Context · ${ctxN}${learnedN?` +${learnedN}`:''}`:'+ context';
+  const tip=(ctxN||learnedN)?`${ctxN} standing instruction${ctxN!==1?'s':''}${learnedN?` · ${learnedN} learned`:''} — click to view & edit`:'Add standing context the agent always honors';
+  el.innerHTML=S.queue.map((q,i)=>`<span class="bl-item" title="${escH(q)}"><span class="bl-n">${i+1}</span><span class="t">${escH(q)}</span><button onclick="dequeue(${i})" title="Remove from backlog">×</button></span>`).join('')
+    +`<button class="ctx-add" onclick="openContextFile()" data-tip="${escH(tip)}">${label}</button>`;
 }
 async function loadStanding(){
   try{const j=await fetch('/v1/standing?project='+encodeURIComponent(S.cwd)).then(r=>r.ok?r.json():null);
@@ -2188,7 +2192,13 @@ async function saveContextFile(){const t=document.getElementById('cx-user');if(!
 
 // ─── ADD FILES / REPO — bring work in, then review · summarize · recommend · edit
 function paintIcons(root){(root||document).querySelectorAll('[data-icon]').forEach(e=>{if(!e.dataset.painted){e.innerHTML=ICON[e.dataset.icon]||'';e.dataset.painted='1'}})}
-function toggleAdd(){const p=document.getElementById('add-panel'),b=document.getElementById('add-btn');const open=p.hasAttribute('hidden');if(open){p.removeAttribute('hidden');b.classList.add('on');paintIcons(p)}else{p.setAttribute('hidden','');b.classList.remove('on')}}
+function _addOutside(e){const p=document.getElementById('add-panel'),b=document.getElementById('add-btn');if(p&&!p.contains(e.target)&&!(b&&b.contains(e.target)))closeAdd()}
+function _addEsc(e){if(e.key==='Escape')closeAdd()}
+function closeAdd(){const p=document.getElementById('add-panel'),b=document.getElementById('add-btn');if(p)p.setAttribute('hidden','');if(b)b.classList.remove('on');document.removeEventListener('mousedown',_addOutside,true);document.removeEventListener('keydown',_addEsc)}
+function toggleAdd(){const p=document.getElementById('add-panel'),b=document.getElementById('add-btn');
+  if(p.hasAttribute('hidden')){p.removeAttribute('hidden');b.classList.add('on');paintIcons(p);setTimeout(()=>{document.addEventListener('mousedown',_addOutside,true);document.addEventListener('keydown',_addEsc)},0)}
+  else closeAdd();
+}
 const _IMG_RE=/\.(png|jpe?g|gif|bmp|webp|tiff?|heic|heif)$/i;
 function renderAdded(){
   const el=document.getElementById('ap-added');if(!el)return;
@@ -2412,7 +2422,7 @@ function _afoCard(k){
   const full=ag.access!=='code',tpc=ag.calls?Math.round(ag.tokens/ag.calls):0;
   const errCls=ag.errs>=AIS_POLICY.errMax?'alert':ag.errs>0?'warn':'';
   const burnCls=ag.burn>=AIS_POLICY.burnMax?'alert':ag.burn>=AIS_POLICY.burnWatch?'warn':'';
-  const cell=(kk,v,c)=>`<div class="afo-cell"><div class="afo-ck">${kk}</div><div class="afo-cv${c?' '+c:''}">${v}</div></div>`;
+  const cell=(kk,v,c,tip)=>`<div class="afo-cell"${tip?` data-tip="${tip}"`:''}><div class="afo-ck">${kk}</div><div class="afo-cv${c?' '+c:''}">${v}</div></div>`;
   const crit=k==='critic'?cell('Trust',ag.trust==null?'—':ag.trust)+cell('Accepted',ag.accepted||0)+cell('Rejected',ag.rejected||0,ag.rejected>0?'warn':''):'';
   return `<div class="afo ${ag.status==='working'?'live':''}">
     <div class="afo-head"><span class="afo-dot ${ag.status==='working'?'on':''}"></span><span class="afo-name">${escH(ag.label)}</span><span class="afo-role">${escH(ag.role)} · ${escH(ag.size)}</span></div>
@@ -2425,7 +2435,7 @@ function _afoCard(k){
     <div class="afo-grid">
       ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok/call',fmtPlain(tpc))}
       ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
-      ${cell('Burn',ag.burn+'%',burnCls)}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',ag.hm.toFixed(0)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'')}
+      ${cell('Burn',ag.burn+'%',burnCls,'Token pressure this turn — tokens vs. budget')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Deviation from baseline · 0% = stable, rises with tool failures')}
       ${crit}
     </div></div>`;
 }
@@ -2706,7 +2716,7 @@ function toggleModels(){const p=document.getElementById('models-pop');if(!p)retu
 function renderModelsPop(){
   const p=document.getElementById('models-pop');if(!p)return;
   const sel=new Set(S.fanout&&S.fanout.length?S.fanout:['mlx']);
-  p.innerHTML='<div class="mp-hd">Models to answer<span class="mp-sub">tag more than one for parallel replies</span></div>'+
+  p.innerHTML='<div class="mp-hd">Models to answer<span class="mp-sub">tag more than one for parallel replies</span><button class="mp-x" onclick="closeModels()" title="Close">✕</button></div>'+
     _modelCatalog().map(m=>{const checked=sel.has(m.id),dis=!m.avail;
       return `<div class="mp-row ${checked?'on':''} ${dis?'dis':''}" onclick="${dis?`keyDialog('${m.id}')`:`toggleFanout('${m.id}')`}"><span class="mp-check">${checked?ICON.check:''}</span><span class="mp-meta"><span class="mp-name">${escH(m.label)}</span><span class="mp-osub">${escH(m.sub)}</span></span>${dis?'<span class="mp-need">add key</span>':''}</div>`;
     }).join('');
