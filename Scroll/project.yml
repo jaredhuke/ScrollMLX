@@ -13,8 +13,10 @@ targets:
       - path: Sources/Scroll
     resources:
       - Sources/Scroll/Resources/Colors.xcassets
+      - Sources/Scroll/Resources/Assets.xcassets
     settings:
       base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.scroll.Scroll
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
