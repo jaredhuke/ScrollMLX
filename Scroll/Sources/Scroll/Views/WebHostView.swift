@@ -80,6 +80,24 @@ struct WebHostView: NSViewRepresentable {
                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: p)])
                 }
                 replyHandler(["ok": true], nil)
+            case "openExternal":
+                // Write the artifact to a temp file and open it in the user's default browser.
+                let name = (body["name"] as? String) ?? "page.html"
+                let content = (body["content"] as? String) ?? ""
+                var ext = (name as NSString).pathExtension
+                if ext.isEmpty { ext = "html" }
+                let safe = name.replacingOccurrences(of: "/", with: "-")
+                let dir = FileManager.default.temporaryDirectory.appendingPathComponent("scroll-preview", isDirectory: true)
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                let file = safe.hasSuffix("." + ext) ? safe : safe + "." + ext
+                let url = dir.appendingPathComponent(file)
+                do {
+                    try content.write(to: url, atomically: true, encoding: .utf8)
+                    NSWorkspace.shared.open(url)
+                    replyHandler(["ok": true], nil)
+                } catch {
+                    replyHandler(["ok": false], "write failed")
+                }
             default:
                 replyHandler(nil, "unknown action")
             }
