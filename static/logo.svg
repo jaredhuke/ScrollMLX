@@ -1,17 +1,7 @@
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scroll">
   <title>Scroll</title>
-  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <!-- top roll -->
-    <ellipse cx="24" cy="12" rx="8" ry="2.6"/>
-    <!-- furled body -->
-    <path d="M16 12v24"/>
-    <path d="M32 12v24"/>
-    <!-- bottom roll -->
-    <ellipse cx="24" cy="36" rx="8" ry="2.6"/>
-    <!-- vertical ribbon — long tails past both rolls -->
-    <path d="M21.3 4v40"/>
-    <path d="M26.7 4v40"/>
-    <!-- teal wax seal -->
-    <circle cx="24" cy="24" r="3" stroke="#2d8c8c"/>
-  </g>
+  <!-- ensō — a single calligraphic sweep, open at the right; the seal is the one mark of colour -->
+  <path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>
+  <path d="M36.4 16.6 l3.4 -2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <circle cx="37.4" cy="25.4" r="2.7" fill="#d2552e"/>
 </svg>

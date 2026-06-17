@@ -1,13 +1,9 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- Scroll app icon — black & white sealed scroll with a red/orange seal -->
+  <!-- Scroll app icon — an ensō (single calligraphic brush-circle) in ink; the seal is the one mark of colour -->
   <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#efece4"/>
-  <g fill="none" stroke="#1a1c22" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
-    <!-- the rolled scroll body -->
-    <rect x="372" y="218" width="280" height="588" rx="140"/>
-    <!-- two ribbon ties, extending just past the body like rod ends -->
-    <path d="M326 398 H698"/>
-    <path d="M326 626 H698"/>
+  <g transform="translate(56,56) scale(19)" fill="none" stroke="#1a1c22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" stroke-width="3.6"/>
+    <path d="M36.4 16.6 l3.4 -2" stroke-width="2" opacity="0.45"/>
   </g>
-  <!-- the seal: the one spot of colour (red/orange) -->
-  <circle cx="512" cy="512" r="58" fill="#d2552e"/>
+  <circle cx="767" cy="539" r="51" fill="#d2552e"/>
 </svg>
