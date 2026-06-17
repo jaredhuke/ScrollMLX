@@ -765,6 +765,66 @@ select.hb{padding:5px 9px}
 
 #ais-tip{position:fixed;display:none;z-index:300;background:var(--bg);border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:10px;line-height:1.6;padding:8px 12px;border-radius:9px;pointer-events:none;box-shadow:0 4px 20px rgba(26,28,34,.15);white-space:pre}
 
+/* ── shared full-screen overlays (Ledger, Operatives) ── */
+.fs-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
+.fs-overlay.open{display:flex}
+.fs-hdr{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--border-mid);flex-shrink:0;background:var(--bg2)}
+.fs-title{font-size:12px;letter-spacing:.22em;color:var(--text);text-transform:uppercase;font-weight:600}
+.fs-sub{font-size:9px;color:var(--text-ghost);letter-spacing:.06em;margin-top:2px}
+.fs-stats{margin-left:auto;display:flex;gap:22px}
+.fs-close{background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:9px;font-weight:500;letter-spacing:.1em;padding:6px 14px;cursor:pointer;border-radius:7px;text-transform:uppercase;transition:all .18s}
+.fs-close:hover{border-color:var(--red);color:var(--red)}
+/* Ledger full-screen */
+.lf-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;padding:20px 22px;overflow:hidden}
+.lf-left{display:flex;flex-direction:column;gap:16px;min-height:0;overflow-y:auto}
+.lf-right{display:flex;flex-direction:column;min-height:0}
+.lf-card{border:1px solid var(--border);border-radius:var(--r2);padding:15px 16px;background:var(--bg2)}
+.lf-card-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.lf-ct{font-variant-numeric:tabular-nums;color:var(--text-dim);letter-spacing:0}
+.lf-an{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:5px;cursor:pointer}
+.lf-an:hover{border-color:var(--teal);color:var(--teal)}
+#lf-spark{display:block;width:100%;height:120px}
+.lf-mode{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lf-mode-k{font-size:11px;color:var(--text-mid);width:96px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-mode-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.lf-mode-fill{height:100%;background:var(--teal);border-radius:3px}.lf-mode-fill.cloud{background:var(--amber)}
+.lf-mode-v{font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums;width:62px;text-align:right;flex-shrink:0}
+.lf-tip{display:flex;gap:8px;font-size:12px;color:var(--text-mid);line-height:1.5;padding:7px 0;border-top:1px solid var(--border)}
+.lf-tip:first-child{border-top:none}.lf-tip .ic{width:13px;height:13px;color:var(--teal);flex-shrink:0;margin-top:2px}
+#lf-rows{flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg2)}
+.lf-row{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--border)}
+.lf-row:hover{background:rgba(26,28,34,.03)}
+.lf-row-prompt{flex:1;font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-row-meta{font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.lf-row-tok{font-size:12px;color:var(--text-mid);font-variant-numeric:tabular-nums;width:74px;text-align:right;flex-shrink:0}
+.lf-row-tok b{color:var(--text)}
+/* Operatives full-screen */
+.af-body{flex:1;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;padding:20px 22px;overflow:hidden}
+.af-main{min-height:0;overflow-y:auto}
+.af-side{display:flex;flex-direction:column;gap:16px;min-height:0;overflow-y:auto}
+#af-ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.afo{border:1px solid var(--border);border-radius:var(--r2);padding:16px;background:var(--bg2)}
+.afo.live{border-color:var(--teal-line)}
+.afo-head{display:flex;align-items:center;gap:9px}
+.afo-dot{width:8px;height:8px;border-radius:50%;background:var(--border-mid);flex-shrink:0}.afo-dot.on{background:var(--teal);animation:dotPulse 1.8s infinite}
+.afo-name{font-size:14px;font-weight:600;letter-spacing:.04em;color:var(--text)}
+.afo-role{font-size:10px;color:var(--text-dim);margin-left:auto}
+.afo-ident{font-size:10px;color:var(--text-ghost);margin:3px 0 10px}
+.afo-scope{display:inline-block;font-size:9px;padding:2px 8px;border-radius:9px;margin-bottom:12px}
+.afo-scope.full{color:var(--teal);background:var(--teal-soft);border:1px solid var(--teal-line)}
+.afo-scope.code{color:var(--amber);background:rgba(176,121,26,.09);border:1px solid rgba(176,121,26,.3)}
+.afo-modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.afo-mode{border:1px solid var(--border);border-radius:var(--r);padding:8px 10px}
+.afo-mk{font-size:7px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-ghost)}
+.afo-mv{font-size:12px;color:var(--teal);font-weight:500;margin-top:2px;line-height:1.25}
+.afo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.afo-cell{background:var(--bg2);padding:9px 6px;text-align:center}
+.afo-ck{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost)}
+.afo-cv{font-size:16px;font-weight:200;color:var(--text);font-variant-numeric:tabular-nums;margin-top:2px}
+.afo-cv.warn{color:var(--amber)}.afo-cv.alert{color:var(--red)}
+.af-card{border:1px solid var(--border);border-radius:var(--r2);padding:15px 16px;background:var(--bg2)}
+.af-card-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.af-note{text-transform:none;letter-spacing:.02em;color:var(--text-ghost);font-weight:400}
 /* ── FULL-SCREEN AIS ── */
 #ais-full{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
 #ais-full.open{display:flex}
@@ -812,7 +872,7 @@ select.hb{padding:5px 9px}
       <button class="pj-mini-add" onclick="openProjects()" data-tip="Add or manage projects">+</button>
     </div>
     <div id="pj-mini"></div>
-    <div class="plabel" data-tip="Active LLM operatives and live metrics">Operatives</div>
+    <div class="plabel pj-plabel" data-tip="Active LLM operatives and live metrics"><span>Operatives</span><button class="pj-mini-add" onclick="openAgentsFull()" data-tip="Full operatives screen — metrics, API keys, repos">↗</button></div>
     <div id="agent-cards"></div>
     <div id="aem">
       <div id="tok-gauge" data-tip="Token usage this session vs. the expected budget">
@@ -894,7 +954,7 @@ select.hb{padding:5px 9px}
         <div id="ais-conn-list"></div>
       </div>
       <div class="ais-sec">
-        <div class="ais-sec-hd" data-tip="Token/burn ledger for this project">Ledger <span class="ais-ct" id="ledger-total"></span><button id="analyze-btn" onclick="analyzeEff()" title="Recommend how to prompt more efficiently">analyze ↻</button></div>
+        <div class="ais-sec-hd" data-tip="Token/burn ledger for this project">Ledger <span class="ais-ct" id="ledger-total"></span><button id="analyze-btn" onclick="openLedgerFull()" title="Open the full ledger">expand ↗</button></div>
         <div id="ledger-burn" class="lburn" data-tip="Live token burn this turn vs. the budget">
           <span class="lburn-lbl">Burn</span>
           <div class="lburn-track"><div class="lburn-fill" id="lburn-fill"></div></div>
@@ -1009,6 +1069,45 @@ select.hb{padding:5px 9px}
     <div class="fsl-item"><div class="fsl-dot" style="background:rgba(200,75,49,.5)"></div>Artifact</div>
     <div class="fsl-item"><div class="fsl-dot" style="background:rgba(140,110,70,.7)"></div>Run</div>
     <div class="fsl-item"><div class="fsl-dot" style="background:rgba(60,90,70,.7)"></div>Connector</div>
+  </div>
+</div>
+
+<div id="ledger-full" class="fs-overlay">
+  <div class="fs-hdr">
+    <div><div class="fs-title">Ledger</div><div class="fs-sub">Token &amp; burn — per project, per prompt</div></div>
+    <div class="fs-stats">
+      <div class="fs-stat"><span class="fs-stat-k">Prompts</span><span class="fs-stat-v" id="lf-prompts">—</span></div>
+      <div class="fs-stat"><span class="fs-stat-k">Total tokens</span><span class="fs-stat-v" id="lf-total">—</span></div>
+      <div class="fs-stat"><span class="fs-stat-k">Avg / prompt</span><span class="fs-stat-v" id="lf-avg">—</span></div>
+      <div class="fs-stat"><span class="fs-stat-k">Tool calls</span><span class="fs-stat-v" id="lf-tools">—</span></div>
+    </div>
+    <button class="fs-close" onclick="closeLedgerFull()">CLOSE ✕</button>
+  </div>
+  <div class="lf-body">
+    <div class="lf-left">
+      <div class="lf-card"><div class="lf-card-h">Burn over time</div><canvas id="lf-spark"></canvas></div>
+      <div class="lf-card"><div class="lf-card-h">By mode</div><div id="lf-modes"></div></div>
+      <div class="lf-card"><div class="lf-card-h">Efficiency <button class="lf-an" onclick="analyzeFull()">analyze ↻</button></div><div id="lf-tips"></div></div>
+    </div>
+    <div class="lf-right"><div class="lf-card-h">Prompts <span id="lf-count" class="lf-ct"></span></div><div id="lf-rows"></div></div>
+  </div>
+</div>
+
+<div id="agents-full" class="fs-overlay">
+  <div class="fs-hdr">
+    <div><div class="fs-title">Operatives</div><div class="fs-sub">Metrics · autonomy &amp; oversight · API keys · repos</div></div>
+    <div class="fs-stats">
+      <div class="fs-stat"><span class="fs-stat-k">Operatives</span><span class="fs-stat-v" id="afh-ops">—</span></div>
+      <div class="fs-stat"><span class="fs-stat-k">Session tokens</span><span class="fs-stat-v" id="afh-tok">—</span></div>
+    </div>
+    <button class="fs-close" onclick="closeAgentsFull()">CLOSE ✕</button>
+  </div>
+  <div class="af-body">
+    <div class="af-main"><div id="af-ops"></div></div>
+    <div class="af-side">
+      <div class="af-card"><div class="af-card-h">API keys <span class="af-note">Keychain · never the browser</span></div><div id="af-keys"></div></div>
+      <div class="af-card"><div class="af-card-h">Repos &amp; projects <button class="lf-an" onclick="closeAgentsFull();openProjects()">manage</button></div><div id="af-repos"></div></div>
+    </div>
   </div>
 </div>
 <div id="fs-node-tip"></div>
@@ -1899,6 +1998,7 @@ async function saveKey(provider,val,ov){
     try{renderSettings()}catch(_){}
     try{loadProviders()}catch(_){}
     try{if(typeof obRender==='function')obRender()}catch(_){}
+    try{if(document.getElementById('agents-full')?.classList.contains('open'))renderAgentsFull()}catch(_){}
     artToast((PROV_LABEL[provider]||provider)+' connected — key saved to your keychain','ok');
     closeKeyDialog();
   }else{btn.disabled=false;btn.textContent='Save securely';artToast('Could not save · '+((r&&r.error)||'unknown'),'err')}
@@ -1906,7 +2006,7 @@ async function saveKey(provider,val,ov){
 async function removeKey(provider){
   if(!confirm('Remove the '+(PROV_LABEL[provider]||provider)+' key from your keychain?'))return;
   let r;try{r=await fetch('/v1/keys/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
-  if(r&&r.ok){await refreshKeys();try{renderSettings()}catch(_){}try{loadProviders()}catch(_){}artToast((PROV_LABEL[provider]||provider)+' key removed','ok')}
+  if(r&&r.ok){await refreshKeys();try{renderSettings()}catch(_){}try{loadProviders()}catch(_){}try{if(document.getElementById('agents-full')?.classList.contains('open'))renderAgentsFull()}catch(_){}artToast((PROV_LABEL[provider]||provider)+' key removed','ok')}
   else artToast('Could not remove key','err');
 }
 function addMsgActions(afterEl,text){
@@ -2258,6 +2358,102 @@ async function analyzeEff(){
   let j;try{j=await fetch('/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:S.cwd})}).then(r=>r.ok?r.json():null)}catch(_){j=null}
   if(!j||!j.tips){tips.innerHTML='<div class="led-tip">Couldn’t analyze — restart the server to enable it.</div>';return}
   tips.innerHTML=j.tips.map(t=>`<div class="led-tip">${ICON.spark}<span>${escH(t)}</span></div>`).join('');
+}
+
+// ─── FULL-SCREEN LEDGER ────────────────────────────────────────────────────────
+function openLedgerFull(){document.getElementById('ledger-full').classList.add('open');document.addEventListener('keydown',_ledgerEsc);renderLedgerFull()}
+function closeLedgerFull(){document.getElementById('ledger-full').classList.remove('open');document.removeEventListener('keydown',_ledgerEsc)}
+function _ledgerEsc(e){if(e.key==='Escape')closeLedgerFull()}
+async function renderLedgerFull(){
+  let j;try{j=await fetch('/v1/ledger?project='+encodeURIComponent(S.cwd)).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  const s=(j&&j.summary)||{}, e=(j&&j.entries)||[];
+  document.getElementById('lf-prompts').textContent=s.prompts||0;
+  document.getElementById('lf-total').innerHTML=fmtNum(s.total_tokens||0);
+  document.getElementById('lf-avg').innerHTML=fmtNum(s.avg_tokens||0);
+  document.getElementById('lf-tools').textContent=s.tool_calls||0;
+  document.getElementById('lf-count').textContent=e.length?e.length:'';
+  // by-mode bars
+  const bm=s.by_mode||{},tot=Object.values(bm).reduce((a,b)=>a+b,0)||1;
+  document.getElementById('lf-modes').innerHTML=Object.keys(bm).length
+    ? Object.entries(bm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="lf-mode"><span class="lf-mode-k">${escH(k)}</span><div class="lf-mode-bar"><div class="lf-mode-fill ${k!=='local'?'cloud':''}" style="width:${Math.round(v/tot*100)}%"></div></div><span class="lf-mode-v">${fmtPlain(v)}</span></div>`).join('')
+    : '<div class="ais-empty">No usage yet</div>';
+  // sparkline (oldest → newest)
+  _drawSpark(e.slice().reverse().map(x=>x.tokens||0));
+  // rows (newest first)
+  document.getElementById('lf-rows').innerHTML=e.length
+    ? e.map(x=>`<div class="lf-row" data-tip="${escH(x.prompt||'')}"><span class="lf-row-prompt">${escH(x.prompt||'(prompt)')}</span><span class="lf-row-meta">${escH(x.mode||'local')}${x.tools?' · '+x.tools+'t':''}${x.iterations?' · '+x.iterations+'⟳':''}</span><span class="lf-row-tok"><b>${fmtPlain(x.tokens||0)}</b> tok</span></div>`).join('')
+    : '<div class="ais-empty" style="padding:18px">No prompts logged yet.</div>';
+  // efficiency tips
+  const tips=document.getElementById('lf-tips');tips.innerHTML='<div class="lf-tip" style="color:var(--text-ghost)">Tap “analyze” for prompt-efficiency tips.</div>';
+}
+function _drawSpark(vals){
+  const cv=document.getElementById('lf-spark');if(!cv)return;const dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth||400,H=cv.clientHeight||120;cv.width=W*dpr;cv.height=H*dpr;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  if(!vals.length){c.fillStyle='rgba(26,28,34,.25)';c.font='11px -apple-system,system-ui';c.fillText('no data yet',12,H/2);return}
+  const max=Math.max(...vals,1),pad=10,n=vals.length,x=i=>pad+(n<2?0:i*(W-2*pad)/(n-1)),y=v=>H-pad-(v/max)*(H-2*pad);
+  // area + line
+  c.beginPath();c.moveTo(x(0),y(vals[0]));vals.forEach((v,i)=>c.lineTo(x(i),y(v)));
+  c.lineTo(x(n-1),H-pad);c.lineTo(x(0),H-pad);c.closePath();c.fillStyle='rgba(47,156,139,.08)';c.fill();
+  c.beginPath();c.moveTo(x(0),y(vals[0]));vals.forEach((v,i)=>c.lineTo(x(i),y(v)));
+  c.strokeStyle='rgba(47,156,139,.85)';c.lineWidth=1.5;c.lineJoin='round';c.stroke();
+  vals.forEach((v,i)=>{c.beginPath();c.arc(x(i),y(v),1.8,0,Math.PI*2);c.fillStyle='rgba(47,156,139,.9)';c.fill()});
+}
+async function analyzeFull(){
+  const tips=document.getElementById('lf-tips');tips.innerHTML='<div class="lf-tip" style="color:var(--text-ghost)">Analyzing your prompts…</div>';
+  let j;try{j=await fetch('/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:S.cwd})}).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  tips.innerHTML=(j&&j.tips)?j.tips.map(t=>`<div class="lf-tip">${ICON.spark}<span>${escH(t)}</span></div>`).join(''):'<div class="lf-tip">Couldn’t analyze — restart the server.</div>';
+}
+
+// ─── FULL-SCREEN OPERATIVES (agents) — metrics · modes · keys · repos ──────────
+function openAgentsFull(){document.getElementById('agents-full').classList.add('open');document.addEventListener('keydown',_agentsEsc);loadProjects().then(renderAgentsFull);renderAgentsFull()}
+function closeAgentsFull(){document.getElementById('agents-full').classList.remove('open');document.removeEventListener('keydown',_agentsEsc)}
+function _agentsEsc(e){if(e.key==='Escape')closeAgentsFull()}
+function _afoCard(k){
+  const ag=S.agents[k];if(!ag)return'';recomputeAgent(k);
+  const full=ag.access!=='code',tpc=ag.calls?Math.round(ag.tokens/ag.calls):0;
+  const errCls=ag.errs>=AIS_POLICY.errMax?'alert':ag.errs>0?'warn':'';
+  const burnCls=ag.burn>=AIS_POLICY.burnMax?'alert':ag.burn>=AIS_POLICY.burnWatch?'warn':'';
+  const cell=(kk,v,c)=>`<div class="afo-cell"><div class="afo-ck">${kk}</div><div class="afo-cv${c?' '+c:''}">${v}</div></div>`;
+  const crit=k==='critic'?cell('Trust',ag.trust==null?'—':ag.trust)+cell('Accepted',ag.accepted||0)+cell('Rejected',ag.rejected||0,ag.rejected>0?'warn':''):'';
+  return `<div class="afo ${ag.status==='working'?'live':''}">
+    <div class="afo-head"><span class="afo-dot ${ag.status==='working'?'on':''}"></span><span class="afo-name">${escH(ag.label)}</span><span class="afo-role">${escH(ag.role)} · ${escH(ag.size)}</span></div>
+    <div class="afo-ident">${escH(ag.tech)} · ${escH(ag.host)}</div>
+    <span class="afo-scope ${full?'full':'code'}">${full?'Full context — code + personal':'Code only — sandboxed'}</span>
+    <div class="afo-modes">
+      <div class="afo-mode" data-tip="Agent Autonomy Mode (AEM)"><div class="afo-mk">AGMO · autonomy</div><div class="afo-mv">${escH(ag.agmo||'—')}</div></div>
+      <div class="afo-mode" data-tip="Human Oversight Mode (AEM)"><div class="afo-mk">HUMO · oversight</div><div class="afo-mv">${escH(ag.humo||'—')}</div></div>
+    </div>
+    <div class="afo-grid">
+      ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok/call',fmtPlain(tpc))}
+      ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
+      ${cell('Burn',ag.burn+'%',burnCls)}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',ag.hm.toFixed(0)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'')}
+      ${crit}
+    </div></div>`;
+}
+function renderAgentsFull(){
+  const keys=['primary','critic'];if(syncCloudAgent())keys.push('cloud');
+  document.getElementById('afh-ops').textContent=keys.length;
+  document.getElementById('afh-tok').innerHTML=fmtNum(S.totalTok||0);
+  document.getElementById('af-ops').innerHTML=keys.map(_afoCard).join('');
+  renderAgentKeys();renderAgentRepos();
+}
+function renderAgentKeys(){
+  const el=document.getElementById('af-keys');if(!el)return;const keys=window.CLOUD||{};
+  el.innerHTML=['groq','openrouter','cerebras','gemini','anthropic','openai'].map(p=>{
+    const has=keys[p],link=KEYLINKS[p],freeKey=['groq','openrouter','cerebras','gemini'].includes(p);
+    const right=has?`<span class="sk-set">✓ set</span><button class="sk-remove" title="Remove key" onclick="removeKey('${p}')">✕</button>`
+      :`<span class="sk-actions">${link?`<a class="sk-link" href="${link}" target="_blank" rel="noopener">${freeKey?'get free key ↗':'get key ↗'}</a>`:''}<button class="icon-btn primary sk-add" onclick="keyDialog('${p}')">${ICON.plus}Add key</button></span>`;
+    return `<div class="sk-row"><span class="sm-dot ${has?'ready':''}"></span><span class="sk-name">${p}</span>${right}</div>`;
+  }).join('');
+}
+function renderAgentRepos(){
+  const el=document.getElementById('af-repos');if(!el)return;const ps=S.projects||[];
+  if(!ps.length){el.innerHTML='<div class="pjm-empty">No projects — use “manage”.</div>';return}
+  el.innerHTML=ps.map(p=>{const active=S.cwd===p.path,dot=p.running?(p.port_up?'up':'starting'):'';
+    const go=p.running?`<button class="pjm-go stop" onclick="event.stopPropagation();stopProject('${p.id}');setTimeout(renderAgentRepos,500)">${_PJ_STOP}</button>`
+            :(p.start?`<button class="pjm-go" onclick="event.stopPropagation();launchProject('${p.id}');setTimeout(renderAgentRepos,800)">${_PJ_PLAY}</button>`:'');
+    return `<div class="pjm-row ${active?'active':''}" onclick="activateProject('${p.id}');renderAgentRepos()"><span class="pjm-dot ${dot}"></span><span class="pjm-name">${escH(p.name)}</span>${go}</div>`;}).join('');
 }
 
 // ─── SETTINGS — model directory · API keys · git ───────────────────────────────
