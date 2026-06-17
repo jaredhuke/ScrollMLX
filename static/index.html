@@ -610,6 +610,7 @@ select.hb{padding:5px 9px}
 .ad-foot .spacer{flex:1}
 .ad-close{background:none;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;padding:7px 15px;border-radius:var(--r);cursor:pointer}.ad-close:hover{color:var(--text);border-color:var(--text-soft)}
 .ad-stop{background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.04em;padding:7px 15px;border-radius:var(--r);cursor:pointer}
+.ad-retask{background:none;border:1px solid var(--teal-line);color:var(--teal);font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.04em;padding:7px 15px;border-radius:var(--r);cursor:pointer;margin-left:8px}.ad-retask:hover{background:var(--teal-soft)}
 #analyze-btn{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;cursor:pointer}
 #analyze-btn:hover{border-color:var(--teal);color:var(--teal)}
 #ledger-tips{padding:0 11px}
@@ -964,10 +965,6 @@ select.hb{padding:5px 9px}
       <div class="ais-sec">
         <div class="ais-sec-hd" data-tip="Files and modules created this session">Build <span class="ais-ct" id="bg-node-ct"></span></div>
         <canvas id="build-canvas"></canvas>
-      </div>
-      <div class="ais-sec">
-        <div class="ais-sec-hd" data-tip="Active operatives and context burn">Operatives <span class="ais-ct" id="ais-agent-ct"></span></div>
-        <div id="ais-agents-list"></div>
       </div>
       <div class="ais-sec">
         <div class="ais-sec-hd" data-tip="Linked data sources and tool connectors">Connectors <span class="ais-ct" id="ais-conn-ct"></span></div>
@@ -1410,7 +1407,8 @@ function drawAIS(){
   // corner readouts (sans, soft)
   AC.font='400 9px -apple-system,system-ui,sans-serif';
   AC.textAlign='left';AC.fillStyle='rgba(60,90,70,.8)';AC.fillText(`vigilance ${Math.round(M.vigilance*100)}`,9,13);
-  AC.fillStyle=gb>60?'rgba(176,122,16,.85)':'rgba(26,28,34,.34)';AC.fillText(`burn ${gb}%`,9,h-7);
+  const maxRate=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
+  AC.fillStyle=gb>60?'rgba(176,122,16,.85)':'rgba(26,28,34,.34)';AC.fillText(`burn ${maxRate} t/s`,9,h-7);
   AC.textAlign='right';AC.fillStyle=M.errorRate>0?'rgba(200,75,49,.7)':'rgba(26,28,34,.34)';AC.fillText(`${Math.round(M.errorRate*100)}% err`,w-9,h-7);
   const gov=(S._gov&&S._gov.overall)||'ok';
   AC.textAlign='right';AC.fillStyle=gov==='intervene'?'rgba(200,75,49,.85)':gov==='watch'?'rgba(176,122,16,.85)':'rgba(60,90,70,.7)';
@@ -1483,11 +1481,17 @@ function agentTick(kind,n){const k=_activeAgentKey(),ag=S.agents[k];if(!ag)retur
   else if(kind==='tool')ag.tools+=n; else if(kind==='iter')ag.iters+=n; else if(kind==='err')ag.errs+=n;
   recomputeAgent(k);
 }
-function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;const budget=S.tokenBudget||16384;
-  ag.burn=Math.min(Math.round(((ag.turnTokens||0)/budget)*100),100);   // live pressure this turn
+const BURN_REF=60;   // tok/s considered "fully hot" — sets the 0-100 heat scale
+function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;
+  // burn is THROUGHPUT (tokens/sec): live = this turn's tokens / elapsed; idle = session avg
+  const elapsed=ag.startMs?Math.max((Date.now()-ag.startMs)/1000,0.4):(ag.ms>0?ag.ms/1000:0);
+  const toks=ag.startMs?(ag.turnTokens||0):(ag.tokens||0);
+  ag.rate=elapsed>0?Math.round(toks/elapsed):0;
+  ag.burn=Math.min(Math.round(ag.rate/BURN_REF*100),100);   // heat 0-100 from throughput
   const er=ag.iters?ag.errs/ag.iters:0;ag.hm=Math.max(2,Math.min(98,50+er*90));   // drift = real tool-failure pressure
 }
-function resetAgentMetrics(){AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],{tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,hm:50}));S.govFlagged=false}
+function rateHr(rate){const h=Math.round((rate||0)*3600);return h>=1000?(h/1000).toFixed(h>=10000?0:1)+'k':String(h)}  // tok/hr
+function resetAgentMetrics(){AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],{tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,rate:0,hm:50}));S.govFlagged=false}
 const AIS_POLICY={burnWatch:75,burnMax:95,errWatch:1,errMax:3,errRate:0.34,iterMax:12};
 // AGMO / HUMO — Agent Autonomy & Human Oversight Modes (Agentic Experience Manual v16, ch.3–4)
 const _AGMO={
@@ -1509,8 +1513,7 @@ function aisGovern(){
   AGENT_KEYS.forEach(k=>{const ag=S.agents[k];let lvl='ok';const why=[];
     const er=ag.iters?ag.errs/ag.iters:0,tt=ag.turnTokens||0;
     if(tt>budget){lvl='intervene';why.push(`over token budget (${fmtPlain(tt)}/${fmtPlain(budget)})`)}
-    else if(ag.burn>=AIS_POLICY.burnMax){lvl=_worse(lvl,'intervene');why.push(`burn ${ag.burn}% — at budget`)}
-    else if(ag.burn>=AIS_POLICY.burnWatch){lvl=_worse(lvl,'watch');why.push(`burn ${ag.burn}%`)}
+    else if(tt>budget*0.8){lvl=_worse(lvl,'watch');why.push(`${Math.round(tt/budget*100)}% of token budget`)}
     if(ag.errs>=AIS_POLICY.errMax){lvl='intervene';why.push(`${ag.errs} errors`)}
     else if(ag.errs>=AIS_POLICY.errWatch){lvl=_worse(lvl,'watch');why.push(`${ag.errs} error${ag.errs>1?'s':''}`)}
     if(ag.iters>=3&&er>AIS_POLICY.errRate){lvl='intervene';why.push(`${Math.round(er*100)}% tool-fail rate`)}
@@ -1557,30 +1560,41 @@ function openAgentDetail(k){
       <div class="ad-grid">
         ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok / call',fmtPlain(tpc))}
         ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
-        ${cell('Burn',ag.burn+'%',burnCls,'Token pressure this turn — tokens generated vs. budget')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Behavioural deviation from baseline · 0% = stable, rises with tool failures ('+hmLabel(hmClass(ag.hm))+')')}
+        ${cell('Burn',(ag.rate||0)+' t/s',burnCls,'Token throughput — '+(ag.rate||0)+' tokens/sec ≈ '+rateHr(ag.rate)+' tokens/hr')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Behavioural deviation from baseline · 0% = stable, rises with tool failures ('+hmLabel(hmClass(ag.hm))+')')}
         ${critRows}
       </div>
     </div>
-    <div class="ad-foot"><span style="font-size:9px;color:var(--text-ghost)">AIS governs these live</span><span class="spacer"></span>${g.level==='intervene'&&S.streaming?'<button class="ad-stop" onclick="stopStream();closeAgentDetail()">Stop run</button>':''}<button class="ad-close" onclick="closeAgentDetail()">Close</button></div>
+    <div class="ad-foot">${ag.status==='working'?`<button class="ad-stop" onclick="haltAgent()">Halt</button><button class="ad-retask" onclick="retaskAgent()">Retask →</button>`:'<span style="font-size:9px;color:var(--text-ghost)">AIS governs these live</span>'}<span class="spacer"></span><button class="ad-close" onclick="closeAgentDetail()">Close</button></div>
   </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('mousedown',e=>{if(e.target===ov)closeAgentDetail()});
 }
 function closeAgentDetail(){const o=document.getElementById('ad-overlay');if(o)o.remove()}
+// Halt the running operative; Retask hands its current work to another (you pick via the model picker)
+function haltAgent(){stopStream();artToast('Operative halted','ok');closeAgentDetail()}
+function retaskAgent(){
+  stopStream();
+  const g=(S.goals||[]).slice().reverse().find(x=>x.text);
+  closeAgentDetail();
+  if(g&&g.text){msgIn.value=g.text;msgIn.dispatchEvent(new Event('input'))}
+  if(typeof toggleModels==='function'&&document.getElementById('models-pop')?.hasAttribute('hidden'))toggleModels();
+  artToast('Halted — tag the operative to retask, then Send','ok');
+}
 
 function cardKeys(){return (typeof syncCloudAgent==='function'&&syncCloudAgent())?['primary','critic','cloud']:['primary','critic']}
 function driftPct(hm){return Math.round(Math.abs((hm==null?50:hm)-50)/50*100)}  // 0% = stable; rises with tool failures
 function renderCards(){
   document.getElementById('agent-cards').innerHTML=cardKeys().map(k=>{
+    recomputeAgent(k);
     const ag=S.agents[k],bc=burnClass(ag.burn),hmc=hmClass(ag.hm);
-    const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.burn}% (token pressure this turn)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
+    const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.rate||0} tok/s (≈ ${rateHr(ag.rate)} tok/hr)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
     return`<div class="${cardClass(ag)}" onclick="openAgentDetail('${k}')" data-tip="${tip.replace(/"/g,'&quot;')} · click for details">
       <div class="ac-head"><div class="ac-dot ${ag.status==='working'?'on':ag.status==='error'?'err':''}"></div>
         <span class="ac-name">${ag.label}</span><span class="ac-role">${ag.role}</span>
         <span class="ac-status ${ag.status}">${ag.status.toUpperCase()}</span></div>
       <div class="ac-tech">${ag.tech} <span class="ac-host">${ag.host}</span></div>
       <div class="ac-task">${ag.task||'—'}</div>
-      <div class="br"><span class="br-lbl">Burn</span><div class="br-track"><div class="br-fill ${bc}" style="width:${ag.burn}%"></div></div><span class="br-val">${ag.burn}%</span></div>
+      <div class="br" data-tip="Token burn — how hot this operative is running (${rateHr(ag.rate)} tok/hr)"><span class="br-lbl">Burn</span><div class="br-track"><div class="br-fill ${bc}" style="width:${ag.burn}%"></div></div><span class="br-val">${ag.rate||0}/s</span></div>
       <div class="hm-row"><span class="hm-lbl">HAS MAP</span>
         <div class="hm-track"><div class="hm-bound" style="left:25%;width:50%"></div><div class="hm-cursor ${hmc}" style="left:${ag.hm}%"></div></div>
         <span class="hm-badge ${hmc}">${hmLabel(hmc)}</span></div></div>`;
@@ -1596,10 +1610,11 @@ function updateAEM(){
   document.getElementById('av-iter').innerHTML=`${S.iterations}<span class="u"> / 12</span>`;
   document.getElementById('av-tc').textContent=S.toolCallTotal;
   const e=document.getElementById('av-err');e.textContent=S.errors;e.className='aem-v'+(S.errors>2?' alert':S.errors>0?' warn':'');
-  // ledger burn meter — live session burn vs. budget, sitting above the ledger
-  const bp=Math.round(frac*100),lf=document.getElementById('lburn-fill'),lv=document.getElementById('lburn-val');
-  if(lf){lf.style.width=Math.min(bp,100)+'%';lf.className='lburn-fill'+(over?' over':bp>=70?' hot':'')}
-  if(lv)lv.textContent=(over?fmtPlain(S.totalTok)+' / '+fmtPlain(budget):bp+'%');
+  // ledger burn meter — live token THROUGHPUT (tok/s), heat-scaled
+  const rate=Math.max(0,...AGENT_KEYS.map(k=>(recomputeAgent(k),S.agents[k].rate||0)),S.agents.cloud.rate||0);
+  const heat=Math.min(Math.round(rate/BURN_REF*100),100),lf=document.getElementById('lburn-fill'),lv=document.getElementById('lburn-val');
+  if(lf){lf.style.width=heat+'%';lf.className='lburn-fill'+(heat>=95?' over':heat>=70?' hot':'')}
+  if(lv)lv.textContent=rate+' t/s';
   renderGov();
 }
 function renderTokBudget(over,budget){
@@ -1618,11 +1633,7 @@ function renderToolMini(){
 }
 function renderAISInfo(){
   renderGov();
-  document.getElementById('ais-agents-list').innerHTML=AGENT_KEYS.map(k=>{
-    const ag=S.agents[k],busy=ag.status==='working',bc=burnClass(ag.burn);
-    return`<div class="ais-a-row" onclick="openAgentDetail('${k}')" data-tip="${ag.label} · ${ag.size} · ${ag.status} · burn ${ag.burn}% · click for details"><div class="ais-a-dot ${busy?'on':ag.status==='error'?'err':''}"></div><span class="ais-a-name">${ag.label}</span><span class="ais-a-sz">${ag.size}</span><div class="ais-a-bar"><div class="ais-a-fill ${bc}" style="width:${ag.burn}%"></div></div><span class="ais-a-pct">${ag.burn}%</span></div>`;
-  }).join('');
-  document.getElementById('ais-agent-ct').textContent=AGENT_KEYS.length;
+  // (right-panel Operatives list removed — redundant with the left-panel cards)
   const sources={};allTools.forEach(t=>{if(!sources[t.source])sources[t.source]={n:t.source,tot:0,en:0};sources[t.source].tot++;if(t.enabled)sources[t.source].en++;});
   const mdl=document.getElementById('model-lbl').textContent||'MLX';
   const g=S.git||{},gitAct=g.active||(Date.now()-(g.last||0)<1600),gitUsed=(g.reads||0)+(g.writes||0);
@@ -2144,7 +2155,7 @@ async function escalate(){
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const ls=buf.split('\n');buf=ls.pop();
       for(const ln of ls){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')break;
         let evt;try{evt=JSON.parse(raw)}catch(_){continue}
-        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents.cloud;cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;cc.burn=Math.min(Math.round((cc.turnTokens/(S.tokenBudget||16384))*100),100);if(S.totalTok%15===0){updateAEM();renderAISInfo()}}
+        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents.cloud;cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;recomputeAgent('cloud');if(S.totalTok%15===0){updateAEM();renderAISInfo()}}
         else if(evt.type==='error'){throw new Error(evt.message)}}}
   }catch(e){cur.remove();bodyEl.innerHTML=`<span style="color:var(--red);font-weight:500">Escalation failed.</span> <span style="color:var(--text-ghost);font-size:12px">${escH(e.message)}</span>`;
     _cloudIdle();S.streaming=false;setSending(false);setStatus(false);return;}
@@ -2495,7 +2506,7 @@ function _afoCard(k){
     <div class="afo-grid">
       ${cell('Tokens',fmtPlain(ag.tokens))}${cell('Calls',ag.calls||0)}${cell('Tok/call',fmtPlain(tpc))}
       ${cell('Tools',ag.tools||0)}${cell('Loops',ag.iters||0)}${cell('Errors',ag.errs||0,errCls)}
-      ${cell('Burn',ag.burn+'%',burnCls,'Token pressure this turn — tokens vs. budget')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Deviation from baseline · 0% = stable, rises with tool failures')}
+      ${cell('Burn',(ag.rate||0)+' t/s',burnCls,'Throughput — '+(ag.rate||0)+' tok/sec ≈ '+rateHr(ag.rate)+' tok/hr')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Deviation from baseline · 0% = stable, rises with tool failures')}
       ${crit}
     </div></div>`;
 }
