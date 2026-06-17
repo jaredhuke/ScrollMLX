@@ -419,8 +419,8 @@ final class ContextEngine: ObservableObject {
     /// authorized. Uses the macOS 14 full-access entry point.
     private func gatherCalendarToday() async -> [String]? {
         let store = eventStore
-        let granted = (try? await store.requestFullAccessToEvents()) ?? false
-        guard granted else { return nil }
+        // Read ONLY if the user has already granted access — never prompt.
+        guard EKEventStore.authorizationStatus(for: .event) == .fullAccess else { return nil }
 
         return await Task.detached { () -> [String]? in
             let cal = Calendar.current
@@ -452,8 +452,8 @@ final class ContextEngine: ObservableObject {
     /// Titles of incomplete reminders. Omitted if access is not authorized.
     private func gatherReminders() async -> [String]? {
         let store = eventStore
-        let granted = (try? await store.requestFullAccessToReminders()) ?? false
-        guard granted else { return nil }
+        // Read ONLY if the user has already granted access — never prompt.
+        guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return nil }
 
         let predicate = store.predicateForIncompleteReminders(
             withDueDateStarting: nil, ending: nil, calendars: nil
