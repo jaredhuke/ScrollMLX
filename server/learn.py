@@ -62,6 +62,25 @@ def reject(project: str, note: str) -> dict:
     return t
 
 
+def note(project: str, text: str) -> None:
+    """Append a learned note WITHOUT touching critic trust.
+
+    Used when the user edits or challenges the agent's output — the friction
+    itself becomes a standing correction future runs are told to honor.
+    """
+    text = (text or "").strip()
+    if not text:
+        return
+    d = _load(_LEARNED, {})
+    key = project or "."
+    d.setdefault(key, [])
+    if any(x.get("note") == text[:300] for x in d[key][-8:]):
+        return  # don't pile up duplicates
+    d[key].append({"note": text[:300], "ts": time.time()})
+    d[key] = d[key][-50:]
+    _save(_LEARNED, d)
+
+
 def learned(project: str | None) -> list[str]:
     d = _load(_LEARNED, {})
     return [x["note"] for x in d.get(project or ".", [])]
