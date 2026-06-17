@@ -368,13 +368,21 @@ select.hb{padding:5px 9px}
 .art-badge.bk{background:rgba(140,110,70,.12);color:#7a5a2a}
 .art-lin{font-size:9.5px;color:var(--text-ghost);margin-top:4px;font-family:var(--mono);line-height:1.5;word-break:break-word}
 .art-lin b{color:var(--text-dim);font-weight:600}
-#art-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);z-index:400;background:var(--text);color:var(--bg);font-family:var(--font);font-size:12px;font-weight:500;padding:11px 16px;border-radius:10px;box-shadow:0 8px 30px rgba(26,28,34,.28);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:flex;align-items:center;gap:12px;max-width:90vw}
-#art-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-#art-toast.err{background:var(--red);color:#fff}
-#art-toast.ok .art-tk{color:rgba(60,200,120,.95)}
-#art-toast button{background:rgba(240,236,228,.18);border:none;color:inherit;font-family:var(--font);font-size:11px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;letter-spacing:.02em}
-#art-toast button:hover{background:rgba(240,236,228,.3)}
-#art-toast button.x{background:none;opacity:.6;font-weight:400;padding:5px 6px}
+/* notification stack — bottom-center, newest on top; severity colour; errors persist */
+#notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column-reverse;gap:8px;max-width:min(440px,92vw);pointer-events:none}
+.nt{display:flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);font-family:var(--font);font-size:12px;font-weight:500;padding:10px 12px;border-radius:10px;box-shadow:0 8px 30px rgba(26,28,34,.28);pointer-events:auto;animation:ntIn .22s cubic-bezier(.2,.7,.3,1)}
+@keyframes ntIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.nt.out{opacity:0;transform:translateY(6px);transition:opacity .28s,transform .28s}
+.nt-ic{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:rgba(240,236,228,.16)}
+.nt-msg{flex:1;line-height:1.4}
+.nt-act{background:rgba(240,236,228,.18);border:none;color:inherit;font-family:var(--font);font-size:11px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;letter-spacing:.02em;flex-shrink:0}
+.nt-act:hover{background:rgba(240,236,228,.32)}
+.nt-x{background:none;border:none;color:inherit;opacity:.55;font-size:12px;cursor:pointer;padding:3px 4px;flex-shrink:0;min-width:24px;min-height:24px}
+.nt-x:hover{opacity:1}
+.nt-err{background:var(--red);color:#fff}
+.nt-ok{background:#26433a;color:#eef3f0}.nt-ok .nt-ic{background:rgba(60,200,120,.28);color:#bff0d2}
+.nt-warn{background:var(--amber);color:#fff}
+.nt-run .nt-ic{background:rgba(240,236,228,.16)}
 
 /* code / HTML artifact cards (collapsed, minimal, apply-in-place) */
 .prose{white-space:pre-wrap;word-break:break-word}
@@ -1226,7 +1234,7 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">Produced this session <span id="art-count" class="art-ct"></span></div><div id="art-list"></div></div>
   </div>
 </div>
-<div id="art-toast" role="status" aria-live="polite"></div>
+<div id="notif" role="status" aria-live="polite"></div>
 
 <div id="cli-panel">
   <div class="cli-head"><span class="cli-title">Terminal</span><span class="cli-cwd" id="cli-cwd">~/</span><button class="dc" onclick="toggleCli()">✕</button></div>
@@ -1969,10 +1977,32 @@ function renderArtifacts(){
   list.querySelectorAll('.art-row.clickable').forEach(r=>r.addEventListener('click',()=>previewArtifact(r.dataset.path,r.dataset.name)));
   updateArtBadge();
 }
-let _artToastT=null;
-function artToast(msg,kind){const el=document.getElementById('art-toast');el.textContent=msg;el.className='show '+(kind||'');clearTimeout(_artToastT);_artToastT=setTimeout(()=>el.className='',3400)}
-function hideArtToast(){document.getElementById('art-toast').className=''}
-function promptSnapshotBanner(count){const el=document.getElementById('art-toast');el.innerHTML=`<span>${count} new artifact${count!==1?'s':''} — save a checkpoint?</span><button onclick="snapshotArtifacts();hideArtToast()">Snapshot</button><button onclick="backupArtifacts();hideArtToast()">Backup</button><button class="x" onclick="hideArtToast()">Later</button>`;el.className='show'}
+// ─── NOTIFICATIONS — a stack with severity; errors persist until dismissed ─────
+const _NT_ICON={err:'✕',ok:'✓',warn:'!',run:'…',info:'·'};
+function notify(msg,kind,opts){
+  kind=kind||'info';opts=opts||{};
+  const wrap=document.getElementById('notif');if(!wrap)return null;
+  const el=document.createElement('div');el.className='nt nt-'+(_NT_ICON[kind]?kind:'info');
+  el.setAttribute('role',kind==='err'?'alert':'status');
+  const acts=(opts.actions||[]).map((a,i)=>`<button class="nt-act" data-i="${i}">${escH(a.label)}</button>`).join('');
+  el.innerHTML=`<span class="nt-ic">${_NT_ICON[kind]||'·'}</span><span class="nt-msg"></span>${acts}<button class="nt-x" aria-label="Dismiss">✕</button>`;
+  el.querySelector('.nt-msg').textContent=msg;
+  (opts.actions||[]).forEach((a,i)=>el.querySelector(`.nt-act[data-i="${i}"]`).addEventListener('click',()=>{try{a.onClick&&a.onClick()}finally{el.remove()}}));
+  el.querySelector('.nt-x').addEventListener('click',()=>el.remove());
+  wrap.appendChild(el);
+  while(wrap.children.length>5)wrap.firstChild.remove();
+  const ttl=(opts.persist||kind==='err')?0:(kind==='warn'?7000:3600);
+  if(ttl)setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),280)},ttl);
+  return el;
+}
+function artToast(msg,kind){return notify(msg,kind)}  // back-compat alias — everything routes through the stack
+function hideArtToast(){const w=document.getElementById('notif');if(w)w.innerHTML=''}
+function promptSnapshotBanner(count){
+  notify(`${count} new artifact${count!==1?'s':''} — save a checkpoint?`,'info',{persist:true,actions:[
+    {label:'Snapshot',onClick:()=>snapshotArtifacts()},
+    {label:'Backup',onClick:()=>backupArtifacts()},
+  ]});
+}
 async function snapshotArtifacts(){
   const goal=(S.goals.length?S.goals[S.goals.length-1].text:'session').slice(0,60);
   let r;try{r=await fetch('/v1/artifacts/snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,message:'MLX snapshot — '+goal})}).then(x=>x.ok?x.json():{ok:false,reason:'server route missing (restart server)'})}catch(e){r={ok:false,reason:'request failed'}}
@@ -3423,7 +3453,7 @@ async function streamRun(text,th){
     S.totalTok++;agentTick('token');if(S.totalTok%15===0){renderCards();updateAEM();renderToolMini();if(S.dual)updateGantt()}};
   try{const resp=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:S.ctrl.signal});const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const ln of lines){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')break;try{dispatch(JSON.parse(raw),onTok)}catch(e){}}}
-  }catch(e){if(e.name!=='AbortError'){S.errors++;agentTick('err');updateAEM();setStatus(false,true)}}
+  }catch(e){if(e.name!=='AbortError'){S.errors++;agentTick('err');updateAEM();setStatus(false,true);notify('The run stopped — '+(e&&e.message?e.message:'lost the connection to the local engine')+'.','err');if(typeof checkHealth==='function')checkHealth()}}
   AGENT_KEYS.forEach(k=>{if(S.agents[k].startMs){S.agents[k].ms+=Date.now()-S.agents[k].startMs;S.agents[k].startMs=0}});
   cur.remove();if(RUN&&RUN.writeEl){RUN.writeEl.remove()}finalizeSteps();
   if(txt){renderAssistantBody(bodyEl,txt);S.msgs.push({role:'assistant',content:txt})}else bodyEl.textContent='';
@@ -3468,7 +3498,7 @@ function dispatch(evt,onTok){
       appendEl(buildMsgEl({type:'phase',phase:evt.name,model:evt.model}));updateGantt();break;
     case 'verdict':appendEl(buildMsgEl({type:'verdict',verdict:evt.verdict}));break;
     case 'done':patchAgent('primary',{status:'idle'});break;
-    case 'error':S.errors++;agentTick('err');updateAEM();const ee=document.createElement('div');ee.className='te err open';ee.innerHTML=`<span class="te-n" style="color:var(--red)">✕ Something went wrong</span><pre class="te-code">${escH(evt.message)}</pre>`;appendEl(ee);break;
+    case 'error':S.errors++;agentTick('err');updateAEM();const ee=document.createElement('div');ee.className='te err open';ee.innerHTML=`<span class="te-n" style="color:var(--red)">✕ Something went wrong</span><pre class="te-code">${escH(evt.message)}</pre>`;appendEl(ee);notify('The agent hit an error — see the run for details','err');break;
   }
 }
 
