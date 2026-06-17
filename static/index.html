@@ -364,6 +364,20 @@ select.hb{padding:5px 9px}
 /* code / HTML artifact cards (collapsed, minimal, apply-in-place) */
 .prose{white-space:pre-wrap;word-break:break-word}
 .codecard{border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);margin:9px 0;overflow:hidden}
+/* renderable (HTML/SVG) artifact — large clear icon + Open-in-browser / Download */
+.codecard.renderable{border-color:var(--teal-line)}
+.cc-render{display:flex;align-items:center;gap:15px;padding:15px 16px}
+.cc-render-ic{flex-shrink:0;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--teal);background:var(--teal-soft);border:1px solid var(--teal-line)}
+.cc-render-ic svg{width:28px;height:28px}
+.cc-render-body{flex:1;min-width:0}
+.cc-render-name{font-size:14px;color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-render-sub{font-size:10px;color:var(--text-soft);letter-spacing:.02em;margin-top:1px}
+.cc-render-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.cc-srcbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 13px 9px}
+.cc-srcbtn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-dim);font-family:var(--font);font-size:10px;letter-spacing:.04em;cursor:pointer;padding:4px 0;min-height:26px}
+.cc-srcbtn:hover{color:var(--teal)}
+.cc-srcbtn .ic{transition:transform .18s}
+.codecard.renderable.open .cc-srcbtn .ic{transform:rotate(180deg)}
 .cc-head{display:flex;align-items:center;gap:9px;padding:9px 11px}
 .cc-icon{color:var(--red);font-size:12px;flex-shrink:0}
 .cc-title{font-family:var(--mono);font-size:11px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -772,8 +786,13 @@ select.hb{padding:5px 9px}
 .pjm-empty{font-size:9px;color:var(--text-ghost);font-style:italic;padding:2px 6px 6px}
 .pjm-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s}
 .pjm-row:hover{background:rgba(26,28,34,.04)}
-.pjm-row.active{background:var(--teal-soft);box-shadow:inset 2px 0 0 var(--teal)}
-.pjm-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
+/* active = a thin hairline + a circle halo on the dot — no block fill (pen-and-ink) */
+.pjm-row.active{box-shadow:inset 2px 0 0 var(--teal)}
+.pjm-row.active .pjm-name{color:var(--text);font-weight:600}
+.pjm-row.active .pjm-dot{box-shadow:0 0 0 3px var(--teal-soft)}
+.pjm-row.adhoc.active{box-shadow:inset 2px 0 0 var(--amber)}
+.pjm-row.adhoc.active .pjm-dot{box-shadow:0 0 0 3px rgba(176,121,26,.15)}
+.pjm-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0;transition:box-shadow .15s}
 .pjm-dot.up{background:var(--teal);animation:dotPulse 1.8s infinite}.pjm-dot.starting{background:var(--amber)}
 .pjm-name{flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pjm-go{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:4px;flex-shrink:0}
@@ -883,8 +902,24 @@ select.hb{padding:5px 9px}
 .sf-col{display:flex;flex-direction:column;gap:9px;min-width:0}
 .sf-h{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-soft);display:flex;align-items:center;gap:8px;margin-bottom:2px}
 .sf-list{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
-.sf-area{min-height:160px;resize:vertical;font-family:var(--font);line-height:1.5}
+.sf-area{min-height:140px;resize:vertical;font-family:var(--font);line-height:1.5}
 .sf-acts{display:flex;gap:8px}
+/* drop zone — point at a file or folder, name from filename */
+.sf-drop{display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;padding:22px 18px;border:1.5px dashed var(--border-mid);border-radius:var(--r2);background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
+.sf-drop:hover,.sf-drop:focus-visible{border-color:var(--teal);background:var(--teal-soft)}
+.sf-drop.over{border-color:var(--teal);background:var(--teal-soft);border-style:solid}
+.sf-drop-ic{width:30px;height:30px;color:var(--text-dim)}
+.sf-drop:hover .sf-drop-ic,.sf-drop.over .sf-drop-ic{color:var(--teal)}
+.sf-drop-t{font-size:13px;color:var(--text)}
+.sf-drop-s{font-size:11px;color:var(--text-soft)}
+.sf-drop-acts{display:flex;gap:8px;margin-top:6px}
+.sf-write{margin-top:4px}
+.sf-write>summary{font-size:11px;color:var(--text-dim);cursor:pointer;list-style:none;padding:6px 2px;user-select:none}
+.sf-write>summary::-webkit-details-marker{display:none}
+.sf-write>summary:hover{color:var(--teal)}
+.sf-write>summary::before{content:'＋ ';color:var(--text-ghost)}
+.sf-write[open]>summary::before{content:'－ '}
+.sf-write[open]>summary{margin-bottom:8px}
 .sf-row2{display:flex;gap:8px;align-items:flex-start}
 .sf-row2 .pj-in{margin-bottom:0}
 .sf-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2)}
@@ -1197,11 +1232,27 @@ select.hb{padding:5px 9px}
   <div class="sf-body">
     <div class="sf-col">
       <div class="sf-h">Skill files <span class="af-note">markdown the agent always follows</span></div>
+      <div id="sf-drop" class="sf-drop" tabindex="0" role="button" aria-label="Import skills: drop a .md file or folder, or click to choose"
+           onclick="document.getElementById('sf-file').click()"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('sf-file').click()}"
+           ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="_dropSkills(event)">
+        <svg class="sf-drop-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>
+        <div class="sf-drop-t">Drop a <b>.md</b> file or a folder</div>
+        <div class="sf-drop-s">the skill name comes from the filename — no form to fill</div>
+        <div class="sf-drop-acts">
+          <button class="pj-b primary" onclick="event.stopPropagation();document.getElementById('sf-file').click()">Choose files</button>
+          <button class="pj-b" onclick="event.stopPropagation();document.getElementById('sf-folder').click()">Choose folder</button>
+        </div>
+      </div>
+      <input type="file" id="sf-file" accept=".md,.markdown,.txt" multiple hidden onchange="importSkills(event)"/>
+      <input type="file" id="sf-folder" webkitdirectory hidden onchange="importSkills(event)"/>
       <div id="sf-list" class="sf-list"></div>
-      <input class="pj-in" id="sf-name" placeholder="Skill name — e.g. code-style"/>
-      <textarea class="pj-in sf-area" id="sf-body" placeholder="Markdown — capabilities or rules the agent should follow"></textarea>
-      <div class="sf-acts"><button class="pj-b primary" onclick="addSkillFull()">Add skill</button><button class="pj-b" onclick="document.getElementById('sf-file').click()">Upload .md</button></div>
-      <input type="file" id="sf-file" accept=".md,.markdown,.txt" hidden onchange="uploadSkillFull(event)"/>
+      <details class="sf-write">
+        <summary>or write one by hand</summary>
+        <input class="pj-in" id="sf-name" placeholder="Skill name — e.g. code-style"/>
+        <textarea class="pj-in sf-area" id="sf-body" placeholder="Markdown — capabilities or rules the agent should follow"></textarea>
+        <div class="sf-acts"><button class="pj-b primary" onclick="addSkillFull()">Add skill</button></div>
+      </details>
     </div>
     <div class="sf-col">
       <div class="sf-h">Tools <span class="af-note">enabled capabilities</span></div>
@@ -1851,6 +1902,8 @@ const ICON={
   upload:'<svg viewBox="0 0 16 16" class="ic"><path d="M8 10.2V1.8M4.8 5 8 1.8 11.2 5"/><path d="M2.4 13.4h11.2"/></svg>',
   git:'<svg viewBox="0 0 16 16" class="ic"><circle cx="4" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><path d="M4 6v4M12 8c0 2.2-1.8 3-4 3"/></svg>',
   eye:'<svg viewBox="0 0 16 16" class="ic"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z"/><circle cx="8" cy="8" r="2"/></svg>',
+  globe:'<svg viewBox="0 0 16 16" class="ic"><circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4M8 1.8c1.9 2 2.9 4 2.9 6.2S9.9 12.2 8 14.2C6.1 12.2 5.1 10.2 5.1 8S6.1 3.8 8 1.8Z"/></svg>',
+  ext:'<svg viewBox="0 0 16 16" class="ic"><path d="M9 2.5h4.5V7M13 3 7.5 8.5M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg>',
   doc:'<svg viewBox="0 0 16 16" class="ic"><path d="M4 1.8h5l3 3v9.4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2.8a1 1 0 0 1 1-1Z"/><path d="M5.5 7.5h5M5.5 10h5"/></svg>',
   pencil:'<svg viewBox="0 0 16 16" class="ic"><path d="M11.5 2.5l2 2L6 12l-2.6.6L4 10z"/></svg>',
   plus:'<svg viewBox="0 0 16 16" class="ic"><path d="M8 3v10M3 8h10"/></svg>',
@@ -2096,19 +2149,53 @@ function buildTriad(tri){
   });
   return wrap;
 }
+function _isRenderable(e){return /^(html?|svg)$/.test((e||'').toLowerCase())}
+function openInBrowser(name,content,ext){
+  try{
+    const blob=new Blob([content],{type:_mimeFor(ext)||'text/html'});
+    const u=URL.createObjectURL(blob);
+    const w=window.open(u,'_blank');
+    if(!w){artToast('Pop-up blocked — showing the in-app preview','err');openPreview(name,content,ext)}
+    else artToast('Opened '+name+' in a new tab','ok');
+    setTimeout(()=>URL.revokeObjectURL(u),60000);
+  }catch(_){artToast('Could not open — showing preview','err');openPreview(name,content,ext)}
+}
+const _BROWSER_GLYPH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.75" r=".55" fill="currentColor" stroke="none"/><circle cx="8.2" cy="6.75" r=".55" fill="currentColor" stroke="none"/><circle cx="10.4" cy="6.75" r=".55" fill="currentColor" stroke="none"/></svg>';
 function buildCodeCard(lang,header,code){
   const lines=code.split('\n').length,path=_inferPath(header,code);
   const fname=path?path.split('/').pop():_suggestName(lang,code);
   const title=path||fname,ext=(fname.split('.').pop()||_langExt(lang));
   const card=document.createElement('div');card.className='codecard';
-  card.innerHTML=`<div class="cc-head">${ICON.file}<span class="cc-title">${escH(title)}</span><span class="cc-meta">${escH(ext)} · ${lines} ${lines===1?'line':'lines'}</span><span class="cc-acts"><button class="icon-btn primary dl">${ICON.download}Download</button><button class="icon-btn apply">${ICON.check}${path?'Apply':'Save'}</button><button class="icon-btn bare copy" title="Copy code">${ICON.copy}</button><button class="icon-btn bare expand" title="Show / hide code">${ICON.chev}</button></span></div><div class="cc-bar"><div class="cc-bar-fill"></div></div><pre class="cc-code" contenteditable="plaintext-only" spellcheck="false">${escH(code)}</pre><div class="cc-foot"><span class="cc-edithint">Editable — your changes apply &amp; are learned</span><button class="cc-collapse">${ICON.chev} Collapse</button></div>`;
   const _cur=()=>{const p=card.querySelector('.cc-code');const t=p?(p.innerText!=null?p.innerText:p.textContent):code;return (t==null||t==='')?code:t};
+  if(_isRenderable(ext)){
+    card.classList.add('renderable');
+    card.innerHTML=`<div class="cc-render">
+        <div class="cc-render-ic">${_BROWSER_GLYPH}</div>
+        <div class="cc-render-body">
+          <div class="cc-render-name">${escH(title)}</div>
+          <div class="cc-render-sub">${escH(ext.toUpperCase())} · ${lines} ${lines===1?'line':'lines'} · opens as a web page</div>
+          <div class="cc-render-acts">
+            <button class="icon-btn primary openb">${ICON.globe}Open in browser</button>
+            <button class="icon-btn dl">${ICON.download}Download</button>
+            <button class="icon-btn bare prev" title="Preview inside the app">${ICON.eye}Preview</button>
+            <button class="icon-btn bare apply" title="${path?'Save to '+escH(path):'Save to the working folder'}">${ICON.check}${path?'Apply':'Save'}</button>
+          </div>
+        </div>
+      </div>
+      <div class="cc-srcbar"><button class="cc-srcbtn expand">${ICON.chev}<span>View &amp; edit source</span></button><button class="icon-btn bare copy" title="Copy code">${ICON.copy}Copy</button></div>
+      <pre class="cc-code" contenteditable="plaintext-only" spellcheck="false">${escH(code)}</pre>
+      <div class="cc-foot"><span class="cc-edithint">Editable — your changes apply &amp; are learned</span><button class="cc-collapse">${ICON.chev} Collapse</button></div>`;
+    card.querySelector('.openb').addEventListener('click',e=>{e.stopPropagation();openInBrowser(fname,_cur(),ext)});
+    card.querySelector('.prev').addEventListener('click',e=>{e.stopPropagation();openPreview(fname,_cur(),ext)});
+  }else{
+    card.innerHTML=`<div class="cc-head">${ICON.file}<span class="cc-title">${escH(title)}</span><span class="cc-meta">${escH(ext)} · ${lines} ${lines===1?'line':'lines'}</span><span class="cc-acts"><button class="icon-btn primary dl">${ICON.download}Download</button><button class="icon-btn apply">${ICON.check}${path?'Apply':'Save'}</button><button class="icon-btn bare copy" title="Copy code">${ICON.copy}</button><button class="icon-btn bare expand" title="Show / hide code">${ICON.chev}</button></span></div><div class="cc-bar"><div class="cc-bar-fill"></div></div><pre class="cc-code" contenteditable="plaintext-only" spellcheck="false">${escH(code)}</pre><div class="cc-foot"><span class="cc-edithint">Editable — your changes apply &amp; are learned</span><button class="cc-collapse">${ICON.chev} Collapse</button></div>`;
+    const t=card.querySelector('.cc-title');if(t)t.addEventListener('click',e=>{e.stopPropagation();openPreview(fname,_cur(),ext)});
+  }
   card.querySelector('.expand').addEventListener('click',e=>{e.stopPropagation();card.classList.toggle('open')});
   card.querySelector('.cc-collapse').addEventListener('click',e=>{e.stopPropagation();card.classList.remove('open');card.scrollIntoView({block:'nearest',behavior:'smooth'})});
   card.querySelector('.copy').addEventListener('click',async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(_cur());artToast('Copied '+fname,'ok')}catch(_){artToast('Copy failed','err')}});
   card.querySelector('.dl').addEventListener('click',e=>{e.stopPropagation();downloadFile(fname,_cur(),_mimeFor(ext))});
   card.querySelector('.apply').addEventListener('click',e=>{e.stopPropagation();applyCode(path,_cur(),card,code)});
-  card.querySelector('.cc-title').addEventListener('click',e=>{e.stopPropagation();openPreview(fname,_cur(),ext)});
   return card;
 }
 async function applyCode(path,code,card,orig){
@@ -2622,13 +2709,40 @@ async function addSkillFull(){
   if(r&&r.ok){document.getElementById('sf-name').value='';document.getElementById('sf-body').value='';artToast('Skill added — the agent will follow it','ok');renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
   else artToast('Could not add · '+((r&&r.error)||'unknown'),'err');
 }
-async function uploadSkillFull(ev){
-  const fl=ev.target.files&&ev.target.files[0];if(!fl)return;
-  const name=fl.name.replace(/\.(md|markdown|txt)$/i,'');let content='';try{content=await fl.text()}catch(_){}
-  ev.target.value='';
-  if(!content.trim()){artToast('File looks empty','err');return}
-  let r;try{r=await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
-  artToast(r&&r.ok?('Imported '+name):'Import failed',r&&r.ok?'ok':'err');renderSkillsFull();
+// ─── IMPORT SKILLS — point at a file or folder; name comes from the filename ────
+const _SKILL_EXT=/\.(md|markdown|txt)$/i;
+function importSkills(ev){const fl=ev.target.files;ev.target.value='';if(fl&&fl.length)_importSkillFiles(fl)}
+async function _importSkillFiles(files){
+  const md=[...files].filter(f=>_SKILL_EXT.test(f.name));
+  if(!md.length){artToast('No .md, .markdown or .txt files found','err');return}
+  let ok=0,empty=0;
+  for(const f of md){
+    let content='';try{content=await f.text()}catch(_){}
+    if(!content.trim()){empty++;continue}
+    const name=f.name.replace(_SKILL_EXT,'');
+    try{const r=await fetch('/v1/skills/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,content})}).then(x=>x.ok?x.json():null);if(r&&r.ok)ok++}catch(_){}
+  }
+  artToast(ok?('Imported '+ok+' skill'+(ok>1?'s':'')+(empty?' · '+empty+' empty skipped':'')):'Import failed — files were empty or unreadable',ok?'ok':'err');
+  renderSkillsFull();if(typeof loadSkills==='function')loadSkills();
+}
+// Drag-drop: handle dropped files AND folders (recurse via webkitGetAsEntry)
+async function _readSkillEntry(entry,out){
+  if(!entry)return;
+  if(entry.isFile){await new Promise(res=>entry.file(f=>{if(_SKILL_EXT.test(f.name))out.push(f);res()},()=>res()))}
+  else if(entry.isDirectory){const rd=entry.createReader();
+    const read=()=>new Promise(res=>rd.readEntries(e=>res(e||[]),()=>res([])));
+    let batch;do{batch=await read();for(const e of batch)await _readSkillEntry(e,out)}while(batch.length)}
+}
+async function _dropSkills(ev){
+  ev.preventDefault();const dz=document.getElementById('sf-drop');if(dz)dz.classList.remove('over');
+  const dt=ev.dataTransfer;if(!dt)return;
+  const items=dt.items;
+  if(items&&items.length&&items[0]&&items[0].webkitGetAsEntry){
+    const ents=[...items].map(it=>it.webkitGetAsEntry&&it.webkitGetAsEntry()).filter(Boolean);
+    if(ents.length){const out=[];for(const en of ents)await _readSkillEntry(en,out);if(out.length){_importSkillFiles(out);return}
+      artToast('No .md / .txt files in that drop','err');return}
+  }
+  if(dt.files&&dt.files.length)_importSkillFiles(dt.files);
 }
 async function editSkillFull(name){
   let j;try{j=await fetch('/v1/skills/get?name='+encodeURIComponent(name)).then(r=>r.ok?r.json():null)}catch(_){j=null}
