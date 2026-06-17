@@ -36,7 +36,8 @@ final class AppState: ObservableObject {
 
     func boot() {
         server.boot()
-        context.requestPermissions()
+        // No proactive Calendar/Reminders prompt — the context engine reads them only
+        // if the user has already granted access in System Settings (privacy by default).
     }
 
     func shutdown() {

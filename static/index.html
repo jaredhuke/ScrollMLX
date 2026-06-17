@@ -202,6 +202,11 @@ select.hb{padding:5px 9px}
 .vb{display:inline-flex;align-items:center;padding:3px 10px;font-size:9px;letter-spacing:.1em;font-weight:600;border-radius:4px}
 .vb.LGTM{background:rgba(60,90,60,.07);color:rgba(60,100,60,.9);border:1px solid rgba(60,90,60,.18)}.vb.ISSUES{background:rgba(176,122,16,.06);color:#7a5510;border:1px solid rgba(176,122,16,.18)}.vb.CRITICAL{background:rgba(200,75,49,.06);color:var(--red);border:1px solid rgba(200,75,49,.2)}
 .cursor{display:inline-block;width:1.5px;height:14px;background:var(--text-mid);animation:blink 1.3s ease-in-out infinite;vertical-align:text-bottom;margin-left:2px;border-radius:1px;opacity:.6}
+#at-pop{margin:0 10px;background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r);box-shadow:0 -4px 18px rgba(26,28,34,.1);overflow:hidden;max-height:188px;overflow-y:auto}
+.at-row{display:flex;align-items:baseline;gap:9px;padding:8px 12px;cursor:pointer;min-height:26px}
+.at-row:hover,.at-row:first-child{background:rgba(210,85,46,.07)}
+.at-k{font-size:12px;font-weight:600;color:var(--red)}
+.at-sub{font-size:11px;color:var(--text-soft);margin-left:auto}
 #input-row{border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:8px;padding:10px;background:var(--bg2);flex-shrink:0;border-radius:0 0 var(--r2) var(--r2)}
 #msg-in{flex:1;background:var(--bg);border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:13px;padding:9px 13px;resize:none;min-height:40px;max-height:120px;line-height:1.5;outline:none;border-radius:var(--r);transition:border-color .2s}
 #msg-in:focus{border-color:rgba(200,75,49,.4)}
@@ -477,15 +482,27 @@ select.hb{padding:5px 9px}
 
 /* clean dialog: human-language steps, hidden code, strong hierarchy */
 .prose{white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.75;color:var(--text-mid);font-weight:300}
-.prose.clamp .prose-txt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.prose.clamp.open .prose-txt{display:block;overflow:visible}
+.prose.clamp .prose-txt{max-height:5.2em;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 68%,transparent)}
+.prose.clamp.open .prose-txt{max-height:none;overflow:visible;-webkit-mask-image:none}
 .prose-more{display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--teal);font-family:var(--font);font-size:11px;letter-spacing:.02em;cursor:pointer;padding:5px 0 0;margin-top:1px;opacity:.85;transition:opacity .15s}
 .prose-more:hover{opacity:1}
 .prose-more .ic{width:12px;height:12px;transition:transform .25s}
 .prose.clamp.open .prose-more .ic{transform:rotate(180deg)}
-.prose .md-h{display:block;font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--teal);margin:13px 0 4px;opacity:.92}
-.prose .md-h:first-child{margin-top:0}
-.prose strong{font-weight:600;color:var(--text)}
+/* typographic hierarchy for rendered markdown — ink with a red/orange detail, no teal */
+.prose .md-p{margin:0;line-height:1.7}
+.prose .md-p+.md-p{margin-top:3px}
+.prose .md-sp{height:9px}
+.prose .md-h{display:block;color:var(--text);line-height:1.3}
+.prose .md-h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin:16px 0 6px}
+.prose .md-h2{font-size:14.5px;font-weight:650;margin:15px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border-mid)}
+.prose .md-h3{font-size:12px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.08em;margin:13px 0 4px;padding-left:11px;position:relative}
+.prose .md-h3::before{content:'';position:absolute;left:0;top:.18em;bottom:.18em;width:3px;border-radius:2px;background:var(--red)}  /* red/orange tick = the subtitle accent */
+.prose .md-h:first-child,.prose .md-h1:first-child,.prose .md-h2:first-child,.prose .md-h3:first-child{margin-top:0}
+.prose .md-ul,.prose .md-ol{margin:5px 0;padding-left:21px}
+.prose .md-ul li,.prose .md-ol li{margin:2px 0;line-height:1.6;padding-left:3px}
+.prose .md-ul li::marker{color:var(--red);font-size:.9em}
+.prose .md-ol li::marker{color:var(--text-dim);font-weight:600}
+.prose strong{font-weight:650;color:var(--text)}
 .prose em{font-style:italic;color:var(--text-mid)}
 .prose code.md-ic{font-family:var(--mono);font-size:.92em;background:var(--bg3);color:var(--text);padding:1px 5px;border-radius:4px}
 .msg.assistant{gap:5px}
@@ -1079,11 +1096,12 @@ select.hb{padding:5px 9px}
     </div>
     <div id="models-pop" hidden></div>
     <div id="ctx-tray"></div>
+    <div id="at-pop" hidden></div>
     <div id="input-row">
       <button id="add-btn" onclick="toggleAdd()" aria-label="Add files or a git repo to work on" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
       <button id="term-btn" onclick="toggleCli()" aria-label="Open terminal" data-tip="Terminal — run shell commands in the working directory"><svg viewBox="0 0 16 16" class="ic"><path d="M3.5 5l3 3-3 3M8.5 11h4"/></svg></button>
       <button id="models-btn" onclick="toggleModels()" aria-label="Choose which models answer" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
-      <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…"></textarea>
+      <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…   ( @claude · @all to target a model )"></textarea>
       <button id="send-btn" onclick="send()" data-tip="Send (Enter)">Send</button>
     </div>
   </div>
@@ -2086,14 +2104,26 @@ function _renderProseAndCode(bodyEl,txt){
 }
 // Light, safe markdown: escape first, then style headings (### → small elegant teal),
 // bold, and inline code. Headings no longer show as literal "###".
+function _mdInline(x){
+  x=escH(x);
+  x=x.replace(/\*\*(?!\s)([^*]+?)\*\*/g,'<strong>$1</strong>');
+  x=x.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
+  x=x.replace(/`([^`]+?)`/g,'<code class="md-ic">$1</code>');
+  return x;
+}
 function _mdLite(t){
-  let s=escH(t);
-  s=s.replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm,(_,h)=>`${h}`);  // placeholder dodges the pre-wrap newline
-  s=s.replace(/\*\*(?!\s)([^*]+?)\*\*/g,'<strong>$1</strong>');
-  s=s.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
-  s=s.replace(/`([^`]+?)`/g,'<code class="md-ic">$1</code>');
-  s=s.replace(/([^]*)\n?/g,'<span class="md-h">$1</span>');
-  return s;
+  const lines=String(t).split('\n');let html='',inList=false,tag='';
+  const close=()=>{if(inList){html+='</'+tag+'>';inList=false}};
+  for(const raw of lines){
+    const line=raw.replace(/\s+$/,'');let m;
+    if((m=/^[ \t]{0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*$/.exec(line))){close();const lv=Math.min(m[1].length,3);html+='<div class="md-h md-h'+lv+'">'+_mdInline(m[2])+'</div>';continue}
+    if((m=/^[ \t]{0,3}[-*\u2022][ \t]+(.+)$/.exec(line))){if(!inList||tag!=='ul'){close();html+='<ul class="md-ul">';inList=true;tag='ul'}html+='<li>'+_mdInline(m[1])+'</li>';continue}
+    if((m=/^[ \t]{0,3}\d+[.)][ \t]+(.+)$/.exec(line))){if(!inList||tag!=='ol'){close();html+='<ol class="md-ol">';inList=true;tag='ol'}html+='<li>'+_mdInline(m[1])+'</li>';continue}
+    close();
+    if(line.trim()===''){html+='<div class="md-sp"></div>';continue}
+    html+='<div class="md-p">'+_mdInline(line)+'</div>';
+  }
+  close();return html;
 }
 // Long prose collapses to a skimmable preview; the rest is one click away (text = the gist, content discoverable).
 function _proseEl(text){
@@ -3113,8 +3143,22 @@ function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.e
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual)}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
-msgIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
-msgIn.addEventListener('input',()=>{msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px'});
+msgIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){const p=document.getElementById('at-pop');if(p&&!p.hasAttribute('hidden')){const f=p.querySelector('.at-row');if(f){e.preventDefault();_atInsert(f.dataset.k);return}}e.preventDefault();send()}else if(e.key==='Escape'){document.getElementById('at-pop')?.setAttribute('hidden','')}});
+msgIn.addEventListener('input',()=>{msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px';updateAtPop()});
+msgIn.addEventListener('blur',()=>setTimeout(()=>document.getElementById('at-pop')?.setAttribute('hidden',''),140));
+// @-mention autocomplete — discoverable model targeting
+const _AT_OPTS=[['all','Everyone'],['local','Local · 32B'],['claude','Claude'],['gpt','GPT-4o'],['gemini','Gemini'],['groq','Groq'],['cerebras','Cerebras'],['openrouter','OpenRouter']];
+function _atToken(){const v=msgIn.value,c=msgIn.selectionStart||0;const m=/(^|\s)@([a-z0-9_.-]*)$/i.exec(v.slice(0,c));return m?{word:m[2],start:c-m[2].length-1,end:c}:null}
+function updateAtPop(){const p=document.getElementById('at-pop');if(!p)return;const t=_atToken();
+  if(!t){p.setAttribute('hidden','');return}
+  const avail=new Set(_availIds()),w=t.word.toLowerCase();
+  const opts=_AT_OPTS.filter(([k])=>k==='all'||(()=>{const id=_MODEL_ALIAS[k];return id==='mlx'||avail.has(id)})()).filter(([k,l])=>!w||k.startsWith(w)||l.toLowerCase().indexOf(w)>=0);
+  if(!opts.length){p.setAttribute('hidden','');return}
+  p.innerHTML=opts.map(([k,l])=>`<div class="at-row" data-k="${k}"><span class="at-k">@${k}</span><span class="at-sub">${l}</span></div>`).join('');
+  p.removeAttribute('hidden');
+  p.querySelectorAll('.at-row').forEach(r=>r.addEventListener('mousedown',e=>{e.preventDefault();_atInsert(r.dataset.k)}));
+}
+function _atInsert(k){const t=_atToken();if(!t)return;const v=msgIn.value;msgIn.value=v.slice(0,t.start)+'@'+k+' '+v.slice(t.end);const np=t.start+k.length+2;msgIn.focus();msgIn.setSelectionRange(np,np);document.getElementById('at-pop').setAttribute('hidden','');msgIn.dispatchEvent(new Event('input'))}
 function fadeMsgs(){
   const msgs=timeline.querySelectorAll('.msg');
   const n=msgs.length;
@@ -3190,9 +3234,18 @@ function threadSummary(th,text){if(th&&th.summary)th.summary.textContent=(text||
 function threadVerdict(th,verdict){if(!th||!th.meta)return;th.meta.querySelector('.thread-verdict')?.remove();if(!verdict)return;const v=document.createElement('span');v.className='thread-verdict '+verdict.toLowerCase();v.textContent=verdict;th.meta.prepend(v)}
 function threadTokens(th,tok){if(!th||!th.meta)return;let t=th.meta.querySelector('.thread-tok');if(!t){t=document.createElement('span');t.className='thread-tok';th.meta.appendChild(t)}t.textContent=tok}
 function lastThreadBody(){return timeline.querySelector('.thread:last-child .thread-body')||timeline}
-async function send(){const text=msgIn.value.trim();if(!text)return;
-  if(S.streaming){S.queue.push(text);msgIn.value='';msgIn.style.height='';renderCtx();artToast('Queued — sends after the current run','ok');return}
-  const models=fanoutModels();
+async function send(){const raw=msgIn.value.trim();if(!raw)return;
+  if(S.streaming){S.queue.push(raw);msgIn.value='';msgIn.style.height='';renderCtx();artToast('Queued — sends after the current run','ok');return}
+  let text=raw,models;
+  const tgt=(typeof parseTargets==='function')?parseTargets(raw):null;
+  if(tgt){
+    text=tgt.text||raw;
+    const avail=tgt.ids.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id]));
+    const missing=tgt.ids.filter(id=>id!=='mlx'&&!(window.CLOUD&&window.CLOUD[id]));
+    if(!avail.length){artToast('Those @targets need a key first — add one in Settings','err');return}
+    if(missing.length)artToast('Skipping (no key): '+missing.map(id=>_MODEL_LABEL[id]||id).join(', '),'err');
+    models=avail.map(id=>({id,label:_MODEL_LABEL[id]||id}));
+  } else models=fanoutModels();
   if(models.length>1||(models.length===1&&models[0].id!=='mlx')){msgIn.value='';msgIn.style.height='';return sendMulti(text,models)}
   msgIn.value='';msgIn.style.height='';S.msgs.push({role:'user',content:text});S.goals.forEach(g=>g.active=false);S.goals.push({text,active:true,done:false,ts:Date.now()});renderAISInfo();
   const th=newThread(text);
@@ -3201,10 +3254,22 @@ async function send(){const text=msgIn.value.trim();if(!text)return;
   await streamRun(text,th);
 }
 // ─── MULTI-MODEL — tag several models, get a response from each, side by side ───
+const _MODEL_LABEL={mlx:'Local · 32B',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
 function fanoutModels(){
   const sel=S.fanout&&S.fanout.length?S.fanout:['mlx'];
-  const label={mlx:'Local · 32B',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
-  return sel.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id])).map(id=>({id,label:label[id]||id}));
+  return sel.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id])).map(id=>({id,label:_MODEL_LABEL[id]||id}));
+}
+// @-targeting — "@claude fix this" routes only to Claude; "@all" to every available model.
+const _MODEL_ALIAS={claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
+function _availIds(){return ['mlx'].concat(['anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id]))}
+function parseTargets(text){
+  const re=/(^|\s)@([a-z0-9_.-]+)/gi;let m,all=false;const ids=new Set(),strip=[];
+  while((m=re.exec(text))){const key=m[2].toLowerCase().replace(/[._-]/g,'');
+    if(key==='all'||key==='everyone'){all=true;strip.push(m[0]);continue}
+    const id=_MODEL_ALIAS[key];if(id){ids.add(id);strip.push(m[0])}}
+  if(!all&&ids.size===0)return null;
+  let out=text;strip.forEach(s=>{out=out.replace(s,s[0]===' '?' ':'')});
+  return {ids:all?_availIds():[...ids],all,text:out.replace(/\s{2,}/g,' ').trim()};
 }
 function _modelCatalog(){
   const out=[{id:'mlx',label:'Local · Qwen 32B',sub:'on-device · full context',avail:true}];
