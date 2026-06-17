@@ -1457,12 +1457,30 @@ function meshMetrics(){
 }
 // Cloud operative — present when an escalation provider has a key. Code-only access.
 const _CLOUD_META={anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
+const _CLOUD_ORDER=['anthropic','openai','gemini','groq','cerebras','openrouter'];
+function cloudAgentKey(id){return 'cloud:'+id}
+// Each keyed cloud provider is its own operative object in S.agents['cloud:<id>'].
+function ensureCloudAgent(id){
+  const k=cloudAgentKey(id);
+  if(!S.agents[k]){const m=_CLOUD_META[id]||[id.toUpperCase(),id];
+    S.agents[k]={label:m[0],size:'cloud',role:'Escalation',tech:m[1],host:'cloud · '+((typeof PROV_LABEL!=='undefined'&&PROV_LABEL[id])||id),status:'idle',task:'',burn:0,hm:50,loaded:true,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:true,provider:id,tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,rate:0};}
+  else S.agents[k].present=true;
+  return k;
+}
+// Sync the cloud operatives to the keychain: create one per keyed provider, prune the rest.
+function cloudAgentKeys(){
+  const c=window.CLOUD||{};
+  const keyed=_CLOUD_ORDER.filter(id=>c[id]).concat(Object.keys(c).filter(id=>c[id]&&_CLOUD_ORDER.indexOf(id)<0));
+  Object.keys(S.agents).filter(k=>k.indexOf('cloud:')===0).forEach(k=>{if(!keyed.includes(k.slice(6)))delete S.agents[k]});
+  return keyed.map(ensureCloudAgent);
+}
+// Legacy single-cloud accessor — keeps S.agents.cloud pointing at the active escalation provider (for the mesh node).
 function syncCloudAgent(){
-  const id=(typeof SET!=='undefined'&&SET.cloud)?SET.cloud:'anthropic';
-  const keyed=!!(window.CLOUD&&window.CLOUD[id]);
-  const ca=S.agents.cloud;ca.present=keyed;
-  if(keyed){const m=_CLOUD_META[id]||[id.toUpperCase(),id];ca.label=m[0];ca.tech=m[1];ca.provider=id}
-  return keyed;
+  const keys=cloudAgentKeys();
+  if(!keys.length){S.agents.cloud.present=false;return false}
+  const sel=(typeof SET!=='undefined'&&SET.cloud&&window.CLOUD&&window.CLOUD[SET.cloud])?SET.cloud:keys[0].slice(6);
+  S.agents.cloud=S.agents[cloudAgentKey(sel)];S.agents.cloud.present=true;
+  return true;
 }
 // ── Inline radial instrument (light "astrolabe" mesh) ──
 let meshHits=[];
@@ -1640,7 +1658,7 @@ function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;
   const er=ag.iters?ag.errs/ag.iters:0;ag.hm=Math.max(2,Math.min(98,50+er*90));   // drift = real tool-failure pressure
 }
 function rateHr(rate){const h=Math.round((rate||0)*3600);return h>=1000?(h/1000).toFixed(h>=10000?0:1)+'k':String(h)}  // tok/hr
-function resetAgentMetrics(){AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],{tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,rate:0,hm:50}));S.govFlagged=false}
+function resetAgentMetrics(){const z={tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0,burn:0,rate:0,hm:50};AGENT_KEYS.forEach(k=>Object.assign(S.agents[k],z));Object.keys(S.agents).filter(k=>k.indexOf('cloud:')===0||k==='cloud').forEach(k=>Object.assign(S.agents[k],z));S.govFlagged=false}
 const AIS_POLICY={burnWatch:75,burnMax:95,errWatch:1,errMax:3,errRate:0.34,iterMax:12};
 // AGMO / HUMO — Agent Autonomy & Human Oversight Modes (Agentic Experience Manual v16, ch.3–4)
 const _AGMO={
@@ -1737,7 +1755,7 @@ function retaskAgent(){
   artToast('Halted — tag the operative to retask, then Send','ok');
 }
 
-function cardKeys(){return (typeof syncCloudAgent==='function'&&syncCloudAgent())?['primary','critic','cloud']:['primary','critic']}
+function cardKeys(){const ck=['primary','critic'];if(typeof cloudAgentKeys==='function')ck.push(...cloudAgentKeys());return ck}
 function driftPct(hm){return Math.round(Math.abs((hm==null?50:hm)-50)/50*100)}  // 0% = stable; rises with tool failures
 function renderCards(){
   document.getElementById('agent-cards').innerHTML=cardKeys().map(k=>{
@@ -1795,12 +1813,12 @@ function renderAISInfo(){
   const g=S.git||{},gitAct=g.active||(Date.now()-(g.last||0)<1600),gitUsed=(g.reads||0)+(g.writes||0);
   const gitBadge=gitAct?((g.op||'sync').toUpperCase()):(gitUsed?`${g.reads||0}r · ${g.writes||0}w`:'IDLE');
   const gitRow=`<div class="ais-c-row git" onclick="openGitHub()" data-tip="GitHub / git — ${g.reads||0} read${(g.reads||0)!==1?'s':''} · ${g.writes||0} write/PR${g.op?' · last: '+escH(g.op):''}"><div class="ais-c-dot git ${gitAct?'on':gitUsed?'live':''}">${ICON.git}</div><span class="ais-c-name">GitHub</span><span class="ais-c-badge ${gitAct?'on':gitUsed?'live':''}">${gitBadge}</span></div>`;
-  const ca=S.agents.cloud, cloudRow=syncCloudAgent()?`<div class="ais-c-row" onclick="openAgentDetail('cloud')" data-tip="${escH(ca.tech)} — escalation operative · code-only access (no personal context) · click for details"><div class="ais-c-dot ${ca.status==='working'?'on':'cloud'}"></div><span class="ais-c-name">${escH(ca.label)}</span><span class="ais-c-badge cloud">CLOUD · CODE</span></div>`:'';
+  const cloudRows=cloudAgentKeys().map(k=>{const ca=S.agents[k];return `<div class="ais-c-row" onclick="openAgentDetail('${k}')" data-tip="${escH(ca.tech)} — escalation operative · code-only access (no personal context) · click for details"><div class="ais-c-dot ${ca.status==='working'?'on':'cloud'}"></div><span class="ais-c-name">${escH(ca.label)}</span><span class="ais-c-badge cloud">CLOUD · CODE</span></div>`}).join('');
   document.getElementById('ais-conn-list').innerHTML=`<div class="ais-c-row" data-tip="Local MLX — full context (code + personal), no network"><div class="ais-c-dot live"></div><span class="ais-c-name">${mdl}</span><span class="ais-c-badge live">LOCAL · FULL</span></div>`
-    +cloudRow
+    +cloudRows
     +gitRow
     +Object.values(sources).map(s=>`<div class="ais-c-row" data-tip="${s.n} — ${s.en}/${s.tot} enabled"><div class="ais-c-dot ${s.en>0?'live':'warn'}"></div><span class="ais-c-name">${s.n}</span><span class="ais-c-badge ${s.en>0?'live':''}">${s.en}/${s.tot}</span></div>`).join('');
-  document.getElementById('ais-conn-ct').textContent=Object.keys(sources).length+2+(ca.present?1:0);
+  document.getElementById('ais-conn-ct').textContent=Object.keys(sources).length+2+cloudAgentKeys().length;
   document.getElementById('ais-goals-list').innerHTML=S.goals.length?S.goals.slice(-5).reverse().map(g=>`<div class="ais-g-row" data-tip="${g.active?'Active':'Done'}"><span class="ais-g-ic ${g.active?'active':g.done?'done':''}">${g.active?'→':g.done?'✓':'·'}</span><span class="ais-g-txt ${g.active?'active':''}">${escH(g.text)}</span></div>`).join(''):'<div class="ais-empty">No active goal</div>';
   const recent=S.taskLog.slice(-8).reverse();
   document.getElementById('ais-tasks-list').innerHTML=recent.length?recent.map(t=>`<div class="ais-t-row ${t.error?'err':''}" data-tip="${t.name} — ${t.error?'failed':'ok'} ${_relTime(t.ts)} ago"><span class="ais-t-ic">${t.error?'✕':'✓'}</span><span class="ais-t-name">${t.name}</span><span class="ais-t-time">${_relTime(t.ts)}</span></div>`).join(''):'<div class="ais-empty">No tasks yet</div>';
@@ -2232,7 +2250,9 @@ async function applyCode(path,code,card,orig){
 window.CLOUD={};
 async function refreshKeys(){try{const j=await fetch('/v1/keys').then(r=>r.json());window.CLOUD=j.providers||{}}catch(_){window.CLOUD={}}
   // If the chosen cloud model has no key but another does, prefer a keyed one (free first).
-  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}}
+  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}
+  // surface keyed providers as operatives immediately (left cards + right connectors)
+  try{syncCloudAgent();renderCards();renderAISInfo()}catch(_){}}
 
 // ─── SECURE KEY DIALOG — paste a key once; it goes straight to the OS keychain ──
 const PROV_LABEL={groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
@@ -2356,7 +2376,8 @@ async function escalate(){
   const dest=lastThreadBody();
   dest.appendChild(buildMsgEl({type:'phase',phase:'escalation',model:provName}));
   S.streaming=true;setSending(true);setStatus(true);
-  syncCloudAgent();S.agents.cloud.status='working';S.agents.cloud.calls++;S.agents.cloud.startMs=Date.now();S.agents.cloud.turnTokens=0;renderAISInfo();
+  const _cak=ensureCloudAgent(prov);S.agents.cloud=S.agents[_cak];   // attribute tokens to THIS provider's operative
+  const _cc0=S.agents[_cak];_cc0.status='working';_cc0.calls++;_cc0.startMs=Date.now();_cc0.turnTokens=0;renderCards();renderAISInfo();
   const aEl=document.createElement('div');aEl.className='msg assistant escalated';
   const roleEl=document.createElement('div');roleEl.className='msg-role';roleEl.textContent=provName.toLowerCase()+' · cloud';
   const bodyEl=document.createElement('div');bodyEl.className='msg-body';const cur=document.createElement('span');cur.className='cursor';
@@ -2370,7 +2391,7 @@ async function escalate(){
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const ls=buf.split('\n');buf=ls.pop();
       for(const ln of ls){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')break;
         let evt;try{evt=JSON.parse(raw)}catch(_){continue}
-        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents.cloud;cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;recomputeAgent('cloud');if(S.totalTok%15===0){updateAEM();renderAISInfo()}}
+        if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents[_cak];cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;recomputeAgent(_cak);if(S.totalTok%15===0){updateAEM();renderAISInfo();renderCards()}}
         else if(evt.type==='error'){throw new Error(evt.message)}}}
   }catch(e){cur.remove();bodyEl.innerHTML=`<span style="color:var(--red);font-weight:500">Escalation failed.</span> <span style="color:var(--text-ghost);font-size:12px">${escH(e.message)}</span>`;
     _cloudIdle();S.streaming=false;setSending(false);setStatus(false);return;}
@@ -2378,7 +2399,7 @@ async function escalate(){
   if(txt){renderAssistantBody(bodyEl,txt);S.msgs.push({role:'assistant',content:txt});addMsgActions(aEl,txt)}
   _cloudIdle();S.streaming=false;setSending(false);setStatus(false);updateAEM();
 }
-function _cloudIdle(){const c=S.agents.cloud;if(c.startMs){c.ms+=Date.now()-c.startMs;c.startMs=0}c.status='idle';renderAISInfo()}
+function _cloudIdle(){const c=S.agents.cloud;if(c.startMs){c.ms+=Date.now()-c.startMs;c.startMs=0}c.status='idle';recomputeAgent('cloud');renderCards();renderAISInfo()}
 
 // ─── EMBEDDED TERMINAL ─────────────────────────────────────────────────────────
 function toggleCli(){const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');document.getElementById('cli-cwd').textContent=S.cwd;const b=document.getElementById('term-btn');if(b)b.classList.toggle('on',open);if(open)setTimeout(()=>document.getElementById('cli-in').focus(),60)}
@@ -2811,7 +2832,7 @@ function _afoCard(k){
     </div></div>`;
 }
 function renderAgentsFull(){
-  const keys=['primary','critic'];if(syncCloudAgent())keys.push('cloud');
+  const keys=cardKeys();
   document.getElementById('afh-ops').textContent=keys.length;
   document.getElementById('afh-tok').innerHTML=fmtNum(S.totalTok||0);
   document.getElementById('af-ops').innerHTML=keys.map(_afoCard).join('');
@@ -3148,15 +3169,18 @@ async function _streamModel(th,model,text){
   const proseEl=aEl.querySelector('.prose'),cur=proseEl.querySelector('.cursor'),bodyEl=aEl.querySelector('.msg-body');
   let txt='';const ctrl=new AbortController();(S._multiCtrls=S._multiCtrls||[]).push(ctrl);
   const ep=model.id==='mlx'?'/v1/agent':'/v1/escalate';
+  const cak=model.id!=='mlx'?ensureCloudAgent(model.id):null;   // track this cloud operative's tokens
+  if(cak){const a=S.agents[cak];a.status='working';a.calls++;a.startMs=Date.now();a.turnTokens=0;renderCards()}
   const msgs=[...(S.context.length?[{role:'system',content:'Standing user context (always honor):\n- '+S.context.join('\n- ')}]:[]),...S.msgs.map(m=>({role:m.role,content:m.content||''}))];
   const body=model.id==='mlx'?{messages:msgs,cwd:S.cwd,stream:true,max_tokens:4096,temperature:.15}:{messages:msgs,cwd:S.cwd,provider:model.id,max_tokens:4096};
   try{const resp=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
     const reader=resp.body.getReader(),dec=new TextDecoder();let buf='';
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
       for(const ln of lines){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')continue;let evt;try{evt=JSON.parse(raw)}catch(_){continue}
-        if(evt.type==='token'){txt+=evt.content||'';proseEl.textContent=_liveProse(txt).prose;proseEl.appendChild(cur)}
+        if(evt.type==='token'){txt+=evt.content||'';proseEl.textContent=_liveProse(txt).prose;proseEl.appendChild(cur);if(cak){const a=S.agents[cak];a.tokens++;a.turnTokens=(a.turnTokens||0)+1;recomputeAgent(cak)}}
         else if(evt.type==='error')txt+='\n⚠ '+(evt.message||'error');}}
   }catch(e){if(e.name!=='AbortError')txt+='\n⚠ request failed';}
+  if(cak){const a=S.agents[cak];if(a.startMs){a.ms+=Date.now()-a.startMs;a.startMs=0}a.status='idle';recomputeAgent(cak);renderCards();renderAISInfo()}
   cur.remove();
   if(txt.trim()){renderAssistantBody(bodyEl,txt)}else bodyEl.innerHTML='<div class="prose" style="color:var(--text-ghost)">(no response)</div>';
   S.msgs.push({role:'assistant',content:`[${model.label}]\n${_cleanProse(txt)}`});
