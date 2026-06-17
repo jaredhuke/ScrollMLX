@@ -169,6 +169,9 @@ select.hb{padding:5px 9px}
 #empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
 #empty .big{font-size:36px;letter-spacing:.3em;font-weight:300;color:rgba(26,28,34,.1)}
 #empty .sub{font-size:10px;letter-spacing:.12em;color:var(--text-ghost);font-weight:400}
+.starters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px;margin-top:14px;pointer-events:auto}
+.starter{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;padding:7px 13px;border-radius:16px;cursor:pointer;transition:color .15s,border-color .15s;min-height:26px}
+.starter:hover{color:var(--teal);border-color:var(--teal)}
 .msg{display:flex;flex-direction:column;gap:3px;transition:opacity 1.6s ease}
 .msg-role{font-size:8px;letter-spacing:.16em;color:var(--text-ghost);text-transform:uppercase;font-weight:400;padding-left:2px}
 .msg.user .msg-role{color:var(--red);opacity:.55}
@@ -200,7 +203,7 @@ select.hb{padding:5px 9px}
 #send-btn:hover{opacity:.85}
 #send-btn:active{transform:scale(.97)}
 #send-btn:disabled{background:var(--border-mid);color:var(--text-ghost);cursor:not-allowed;transform:none}
-#send-btn.stop{background:var(--text)}#send-btn.stop:hover{background:var(--text);opacity:.82}
+#send-btn.stop{background:var(--red);color:#fff}#send-btn.stop:hover{background:var(--red);opacity:.85}
 #add-btn{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);width:40px;height:40px;flex-shrink:0;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;align-self:flex-end;transition:color .15s,border-color .15s,background .15s}
 #add-btn:hover{color:var(--teal);border-color:var(--teal)}
 #add-btn.on{color:var(--teal);border-color:var(--teal);background:rgba(45,140,140,.08)}
@@ -220,10 +223,10 @@ select.hb{padding:5px 9px}
 .mp-hd .mp-sub{text-transform:none;letter-spacing:.02em;color:var(--text-ghost);font-weight:400}
 .mp-row{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:var(--r);cursor:pointer;transition:background .12s}
 .mp-row:hover{background:rgba(26,28,34,.04)}
-.mp-row.on{background:var(--teal-soft)}
+.mp-row.on{box-shadow:inset 2px 0 0 var(--teal)}
 .mp-row.dis{opacity:.55}
 .mp-check{width:14px;height:14px;flex-shrink:0;border:1px solid var(--border-mid);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--teal)}
-.mp-row.on .mp-check{border-color:var(--teal)}
+.mp-row.on .mp-check{border-color:var(--teal);background:var(--teal);color:#fff}
 .mp-check .ic{width:11px;height:11px}
 .mp-meta{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
 .mp-name{font-size:12px;color:var(--text)}
@@ -434,6 +437,8 @@ select.hb{padding:5px 9px}
 .triad{margin-top:14px;background:var(--bg2);border:1px solid var(--border-mid);border-radius:var(--r2);padding:13px 15px;display:flex;flex-direction:column;gap:13px}
 .triad-head{display:flex;align-items:center;gap:7px;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--red);font-weight:600}
 .triad-head .ic{width:11px;height:11px;color:var(--red)}
+.triad-head.calm{color:var(--text-dim);font-weight:500}
+.triad-head.calm .ic{color:var(--text-dim)}
 .tr-head{display:flex;align-items:center;gap:7px;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:5px;font-weight:500}
 .tr-head .ic{width:11px;height:11px;color:var(--red)}
 .tr-item{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
@@ -978,10 +983,10 @@ select.hb{padding:5px 9px}
   <div id="lpanel">
     <div class="plabel pj-plabel" data-tip="Projects — repos &amp; their runnable servers">
       <span>Projects</span>
-      <button class="pj-mini-add" onclick="openProjects()" data-tip="Add or manage projects">+</button>
+      <button class="pj-mini-add" onclick="openProjects()" aria-label="Add or manage projects" data-tip="Add or manage projects">+</button>
     </div>
     <div id="pj-mini"></div>
-    <div class="plabel pj-plabel" data-tip="Active LLM operatives and live metrics"><span>Operatives</span><button class="pj-mini-add" onclick="openAgentsFull()" data-tip="Full operatives screen — metrics, API keys, repos">↗</button></div>
+    <div class="plabel pj-plabel" data-tip="Active LLM operatives and live metrics"><span>Operatives</span><button class="pj-mini-add" onclick="openAgentsFull()" aria-label="Open the full operatives screen" data-tip="Full operatives screen — metrics, API keys, repos">↗</button></div>
     <div id="agent-cards"></div>
     <div id="aem">
       <div id="tok-gauge" data-tip="Token usage this session vs. the expected budget">
@@ -1032,9 +1037,9 @@ select.hb{padding:5px 9px}
     <div id="models-pop" hidden></div>
     <div id="ctx-tray"></div>
     <div id="input-row">
-      <button id="add-btn" onclick="toggleAdd()" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
-      <button id="term-btn" onclick="toggleCli()" data-tip="Terminal — run shell commands in the working directory"><svg viewBox="0 0 16 16" class="ic"><path d="M3.5 5l3 3-3 3M8.5 11h4"/></svg></button>
-      <button id="models-btn" onclick="toggleModels()" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
+      <button id="add-btn" onclick="toggleAdd()" aria-label="Add files or a git repo to work on" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
+      <button id="term-btn" onclick="toggleCli()" aria-label="Open terminal" data-tip="Terminal — run shell commands in the working directory"><svg viewBox="0 0 16 16" class="ic"><path d="M3.5 5l3 3-3 3M8.5 11h4"/></svg></button>
+      <button id="models-btn" onclick="toggleModels()" aria-label="Choose which models answer" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
       <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…"></textarea>
       <button id="send-btn" onclick="send()" data-tip="Send (Enter)">Send</button>
     </div>
@@ -1047,7 +1052,7 @@ select.hb{padding:5px 9px}
     </div>
     <canvas id="ais-canvas"></canvas>
     <div id="ais-info">
-      <div id="ais-gov" class="ok" onclick="openGovernance()" data-tip="AIS governance — watching live agentic values against policy">
+      <div id="ais-gov" class="ok" role="button" tabindex="0" aria-label="Governance status — open details" onclick="openGovernance()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openGovernance()}" data-tip="AIS governance — watching live agentic values against policy">
         <span class="gov-dot"></span><span class="gov-state">OK</span><span class="gov-why">all operatives within policy</span>
       </div>
       <div class="ais-sec">
@@ -1138,7 +1143,7 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">Produced this session <span id="art-count" class="art-ct"></span></div><div id="art-list"></div></div>
   </div>
 </div>
-<div id="art-toast"></div>
+<div id="art-toast" role="status" aria-live="polite"></div>
 
 <div id="cli-panel">
   <div class="cli-head"><span class="cli-title">Terminal</span><span class="cli-cwd" id="cli-cwd">~/</span><button class="dc" onclick="toggleCli()">✕</button></div>
@@ -1568,7 +1573,7 @@ AIS.addEventListener('click',e=>{
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function hmClass(p){const d=Math.abs(p-50);return d>40?'crit':d>28?'drift':d>18?'warn':''}
-function hmLabel(c){return{crit:'CRIT',drift:'DRIFT',warn:'WARN','':'OK'}[c]}
+function hmLabel(c){return{crit:'OFF TASK',drift:'DRIFTING',warn:'WOBBLY','':'STEADY'}[c]}
 function burnClass(p){return p>85?'over':p>60?'hot':''}
 function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 // ── Human-language tool descriptions (raw call revealed on click/rollover) ──
@@ -1726,14 +1731,14 @@ function renderCards(){
     recomputeAgent(k);
     const ag=S.agents[k],bc=burnClass(ag.burn),hmc=hmClass(ag.hm);
     const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.rate||0} tok/s (≈ ${rateHr(ag.rate)} tok/hr)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
-    return`<div class="${cardClass(ag)}" onclick="openAgentDetail('${k}')" data-tip="${tip.replace(/"/g,'&quot;')} · click for details">
+    return`<div class="${cardClass(ag)}" role="button" tabindex="0" aria-label="${escH(ag.label)} — ${escH(ag.role)}, details" onclick="openAgentDetail('${k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAgentDetail('${k}')}" data-tip="${tip.replace(/"/g,'&quot;')} · click for details">
       <div class="ac-head"><div class="ac-dot ${ag.status==='working'?'on':ag.status==='error'?'err':''}"></div>
         <span class="ac-name">${ag.label}</span><span class="ac-role">${ag.role}</span>
         <span class="ac-status ${ag.status}">${ag.status.toUpperCase()}</span></div>
       <div class="ac-tech">${ag.tech} <span class="ac-host">${ag.host}</span></div>
       <div class="ac-task">${ag.task||'—'}</div>
       <div class="br" data-tip="Token burn — how hot this operative is running (${rateHr(ag.rate)} tok/hr)"><span class="br-lbl">Burn</span><div class="br-track"><div class="br-fill ${bc}" style="width:${ag.burn}%"></div></div><span class="br-val">${ag.rate||0}/s</span></div>
-      <div class="hm-row"><span class="hm-lbl">HAS MAP</span>
+      <div class="hm-row" data-tip="Steadiness — how consistently this operative stays on task; drifts with repeated tool failures"><span class="hm-lbl">Steady</span>
         <div class="hm-track"><div class="hm-bound" style="left:25%;width:50%"></div><div class="hm-cursor ${hmc}" style="left:${ag.hm}%"></div></div>
         <span class="hm-badge ${hmc}">${hmLabel(hmc)}</span></div></div>`;
   }).join('');
@@ -2132,7 +2137,8 @@ function parseTriad(txt){
 }
 function buildTriad(tri){
   const wrap=document.createElement('div');wrap.className='triad';
-  const head=document.createElement('div');head.className='triad-head';head.innerHTML=ICON.spark+'Needs your input';wrap.appendChild(head);
+  const needsInput=!!(tri.questions&&tri.questions.length);
+  const head=document.createElement('div');head.className='triad-head'+(needsInput?'':' calm');head.innerHTML=ICON.spark+(needsInput?'Needs your input':'For your review');wrap.appendChild(head);
   [['questions','Questions',ICON.spark],['critiques','Critiques',ICON.down],['suggestions','Suggestions',ICON.up]].forEach(([key,label,ic])=>{
     const items=tri[key];if(!items||!items.length)return;
     const sec=document.createElement('div');sec.className='tr-sec';
@@ -2972,7 +2978,12 @@ const timeline=document.getElementById('timeline'),sendBtn=document.getElementBy
 function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('stop');sendBtn.onclick=stopStream;sendBtn.disabled=false}else{sendBtn.textContent='Send';sendBtn.classList.remove('stop');sendBtn.onclick=send;sendBtn.disabled=false}}
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML='<div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>';showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+// Empty state — gives a novice something to do (single source of truth, used at init + on Clear)
+const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="12" rx="8" ry="2.6"/><path d="M16 12v24"/><path d="M32 12v24"/><ellipse cx="24" cy="36" rx="8" ry="2.6"/><path d="M21.3 4v40"/><path d="M26.7 4v40"/><circle cx="24" cy="24" r="3" stroke="#2d8c8c"/></svg>';
+const STARTERS=['Make a landing page for my café','Build a Pomodoro timer I can run','Explain this folder of code to me','Make a tip-splitting calculator'];
+function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll</span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
+function useStarter(t){const m=document.getElementById('msg-in');if(!m)return;m.value=t;m.dispatchEvent(new Event('input'));m.focus()}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual)}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
@@ -3374,6 +3385,7 @@ function drawFullAIS(){
 window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
+if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
 loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects();
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
