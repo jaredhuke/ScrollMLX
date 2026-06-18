@@ -673,6 +673,34 @@ async def projects_list():
     return {"projects": projects.list_projects()}
 
 
+@app.post("/v1/reset")
+async def reset_all(payload: dict = None):
+    """Erase ALL previous work for a clean slate — every project its own world from here.
+    Wipes chats/threads (client), projects, artifacts, context, ledger, learned, skills,
+    versions, provider-plugins. KEEPS your API keys (Keychain) and the downloaded model."""
+    import shutil
+    base = Path.home() / ".scroll"
+    removed = []
+    for t in ("context", "versions", "provider-plugins", "skills",
+              "ledger.json", "learned.json", "trust.json", "skills.json", "projects.json"):
+        p = base / t
+        try:
+            if p.is_dir():
+                shutil.rmtree(p); removed.append(t)
+            elif p.exists():
+                p.unlink(); removed.append(t)
+        except Exception:
+            pass
+    try:  # ad-hoc auto-saved outputs (never touch real project repos)
+        from server import projects
+        d = projects.adhoc_dir() / "scroll-artifacts"
+        if d.is_dir():
+            shutil.rmtree(d); removed.append("adhoc/scroll-artifacts")
+    except Exception:
+        pass
+    return {"ok": True, "removed": removed, "kept": ["API keys", "downloaded model"]}
+
+
 @app.get("/v1/repos")
 async def repos_list():
     """Git status for every project + the app repo, across all remotes (multiple gits)."""
