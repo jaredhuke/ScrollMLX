@@ -763,6 +763,16 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .kd-cmd{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-dim);font-family:var(--font);font-size:11px;cursor:pointer;padding:6px 4px}.kd-cmd:hover{color:var(--accent)}.kd-cmd .ic{width:13px;height:13px}
 .kd-cancel{background:none;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;padding:8px 15px;border-radius:var(--r);cursor:pointer}.kd-cancel:hover{border-color:var(--text-soft);color:var(--text)}
 .kd-save{background:var(--accent);border:none;color:#fff;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.04em;padding:8px 17px;border-radius:var(--r);cursor:pointer;transition:opacity .15s}.kd-save:hover{opacity:.88}.kd-save:disabled{opacity:.5;cursor:default}
+.kd.kd-wide{max-width:560px;width:92vw}
+.kd.kd-wide .kd-body{max-height:60vh;overflow-y:auto}
+.ml-grid{display:flex;flex-direction:column;gap:8px}
+.ml-card{display:flex;align-items:flex-start;gap:12px;padding:11px 13px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg2)}
+.ml-info{flex:1;min-width:0}
+.ml-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.ml-meta{font-size:10px;color:var(--accent-ink);margin-top:2px;font-variant-numeric:tabular-nums}
+.ml-doc{font-size:10.5px;color:var(--text-ghost);line-height:1.45;margin-top:4px}
+.ml-card .kd-save{flex-shrink:0;align-self:center;padding:6px 14px}
+.ml-on{flex-shrink:0;align-self:center;font-size:10px;font-weight:600;color:var(--green-ink);white-space:nowrap}
 .sm-addkey{flex-shrink:0}
 .sk-remove{background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:13px;padding:2px 6px}.sk-remove:hover{color:var(--ext)}
 
@@ -1413,9 +1423,10 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
     <div><div class="ds-title">+ Add a tool <span class="ds-sub">Python extension</span></div><input class="din" id="ext-path" placeholder="~/path/to/tool.py"/><button class="dbtn" onclick="loadExt()">Add tool</button></div>
     <div><div class="ds-title">+ Add a plugin <span class="ds-sub">MCP connector</span></div><input class="din" id="mcp-url" placeholder="http://localhost:3000"/><button class="dbtn" onclick="loadMCP()">Connect plugin</button></div>
     <div>
-      <div class="ds-title">Provider plugins <span class="ds-sub">drop a .md + a password → a cloud model</span></div>
+      <div class="ds-title">Operatives <span class="ds-sub">every model is a .md plugin — browse or drop your own</span></div>
       <div id="pp-list"></div>
-      <input class="din" id="pp-path" placeholder="…paste path to a provider .md — e.g. ~/Desktop/redacted.md" onkeydown="if(event.key==='Enter')importProviderPlugin()"/>
+      <button class="dbtn" onclick="modelLibrary()">Browse the model library — GLM, DeepSeek, Qwen, Llama…</button>
+      <input class="din" id="pp-path" placeholder="…or paste a path to your own provider .md" onkeydown="if(event.key==='Enter')importProviderPlugin()"/>
       <button class="dbtn ghost" onclick="importProviderPlugin()">Add provider plugin</button>
     </div>
   </div>
@@ -2983,11 +2994,52 @@ async function importProviderPlugin(){
   if(r&&r.ok){if(inp)inp.value='';artToast('Added '+(r.name||r.id),'ok');await loadProviderPlugins();if(r.needs_secret)ppSecret(r.id);}
   else artToast('Couldn’t add · '+((r&&r.error)||'unknown'),'err');
 }
-async function ppSecret(id){
-  const v=prompt('Password / token for "'+id+'" (stored in your Keychain, never in the file):');
-  if(v==null)return;
-  let r;try{r=await fetch('/v1/provider-plugins/secret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,secret:v})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
-  if(r&&r.ok){artToast('Saved — '+id+' ready','ok');loadProviderPlugins()}else artToast('Could not save password','err');
+function ppSecret(id){const p=(window.PROVIDER_PLUGINS||[]).find(x=>x.id===id);ppSecretDialog(id,p?p.name:id)}
+// in-app key entry (WKWebView swallows window.prompt) — paste once, straight to the Keychain
+function ppSecretDialog(id,name){
+  closeKeyDialog();
+  const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
+  ov.innerHTML=`<div class="kd" role="dialog" aria-modal="true" aria-label="API key">
+    <div class="kd-head"><span class="kd-title">API key — ${escH(name||id)}</span><button class="kd-x" aria-label="Close">✕</button></div>
+    <div class="kd-body">
+      <div class="kd-note">${ICON.check}<span>Stored in your macOS Keychain — never in the .md, and only ever sent to ${escH(name||id)}.</span></div>
+      <input class="din" id="pp-secret-in" type="password" placeholder="paste API key / token" autocomplete="off" spellcheck="false" style="margin-top:12px"/>
+    </div>
+    <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Cancel</button><button class="kd-save primary">Save key</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const inp=ov.querySelector('#pp-secret-in');setTimeout(()=>inp.focus(),50);
+  ov.querySelector('.kd-x').onclick=closeKeyDialog;ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
+  ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
+  const save=async()=>{const v=inp.value.trim();if(!v){artToast('Paste the key first','err');return}
+    let r;try{r=await fetch('/v1/provider-plugins/secret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,secret:v})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+    if(r&&r.ok){artToast('Saved — '+(name||id)+' ready','ok');closeKeyDialog();loadProviderPlugins()}else artToast('Could not save key','err')};
+  ov.querySelector('.kd-save').onclick=save;
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')save()});
+}
+// the bundled model library — every option is a .md plugin (GLM + open-source models)
+async function modelLibrary(){
+  let j;try{j=await fetch('/v1/provider-plugins/library').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  const lib=(j&&j.library)||[];
+  closeKeyDialog();
+  const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
+  const cards=lib.length?lib.map(p=>`<div class="ml-card"><div class="ml-info"><div class="ml-name">${escH(p.name)}</div><div class="ml-meta">${escH(p.model||p.kind)}${p.needs_secret?' · needs API key':' · no key'}</div><div class="ml-doc">${escH(p.doc||'')}</div></div>${p.installed?'<span class="ml-on">✓ added</span>':`<button class="kd-save primary ml-add" data-id="${escH(p.id)}" data-name="${escH(p.name)}" data-key="${p.needs_secret?1:0}">Add</button>`}</div>`).join(''):'<div class="dr-empty">No library bundled — restart the server.</div>';
+  ov.innerHTML=`<div class="kd kd-wide" role="dialog" aria-modal="true" aria-label="Model library">
+    <div class="kd-head"><span class="kd-title">Model library <span class="ds-sub">every operative is a .md plugin</span></span><button class="kd-x" aria-label="Close">✕</button></div>
+    <div class="kd-body"><div class="ml-grid">${cards}</div></div>
+    <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Done</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('.kd-x').onclick=closeKeyDialog;ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
+  ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
+  ov.querySelectorAll('.ml-add').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true;b.textContent='Adding…';
+    let r;try{r=await fetch('/v1/provider-plugins/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:b.dataset.id})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart'})}catch(_){r={ok:false,error:'request failed'}}
+    if(r&&r.ok){artToast('Added '+b.dataset.name,'ok');await loadProviderPlugins();
+      if(+b.dataset.key){closeKeyDialog();ppSecretDialog(b.dataset.id,b.dataset.name)}
+      else{b.outerHTML='<span class="ml-on">✓ added</span>'}}
+    else{b.disabled=false;b.textContent='Add';artToast('Couldn’t add · '+((r&&r.error)||'unknown'),'err')}
+  }));
 }
 function redactedDialog(){
   closeKeyDialog();
