@@ -959,7 +959,13 @@ select.hb{padding:5px 9px}
 .cli-head{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid rgba(240,236,228,.1)}
 .cli-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#efe9dd;font-weight:600}
 .cli-cwd{font-size:10px;color:rgba(239,233,221,.5)}
+.cli-dot{width:6px;height:6px;border-radius:50%;background:rgba(239,233,221,.25);transition:background .2s}
+.cli-dot.live{background:#cf7a2e}
 .cli-head .dc{margin-left:auto;color:rgba(239,233,221,.6)}.cli-head .dc:hover{color:#efe9dd}
+#cli-term{flex:1;min-height:0;padding:6px 4px 4px 10px;overflow:hidden}
+#cli-term .xterm{height:100%}
+#cli-term .xterm-viewport{background:transparent!important}
+#cli-fallback{flex:1;display:flex;flex-direction:column;min-height:0}
 #cli-out{flex:1;overflow-y:auto;padding:12px 14px;font-family:var(--font);font-size:11.5px;line-height:1.55;color:rgba(239,233,221,.8);min-height:60px}
 #cli-out:empty::before{content:'Commands run in the working directory. Type clear to reset.';color:rgba(239,233,221,.4);font-style:italic}
 .cli-cmd{color:#f3eee3;font-weight:600;margin-top:5px}.cli-cmd::before{content:'▸ ';color:var(--accent)}
@@ -1457,9 +1463,12 @@ select.hb{padding:5px 9px}
 <div id="notif" role="status" aria-live="polite"></div>
 
 <div id="cli-panel">
-  <div class="cli-head"><span class="cli-title">Terminal</span><span class="cli-cwd" id="cli-cwd">~/</span><button class="dc" aria-label="Close" onclick="toggleCli()">✕</button></div>
-  <div id="cli-out"></div>
-  <div class="cli-input"><span class="cli-prompt">▸</span><input id="cli-in" placeholder="run a command — e.g. ls, npm test, git status" autocomplete="off" spellcheck="false"/></div>
+  <div class="cli-head"><span class="cli-title">Terminal</span><span class="cli-cwd" id="cli-cwd">~/</span><span class="cli-dot" id="cli-dot" title="shell status"></span><button class="dc" aria-label="Close" onclick="toggleCli()">✕</button></div>
+  <div id="cli-term"></div>
+  <div id="cli-fallback" hidden>
+    <div id="cli-out"></div>
+    <div class="cli-input"><span class="cli-prompt">▸</span><input id="cli-in" placeholder="run a command — e.g. ls, npm test, git status" autocomplete="off" spellcheck="false"/></div>
+  </div>
   <span class="cli-grip" aria-hidden="true"></span>
 </div>
 
@@ -1598,6 +1607,10 @@ select.hb{padding:5px 9px}
 </div>
 <div id="fs-node-tip"></div>
 
+<!-- real terminal: xterm.js, vendored + served locally (offline-first) -->
+<link rel="stylesheet" href="/vendor/xterm.css">
+<script src="/vendor/xterm.js"></script>
+<script src="/vendor/addon-fit.js"></script>
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx'],threadArtifacts:[],effort:'deep',maxTokens:8192,maxIters:24};
@@ -2431,9 +2444,8 @@ async function revealArtifact(path,name){
 }
 function pushToTerminal(it){
   const path=it.saved?(it.path||it.name):('scroll-artifacts/'+it.name);
-  if(typeof toggleCli==='function'&&document.getElementById('cli-panel')&&!document.getElementById('cli-panel').classList.contains('open'))toggleCli();
-  const inp=document.getElementById('cli-in');if(inp){inp.value='open '+path;inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
-  artToast('Sent to terminal — edit & run','ok');
+  _termType('open '+JSON.stringify(path));   // typed into the live shell — review, then Enter
+  artToast('Sent to terminal — review & press Enter','ok');
 }
 async function _traySave(it){
   let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path:it.name,content:it.code||''})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
@@ -3161,10 +3173,62 @@ async function escalate(){
 }
 function _cloudIdle(){const c=S.agents.cloud;if(c.startMs){c.ms+=Date.now()-c.startMs;c.startMs=0}c.status='idle';recomputeAgent('cloud');renderCards();renderAISInfo()}
 
-// ─── EMBEDDED TERMINAL ─────────────────────────────────────────────────────────
-function toggleCli(){const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');document.getElementById('cli-cwd').textContent=S.cwd;const b=document.getElementById('term-btn');if(b)b.classList.toggle('on',open);if(open)setTimeout(()=>document.getElementById('cli-in').focus(),60)}
+// ─── EMBEDDED TERMINAL — a real PTY shell (xterm.js over a WebSocket), as powerful as Terminal.app ──
+let _TERM=null,_TWS=null,_TFIT=null,_termInit=false,_termRO=null;
+function toggleCli(){
+  const p=document.getElementById('cli-panel');const open=p.classList.toggle('open');
+  try{document.getElementById('cli-cwd').textContent=_shortPath?_shortPath(S.cwd):S.cwd}catch(_){document.getElementById('cli-cwd').textContent=S.cwd}
+  const b=document.getElementById('term-btn');if(b)b.classList.toggle('on',open);
+  if(open){setTimeout(()=>{_initTerm();_termFit();if(_TERM)_TERM.focus();else{const i=document.getElementById('cli-in');if(i)i.focus()}},50);}
+}
+function _initTerm(){
+  if(_termInit)return;
+  if(!window.Terminal){_termFallback('xterm not loaded — restart the server so /vendor is served');return}
+  _termInit=true;
+  const host=document.getElementById('cli-term');
+  _TERM=new window.Terminal({
+    fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:12.5,lineHeight:1.15,
+    cursorBlink:true,scrollback:8000,allowProposedApi:true,
+    theme:{background:'#33302a',foreground:'#e9e4db',cursor:'#cf7a2e',cursorAccent:'#33302a',
+      selectionBackground:'rgba(207,122,46,.32)',black:'#33302a',brightBlack:'#6b655c',
+      red:'#d2552e',green:'#7faa6a',yellow:'#cf9a4e',blue:'#6a9ec0',magenta:'#b07ac0',cyan:'#5aa99b',white:'#e9e4db'}
+  });
+  try{_TFIT=new window.FitAddon.FitAddon();_TERM.loadAddon(_TFIT)}catch(_){}
+  _TERM.open(host);_termFit();
+  _TERM.onData(d=>{try{if(_TWS&&_TWS.readyState===1)_TWS.send(new TextEncoder().encode(d))}catch(_){}});
+  // refit when the (resizable) panel changes size
+  try{_termRO=new ResizeObserver(()=>_termFit());_termRO.observe(document.getElementById('cli-panel'))}catch(_){}
+  _termConnect();
+}
+function _termFit(){try{if(_TFIT&&_TERM){_TFIT.fit();_termSendResize()}}catch(_){}}
+function _termSendResize(){try{if(_TWS&&_TWS.readyState===1&&_TERM)_TWS.send(JSON.stringify({type:'resize',cols:_TERM.cols,rows:_TERM.rows}))}catch(_){}}
+function _termDot(on){const d=document.getElementById('cli-dot');if(d)d.classList.toggle('live',!!on)}
+function _termConnect(){
+  if(!_TERM)return;
+  const proto=location.protocol==='https:'?'wss':'ws';
+  const url=`${proto}://${location.host}/v1/pty?cwd=${encodeURIComponent(S.cwd||'')}&cols=${_TERM.cols}&rows=${_TERM.rows}`;
+  let ws;try{ws=new WebSocket(url)}catch(_){_TERM.write('\r\n\x1b[90m[terminal unavailable — restart the server]\x1b[0m\r\n');return}
+  ws.binaryType='arraybuffer';_TWS=ws;
+  ws.onopen=()=>{_termDot(true);_termSendResize();_TERM.focus()};
+  ws.onmessage=e=>{const d=e.data;if(typeof d==='string')_TERM.write(d);else _TERM.write(new Uint8Array(d))};
+  ws.onclose=()=>{_termDot(false);_TWS=null;_TERM.write('\r\n\x1b[90m[session ended — reopen the terminal to start a new shell]\x1b[0m\r\n')};
+  ws.onerror=()=>{_termDot(false)};
+}
+// type a command into the live shell (no auto-run — the user reviews, then hits Enter)
+function _termType(text,run){
+  if(!document.getElementById('cli-panel').classList.contains('open'))toggleCli();
+  setTimeout(()=>{_initTerm();if(_TWS&&_TWS.readyState===1){_TWS.send(new TextEncoder().encode(text+(run?'\n':'')));_TERM&&_TERM.focus()}
+    else{const i=document.getElementById('cli-in');if(i){i.value=text;i.focus()}}},60);
+}
+// fallback: the old one-shot line runner (when xterm/WS aren't available)
+function _termFallback(msg){
+  const fb=document.getElementById('cli-fallback'),tm=document.getElementById('cli-term');
+  if(fb)fb.hidden=false;if(tm)tm.style.display='none';
+  if(msg){const out=document.getElementById('cli-out');if(out){const r=document.createElement('div');r.className='cli-res';r.textContent=msg;out.appendChild(r)}}
+  const i=document.getElementById('cli-in');if(i)i.focus();
+}
 async function cliRun(cmd){
-  const out=document.getElementById('cli-out');
+  const out=document.getElementById('cli-out');if(!out)return;
   const c=document.createElement('div');c.className='cli-cmd';c.textContent=cmd;out.appendChild(c);
   const r=document.createElement('div');r.className='cli-res';r.textContent='running…';out.appendChild(r);out.scrollTop=out.scrollHeight;
   let res;try{res=await fetch('/v1/shell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:cmd,cwd:S.cwd})}).then(x=>x.ok?x.json():{output:'server route missing — restart the server to enable the terminal'})}catch(_){res={output:'request failed'}}

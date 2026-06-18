@@ -35,9 +35,10 @@ try:
 except Exception:
     _log = logging.getLogger("scroll")
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from server import agent as agent_mod
 from server import dual_agent as dual_mod
@@ -89,31 +90,31 @@ app = FastAPI(title="Scroll", lifespan=lifespan)
 _STATIC = Path(__file__).parent.parent / "static"
 
 
-def _guard_local(request: Request) -> None:
-    """Refuse cross-origin calls to powerful endpoints (shell, codemie setup).
-
-    CORS is allow_origins=["*"] (handy for phone relay / dev), and the server is on loopback —
-    but loopback does NOT stop a public web page the user visits from issuing a cross-origin POST
-    that runs a shell command or auto-launches Terminal.app. Same-origin requests omit Origin
-    (allowed); the app + a LAN phone send a loopback/private-IP origin (allowed); a real public
-    site sends its own origin (refused)."""
+def _origin_ok(origin: str) -> bool:
+    """True if the request Origin is same-origin / loopback / private-LAN (so the app and a LAN
+    phone are allowed) — but a real public website's origin is refused. Powerful endpoints (shell,
+    PTY, codemie setup) use this: CORS is allow_origins=["*"] and the server is on loopback, which
+    does NOT stop a public page the user visits from cross-origin POSTing to run a command."""
+    if not origin:
+        return True  # same-origin fetches don't send Origin
     import ipaddress
     from urllib.parse import urlparse
-    origin = request.headers.get("origin") or ""
-    if not origin:
-        return  # same-origin fetches don't send Origin
     try:
         host = urlparse(origin).hostname or ""
     except Exception:
         host = ""
     if host in ("localhost", "127.0.0.1", "::1"):
-        return
+        return True
     try:
-        if ipaddress.ip_address(host).is_private or ipaddress.ip_address(host).is_loopback:
-            return
+        ip = ipaddress.ip_address(host)
+        return ip.is_private or ip.is_loopback
     except ValueError:
-        pass
-    raise HTTPException(403, "cross-origin request refused for this endpoint")
+        return False
+
+
+def _guard_local(request: Request) -> None:
+    if not _origin_ok(request.headers.get("origin") or ""):
+        raise HTTPException(403, "cross-origin request refused for this endpoint")
 
 
 @app.get("/")
@@ -124,6 +125,12 @@ async def root():
 @app.get("/logo.svg")
 async def logo():
     return FileResponse(_STATIC / "logo.svg", media_type="image/svg+xml")
+
+
+# Vendored front-end libs (xterm.js for the real terminal). Served locally — Scroll is offline-first.
+_VENDOR = _STATIC / "vendor"
+if _VENDOR.is_dir():
+    app.mount("/vendor", StaticFiles(directory=str(_VENDOR)), name="vendor")
 
 
 app.add_middleware(
@@ -610,6 +617,88 @@ async def codemie_plugin(request: Request, payload: dict | None = None):
 
 
 # ── Embedded CLI + Apply-code ──────────────────────────────────────────────────
+
+@app.websocket("/v1/pty")
+async def pty_ws(ws: WebSocket):
+    """A real PTY-backed login shell over a WebSocket — the embedded terminal, as powerful as
+    Terminal.app. Keystrokes arrive as binary frames; a JSON text frame {type:'resize',rows,cols}
+    resizes the TTY. Same-origin guarded (a public page must not open a shell)."""
+    if not _origin_ok(ws.headers.get("origin") or ""):
+        await ws.close(code=1008)
+        return
+    await ws.accept()
+    import asyncio, json, os
+    from server import pty_session
+    qp = ws.query_params
+    cwd = qp.get("cwd") or None
+    try:
+        cols = max(2, min(500, int(qp.get("cols") or 80)))
+        rows = max(2, min(200, int(qp.get("rows") or 24)))
+    except Exception:
+        cols, rows = 80, 24
+    pid, fd = pty_session.spawn(cwd, cols, rows)
+    loop = asyncio.get_event_loop()
+
+    async def _send(data: bytes):
+        try:
+            await ws.send_bytes(data)
+        except Exception:
+            pass
+
+    def _on_read():
+        try:
+            data = os.read(fd, 65536)
+        except OSError:
+            data = b""
+        if not data:
+            try:
+                loop.remove_reader(fd)
+            except Exception:
+                pass
+            asyncio.create_task(_close_ws())
+            return
+        asyncio.create_task(_send(data))
+
+    async def _close_ws():
+        try:
+            await ws.close()
+        except Exception:
+            pass
+
+    loop.add_reader(fd, _on_read)
+    try:
+        while True:
+            msg = await ws.receive()
+            if msg.get("type") == "websocket.disconnect":
+                break
+            b = msg.get("bytes")
+            txt = msg.get("text")
+            if b is not None:
+                try:
+                    os.write(fd, b)
+                except OSError:
+                    break
+            elif txt is not None:
+                try:
+                    o = json.loads(txt)
+                    if o.get("type") == "resize":
+                        pty_session.set_winsize(fd, int(o.get("rows", 24)), int(o.get("cols", 80)))
+                    elif o.get("type") == "input":
+                        os.write(fd, str(o.get("data", "")).encode())
+                except Exception:
+                    try:
+                        os.write(fd, txt.encode())  # lenient: treat unknown text as keystrokes
+                    except OSError:
+                        break
+    except WebSocketDisconnect:
+        pass
+    finally:
+        try:
+            loop.remove_reader(fd)
+        except Exception:
+            pass
+        pty_session.close(pid, fd)
+
 
 @app.post("/v1/shell")
 async def shell_endpoint(request: Request, payload: dict):
