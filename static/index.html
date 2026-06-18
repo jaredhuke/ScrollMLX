@@ -2250,7 +2250,7 @@ async function loadTools(){try{allTools=(await fetch('/v1/tools').then(r=>r.json
 async function toggleTool(name,en){await fetch(`/v1/tools/${name}/${en?'enable':'disable'}`,{method:'POST'});await loadTools()}
 async function loadExt(){const p=document.getElementById('ext-path').value.trim();if(!p)return;await fetch('/v1/extensions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});await loadTools()}
 async function loadMCP(){const u=document.getElementById('mcp-url').value.trim();if(!u)return;await fetch('/v1/connectors/mcp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_url:u})});await loadTools()}
-function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('overlay').classList.add('open');loadTools();loadProviders();loadSkills()}
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('overlay').classList.add('open');loadTools();loadProviders();loadSkills();loadProviderPlugins()}
 // ─── SKILL FILES (.md the agent follows) ───────────────────────────────────────
 async function loadSkills(){
   const el=document.getElementById('skill-list');if(!el)return;
@@ -2867,6 +2867,40 @@ async function loadCodemie(){
   window.CLOUD=window.CLOUD||{};
   if(window.CODEMIE.available)window.CLOUD.codemie=true;else delete window.CLOUD.codemie;
   try{syncCloudAgent();renderCards();renderAISInfo();updateModelsCount()}catch(_){}
+}
+// ─── PROVIDER PLUGINS — droppable .md providers (CodeMie-style) ───────────────
+window.PROVIDER_PLUGINS=[];
+async function loadProviderPlugins(){
+  let j;try{j=await fetch('/v1/provider-plugins').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  const list=(j&&j.plugins)||[];window.PROVIDER_PLUGINS=list;window.CLOUD=window.CLOUD||{};
+  list.forEach(p=>{ _CLOUD_META[p.id]=[(p.name||p.id).split('·')[0].trim().toUpperCase().slice(0,12),p.name||p.id];
+    if(p.available)window.CLOUD[p.id]=true;else delete window.CLOUD[p.id];
+    _MODEL_LABEL[p.id]=p.name||p.id; });
+  try{syncCloudAgent();renderCards();renderAISInfo();updateModelsCount()}catch(_){}
+  renderPPList();
+}
+function renderPPList(){
+  const el=document.getElementById('pp-list');if(!el)return;const list=window.PROVIDER_PLUGINS||[];
+  if(!list.length){el.innerHTML='<div class="dr-empty">None yet — drop a provider .md below.</div>';return}
+  el.innerHTML=list.map(p=>{
+    const ok=p.available,need=p.needs_secret&&!p.secret_set;
+    const right=need?`<button class="skill-mini" onclick="ppSecret('${escH(p.id)}')">add password</button>`
+      :`<span class="pbadge ${ok?'ready':''}">${ok?'ready':'set up'}</span>`;
+    return `<div class="prov-row" data-tip="${escH(p.kind)} plugin"><span class="pdot ${ok?'ready':''}"></span><span class="prov-name">${escH(p.name||p.id)}</span>${right}</div>`;
+  }).join('');
+}
+async function importProviderPlugin(){
+  const inp=document.getElementById('pp-path'),path=(inp&&inp.value||'').trim();
+  if(!path){artToast('Paste the path to a provider .md','err');return}
+  let r;try{r=await fetch('/v1/provider-plugins/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){if(inp)inp.value='';artToast('Added '+(r.name||r.id),'ok');await loadProviderPlugins();if(r.needs_secret)ppSecret(r.id);}
+  else artToast('Couldn’t add · '+((r&&r.error)||'unknown'),'err');
+}
+async function ppSecret(id){
+  const v=prompt('Password / token for "'+id+'" (stored in your Keychain, never in the file):');
+  if(v==null)return;
+  let r;try{r=await fetch('/v1/provider-plugins/secret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,secret:v})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+  if(r&&r.ok){artToast('Saved — '+id+' ready','ok');loadProviderPlugins()}else artToast('Could not save password','err');
 }
 function codemieDialog(){
   closeKeyDialog();
@@ -4049,7 +4083,7 @@ function fanoutModels(){
 }
 // @-targeting — "@claude fix this" routes only to Claude; "@all" to every available model.
 const _MODEL_ALIAS={codemie:'codemie',cdme:'codemie',epam:'codemie',opus:'codemie',claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
-function _availIds(){return ['mlx'].concat(['codemie','anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id]))}
+function _availIds(){return ['mlx'].concat(['codemie','anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id])).concat((window.PROVIDER_PLUGINS||[]).filter(p=>window.CLOUD&&window.CLOUD[p.id]).map(p=>p.id))}
 function parseTargets(text){
   const re=/(^|\s)@([a-z0-9_.-]+)/gi;let m,all=false;const ids=new Set(),strip=[];
   while((m=re.exec(text))){const key=m[2].toLowerCase().replace(/[._-]/g,'');
@@ -4063,6 +4097,7 @@ function _modelCatalog(){
   const out=[{id:'mlx',label:'Local · Qwen 32B',sub:'on-device · full context',avail:true}];
   [['codemie','CodeMie','Claude Opus · EPAM SSO'],['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','direct key · paid'],['openai','GPT-4o','paid']]
     .forEach(([id,label,sub])=>out.push({id,label,sub,avail:!!(window.CLOUD&&window.CLOUD[id])}));
+  (window.PROVIDER_PLUGINS||[]).forEach(p=>out.push({id:p.id,label:p.name||p.id,sub:'plugin'+(p.needs_secret&&!p.secret_set?' · needs password':''),avail:!!(window.CLOUD&&window.CLOUD[p.id])}));
   return out;
 }
 function _modelsOutside(e){const p=document.getElementById('models-pop'),b=document.getElementById('models-btn');if(p&&!p.contains(e.target)&&!(b&&b.contains(e.target)))closeModels()}
@@ -4297,7 +4332,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray(); renderNarration(); setInterval(renderNarration,800);
-loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadCodemie(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
+loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadCodemie(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
