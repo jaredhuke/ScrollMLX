@@ -57,22 +57,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .nb-cmd{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:6px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
 .nb-x{margin-left:auto;background:none;border:none;color:var(--text-soft);font-size:14px;cursor:pointer;flex-shrink:0;min-width:26px;min-height:26px}
 .nb-x:hover{color:var(--red)}
-#hdr{height:var(--hh);flex-shrink:0;position:relative;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px}
-#logo{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;user-select:none;color:var(--text);cursor:default}
+#hdr{height:var(--hh);flex-shrink:0;position:relative;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;overflow:hidden}
+#logo{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;user-select:none;color:var(--text);cursor:default;flex-shrink:0}
 #logo .r{color:var(--red)}
 #logo .mlx{color:var(--red);margin-left:.22em}
 #logo .logo-mark{width:19px;height:19px;flex-shrink:0;color:var(--text)}
 #empty .logo-mark{width:46px;height:46px;color:var(--text-soft);margin-bottom:14px}
-#model-lbl{font-size:10px;color:var(--text-dim);letter-spacing:.03em;font-weight:400;white-space:nowrap}
+#model-lbl{font-size:10px;color:var(--text-dim);letter-spacing:.03em;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1;max-width:200px}
 #cwd-lbl{font-size:10px;color:var(--text-ghost);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;font-family:var(--mono);transition:color .2s}
 #cwd-lbl:hover{color:var(--red)}
-#status-pill{display:flex;align-items:center;gap:7px;padding:4px 12px;background:transparent;border:1px solid var(--border);border-radius:20px;transition:all .3s}
+#status-pill{display:flex;align-items:center;gap:7px;padding:4px 12px;background:transparent;border:1px solid var(--border);border-radius:20px;transition:all .3s;flex-shrink:0}
 #spill-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);transition:background .3s}
 #spill-dot.on{background:var(--accent);animation:dotPulse 2s infinite}
 #spill-dot.err{background:#8a2818}
 #spill-lbl{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;font-weight:500}
-#hdr-right{display:flex;align-items:center;gap:8px}
-#sysbar{margin-left:auto;display:flex;align-items:center;gap:15px}
+#hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#sysbar{margin-left:auto;display:flex;align-items:center;gap:15px;flex-shrink:1;min-width:0;overflow:hidden}
 .sg{display:flex;flex-direction:column;gap:2px;width:56px}
 .sg-spark{width:56px;height:15px;display:block}
 .sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
@@ -80,7 +80,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
 .sg-v.warn{color:var(--amber)}.sg-v.alert{color:var(--red)}.sg-v.na{color:var(--text-ghost);font-weight:400}
 @media(max-width:1200px){#sysbar{display:none}}
-.hb{background:transparent;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:500;padding:5px 13px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;transition:all .18s}
+.hb{background:transparent;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:500;padding:5px 13px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;transition:all .18s;white-space:nowrap;flex-shrink:0}
 .hb:hover{color:var(--text);border-color:rgba(26,28,34,.28);background:rgba(26,28,34,.04)}
 .hb.on{background:rgba(200,75,49,.07);color:var(--red);border-color:rgba(200,75,49,.28)}
 .hb:focus{outline:none}
@@ -304,7 +304,7 @@ select.hb{padding:5px 9px}
 
 /* right */
 #rpanel{width:var(--rw);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
-#ais-canvas{display:block;width:100%;height:200px;flex-shrink:0}
+#ais-canvas{display:block;width:100%;height:248px;flex-shrink:0}
 #ais-info{flex:1 1 auto;min-height:110px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
 /* docked artifact tray — primary output surface, lower-right */
 #art-tray{flex:0 0 auto;max-height:46%;min-height:150px;display:flex;flex-direction:column;border-top:1px solid var(--border-mid);background:var(--bg2)}
@@ -314,8 +314,9 @@ select.hb{padding:5px 9px}
 .tray-exp{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font);padding:3px 8px;border-radius:5px;cursor:pointer;transition:color .15s,border-color .15s}
 .tray-exp:hover{color:var(--accent-ink);border-color:var(--accent)}
 .tray-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:2px 9px 6px;display:flex;flex-direction:column;gap:6px}
-.tray-card{display:flex;align-items:center;gap:10px;padding:8px 9px;border:1px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
-.tray-card:hover{border-color:var(--border-mid);background:rgba(26,28,34,.025)}
+.tray-card{display:flex;flex-direction:column;gap:8px;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg);transition:border-color .15s,background .15s}
+.tray-card:hover{border-color:var(--border-mid)}
+.tray-row1{display:flex;align-items:center;gap:10px;cursor:pointer}
 .tray-card.rend .tray-ic{color:var(--red);border-color:rgba(210,85,46,.4)}
 .tray-ic{flex-shrink:0;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);background:var(--bg2);border:1px solid var(--border-mid)}
 .tray-ic svg{width:18px;height:18px}
@@ -326,7 +327,7 @@ select.hb{padding:5px 9px}
 .tray-badge.ok{background:rgba(60,100,60,.1);color:rgba(50,90,50,.95)}
 .tray-badge.warn{background:rgba(210,85,46,.12);color:var(--red-ink)}
 .tray-badge.unsaved{background:rgba(176,122,16,.14);color:#6f520a}
-.tray-acts{display:flex;gap:5px;flex-shrink:0}
+.tray-acts{display:flex;gap:5px;flex-wrap:wrap}
 .tray-act{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
 .tray-act:hover{color:var(--accent-ink);border-color:var(--accent)}
 .tray-act.save:hover{color:var(--red-ink);border-color:var(--red)}
@@ -377,9 +378,9 @@ select.hb{padding:5px 9px}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(26,28,34,.14);border-radius:2px}
 
 /* drawer */
-#overlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
+#overlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:310;backdrop-filter:blur(4px)}
 #overlay.open{display:block}
-#drawer{position:fixed;top:0;right:0;bottom:0;width:306px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:306px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:311;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 #drawer.open{transform:none}
 .dh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .dt{font-size:10px;letter-spacing:.16em;color:var(--text);text-transform:uppercase;font-weight:600}
@@ -410,9 +411,9 @@ select.hb{padding:5px 9px}
 .dr-empty{font-size:10px;color:var(--text-ghost);font-style:italic;padding:4px 0 8px}
 
 /* artifacts drawer */
-#aoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
+#aoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:310;backdrop-filter:blur(4px)}
 #aoverlay.open{display:block}
-#adrawer{position:fixed;top:0;right:0;bottom:0;width:330px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#adrawer{position:fixed;top:0;right:0;bottom:0;width:330px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:311;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 #adrawer.open{transform:none}
 .art-ct{font-family:var(--mono);color:var(--text-ghost);font-weight:400;letter-spacing:0}
 .art-mini{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:9px;padding:2px 8px;border-radius:5px;cursor:pointer;min-height:22px;flex-shrink:0}
@@ -649,7 +650,7 @@ select.hb{padding:5px 9px}
 .bl-item button:hover{color:var(--red)}
 
 /* onboarding wizard */
-#onboard{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.45);backdrop-filter:blur(6px)}
+#onboard{position:fixed;inset:0;z-index:340;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.45);backdrop-filter:blur(6px)}
 #onboard.open{display:flex}
 .ob-card{width:min(560px,92vw);max-height:86vh;background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 24px 70px rgba(26,28,34,.3);display:flex;flex-direction:column;overflow:hidden}
 .ob-top{display:flex;align-items:flex-start;gap:14px;padding:20px 22px 14px;border-bottom:1px solid var(--border)}
@@ -732,7 +733,7 @@ select.hb{padding:5px 9px}
 .sk-remove{background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:13px;padding:2px 6px}.sk-remove:hover{color:var(--ext)}
 
 /* artifact preview — live render for HTML, source for the rest */
-#preview{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.5);backdrop-filter:blur(6px)}  /* below the header so the menu bar stays visible */
+#preview{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:320;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.5);backdrop-filter:blur(6px)}  /* below the header so the menu bar stays visible */
 #preview.open{display:flex}
 .pv-card{width:min(1000px,94vw);height:min(800px,90vh);background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 24px 70px rgba(26,28,34,.32);display:flex;flex-direction:column;overflow:hidden}
 .pv-head{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border-mid)}
@@ -813,6 +814,13 @@ select.hb{padding:5px 9px}
 .ad-cell .k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
 .ad-cell .v{font-size:18px;font-weight:200;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:3px}
 .ad-cell .v.warn{color:var(--amber)}.ad-cell .v.alert{color:var(--red)}
+.ad-budget{margin-top:13px;padding:11px 12px;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg)}
+.ad-budget-h{display:flex;justify-content:space-between;align-items:baseline;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
+.ad-budget-n{font-family:var(--mono);color:var(--text);font-weight:600;letter-spacing:0}
+.ad-budget-track{height:6px;border-radius:3px;background:rgba(26,28,34,.08);margin:8px 0 6px;overflow:hidden}
+.ad-budget-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s,background .3s}
+.ad-budget-fill.hot{background:var(--amber)}.ad-budget-fill.over{background:var(--red)}
+.ad-budget-sub{font-size:9.5px;color:var(--text-soft)}
 .ad-foot{display:flex;align-items:center;gap:9px;padding:12px 18px;border-top:1px solid var(--border);background:var(--bg2)}
 .ad-foot .spacer{flex:1}
 .ad-close{background:none;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;padding:7px 15px;border-radius:var(--r);cursor:pointer}.ad-close:hover{color:var(--text);border-color:var(--text-soft)}
@@ -893,7 +901,7 @@ select.hb{padding:5px 9px}
 
 /* embedded terminal */
 /* terminal — its own warm-dark-grey designation, clean sans (zero mono) */
-#cli-panel{position:fixed;left:50%;bottom:72px;transform:translateX(-50%) translateY(16px);width:min(700px,92vw);max-height:48vh;background:#33302a;border:1px solid rgba(0,0,0,.25);border-radius:var(--r2);box-shadow:0 18px 50px rgba(26,28,34,.34);z-index:60;display:none;flex-direction:column;overflow:hidden;opacity:0;transition:opacity .2s,transform .2s}
+#cli-panel{position:fixed;left:50%;bottom:72px;transform:translateX(-50%) translateY(16px);width:min(700px,92vw);max-height:48vh;background:#33302a;border:1px solid rgba(0,0,0,.25);border-radius:var(--r2);box-shadow:0 18px 50px rgba(26,28,34,.34);z-index:215;display:none;flex-direction:column;overflow:hidden;opacity:0;transition:opacity .2s,transform .2s}
 #cli-panel.open{display:flex;opacity:1;transform:translateX(-50%) translateY(0)}
 .cli-head{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid rgba(240,236,228,.1)}
 .cli-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#efe9dd;font-weight:600}
@@ -909,13 +917,13 @@ select.hb{padding:5px 9px}
 #cli-in::placeholder{color:rgba(239,233,221,.4)}
 
 /* settings drawer */
-#soverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
+#soverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:310;backdrop-filter:blur(4px)}
 #soverlay.open{display:block}
-#sdrawer{position:fixed;top:0;right:0;bottom:0;width:340px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#sdrawer{position:fixed;top:0;right:0;bottom:0;width:340px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:311;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 #sdrawer.open{transform:none}
-#pjoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:49;backdrop-filter:blur(4px)}
+#pjoverlay{display:none;position:fixed;inset:0;background:rgba(26,28,34,.4);z-index:310;backdrop-filter:blur(4px)}
 #pjoverlay.open{display:block}
-#pjdrawer{position:fixed;top:0;right:0;bottom:0;width:380px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:50;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#pjdrawer{position:fixed;top:0;right:0;bottom:0;width:380px;background:var(--bg2);border-left:1px solid var(--border-mid);z-index:311;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
 #pjdrawer.open{transform:none}
 #projects-btn.live{color:var(--accent);border-color:var(--accent-line)}
 #pj-active{font-size:10px;color:var(--text-dim)}
@@ -1484,10 +1492,10 @@ const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,tool
 // and injects a "work thoroughly / produce complete output" directive. The headline lever
 // against light/weak output. Persisted in localStorage.
 const EFFORT={
-  quick:   {label:'Quick',    tokens:2048, iters:6,  blurb:'Fast, short answers',        directive:'Keep it brief and direct.'},
-  standard:{label:'Standard', tokens:4096, iters:12, blurb:'Balanced effort',            directive:''},
-  deep:    {label:'Deep',     tokens:8192, iters:24, blurb:'Thorough, complete output',  directive:'Work thoroughly. Plan first, then implement COMPLETELY — no placeholders, no TODOs, no "rest is similar". Handle edge cases and finish every file you start. Prefer complete, production-quality output over brevity.'},
-  max:     {label:'Max',      tokens:8192, iters:40, blurb:'Exhaustive — spend freely',  directive:'Maximum effort. Decompose the task, implement every part exhaustively and correctly, and keep iterating with tools until it is fully done and self-verified. Do not stop early. Completeness and correctness matter far more than speed or length. If you near the loop budget, say what remains so it can be continued.'},
+  quick:   {label:'Quick',    tokens:2048, iters:6,  budget:6144,   blurb:'Fast, short answers',        directive:'Keep it brief and direct.'},
+  standard:{label:'Standard', tokens:4096, iters:12, budget:16384,  blurb:'Balanced effort',            directive:''},
+  deep:    {label:'Deep',     tokens:8192, iters:24, budget:49152,  blurb:'Thorough, complete output',  directive:'Work thoroughly. Plan first, then implement COMPLETELY — no placeholders, no TODOs, no "rest is similar". Handle edge cases and finish every file you start. Prefer complete, production-quality output over brevity.'},
+  max:     {label:'Max',      tokens:8192, iters:40, budget:131072, blurb:'Exhaustive — spend freely',  directive:'Maximum effort. Decompose the task, implement every part exhaustively and correctly, and keep iterating with tools until it is fully done and self-verified. Do not stop early. Completeness and correctness matter far more than speed or length. If you near the loop budget, say what remains so it can be continued.'},
 };
 const AGENT_KEYS=['primary','critic'];
 
@@ -1732,15 +1740,15 @@ function drawAIS(){
     const x=cx+Math.cos(a)*R*0.69,y=cy+Math.sin(a)*R*0.69,isErr=i<errCount;
     AC.beginPath();AC.arc(x,y,isErr?1.9:1.2,0,Math.PI*2);AC.fillStyle=isErr?'rgba(200,75,49,.78)':'rgba(26,28,34,.12)';AC.fill();}
   // drift markers (per operative, radial deviation off the baseline ring)
-  AGENT_KEYS.forEach((k,idx)=>{const ag=S.agents[k],a=idx===0?-Math.PI/2:Math.PI/2,dr=Math.abs(ag.hm-50)/50,rr=R*0.55;
+  AGENT_KEYS.forEach((k,idx)=>{const ag=S.agents[k],a=idx===0?-Math.PI/2:Math.PI/2,dr=Math.abs(ag.hm-50)/50,rr=R*0.44;
     const mx=cx+Math.cos(a)*rr,my=cy+Math.sin(a)*rr,ox=cx+Math.cos(a)*(rr+dr*10),oy=cy+Math.sin(a)*(rr+dr*10);
     AC.beginPath();AC.moveTo(mx,my);AC.lineTo(ox,oy);AC.strokeStyle=dr>0.5?'rgba(200,75,49,.5)':'rgba(80,74,66,.45)';AC.lineWidth=1.5;AC.stroke();
     AC.beginPath();AC.arc(ox,oy,1.6,0,Math.PI*2);AC.fillStyle=dr>0.5?'rgba(200,75,49,.7)':'rgba(80,74,66,.55)';AC.fill();});
-  const coreR=Math.min(23,R*0.34);
+  const coreR=Math.min(26,R*0.28);
   // ── skills feeding the workflow — small teal nodes wired to the core (lower-left arc) ──
   const _sk=(S.skills||[]).slice(0,6);
   _sk.forEach((sk,i)=>{const a=Math.PI*0.60+(_sk.length>1?(i/(_sk.length-1)):0)*Math.PI*0.78;
-    const rr=coreR+15,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
+    const rr=coreR+Math.max(22,R*0.18),x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
     AC.beginPath();AC.moveTo(cx+Math.cos(a)*(coreR+3),cy+Math.sin(a)*(coreR+3));AC.lineTo(x,y);AC.strokeStyle='rgba(47,156,139,.28)';AC.lineWidth=1;AC.stroke();
     AC.beginPath();AC.arc(x,y,2.3,0,Math.PI*2);AC.fillStyle='rgba(47,156,139,.8)';AC.fill();
     AC.font='500 6px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(26,28,34,.42)';
@@ -1749,7 +1757,7 @@ function drawAIS(){
   // ── operatives: ACTIVE on the inner ring (warm), INACTIVE parked at the right edge (cool, click to enlist) ──
   const _ops=cardKeys(),_act=_ops.filter(_opActive),_idle=_ops.filter(k=>!_opActive(k));
   _act.forEach((k,idx)=>{const ag=S.agents[k],busy=ag.status==='working';
-    const a=-Math.PI/2+(_act.length>1?(idx/_act.length)*Math.PI*2:0),rr=R*0.40;
+    const a=-Math.PI/2+(_act.length>1?(idx/_act.length)*Math.PI*2:0),rr=R*0.56;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,sx=cx+Math.cos(a)*(coreR+3),sy=cy+Math.sin(a)*(coreR+3);
     AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.45)':'rgba(207,122,46,.2)';AC.lineWidth=busy?1.5:1;AC.stroke();
     if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.5,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
@@ -1773,7 +1781,7 @@ function drawAIS(){
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
   // ── OUTPUT artifacts — files the agent produced; drawn as page glyphs (not circles), in their own lower zone ──
   const _arts=(typeof artifactNodes==='function'?artifactNodes():[]).slice(-6);
-  _arts.forEach((nd,i)=>{const nn=_arts.length,a=Math.PI*0.66+(nn>1?(i/(nn-1)):0.5)*Math.PI*0.68,rr=R*0.66;
+  _arts.forEach((nd,i)=>{const nn=_arts.length,a=Math.PI*0.66+(nn>1?(i/(nn-1)):0.5)*Math.PI*0.68,rr=R*0.72;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
     AC.beginPath();AC.moveTo(cx+Math.cos(a)*(coreR+3),cy+Math.sin(a)*(coreR+3));AC.lineTo(x,y);AC.strokeStyle='rgba(26,28,34,.07)';AC.lineWidth=1;AC.stroke();
     const ww=8,hh=10;AC.save();AC.translate(x,y);
@@ -1894,8 +1902,9 @@ function recomputeAgent(k){const ag=S.agents[k];if(!ag)return;
   // burn is THROUGHPUT (tokens/sec): live = this turn's tokens / elapsed; idle = session avg
   const elapsed=ag.startMs?Math.max((Date.now()-ag.startMs)/1000,0.4):(ag.ms>0?ag.ms/1000:0);
   const toks=ag.startMs?(ag.turnTokens||0):(ag.tokens||0);
-  ag.rate=elapsed>0?Math.round(toks/elapsed):0;
-  ag.burn=Math.min(Math.round(ag.rate/BURN_REF*100),100);   // heat 0-100 from throughput
+  ag.rate=elapsed>0?Math.round(toks/elapsed):0;   // throughput (tokens/sec)
+  const _bud=S.tokenBudget||16384;
+  ag.burn=Math.min(Math.round((ag.turnTokens||0)/_bud*100),100);   // burn-down: % of the designated turn token budget
   const er=ag.iters?ag.errs/ag.iters:0;ag.hm=Math.max(2,Math.min(98,50+er*90));   // drift = real tool-failure pressure
 }
 function rateHr(rate){const h=Math.round((rate||0)*3600);return h>=1000?(h/1000).toFixed(h>=10000?0:1)+'k':String(h)}  // tok/hr
@@ -1978,23 +1987,33 @@ function openAgentDetail(k){
         ${cell('Burn',(ag.rate||0)+' t/s',burnCls,'Token throughput — '+(ag.rate||0)+' tokens/sec ≈ '+rateHr(ag.rate)+' tokens/hr')}${cell('Active',_fmtMs(ag.ms))}${cell('Drift',driftPct(ag.hm)+'%',(hmClass(ag.hm)==='crit'||hmClass(ag.hm)==='drift')?'warn':'','Behavioural deviation from baseline · 0% = stable, rises with tool failures ('+hmLabel(hmClass(ag.hm))+')')}
         ${critRows}
       </div>
+      <div class="ad-budget" data-tip="Tokens spent this turn vs the budget set by the Effort control">
+        <div class="ad-budget-h"><span>Burn-down · turn budget</span><span class="ad-budget-n">${fmtPlain(ag.turnTokens||0)} / ${fmtPlain(S.tokenBudget||16384)}</span></div>
+        <div class="ad-budget-track"><div class="ad-budget-fill ${ag.burn>=100?'over':ag.burn>=80?'hot':''}" style="width:${Math.min(ag.burn,100)}%"></div></div>
+        <div class="ad-budget-sub">${ag.burn}% of budget · ${ag.rate||0} t/s · loops ${ag.iters||0}/${S.maxIters||12}</div>
+      </div>
     </div>
-    <div class="ad-foot">${ag.status==='working'?`<button class="ad-stop" onclick="haltAgent()">Halt</button><button class="ad-retask" onclick="retaskAgent()">Retask →</button>`:'<span style="font-size:9px;color:var(--text-ghost)">AIS governs these live</span>'}<span class="spacer"></span><button class="ad-close" onclick="closeAgentDetail()">Close</button></div>
+    <div class="ad-foot">${ag.status==='working'?`<button class="ad-stop" onclick="haltAgent()">Halt</button>`:''}<button class="ad-retask" onclick="restartAgent()">${ag.status==='working'?'Retask →':'Restart ↻'}</button><span class="spacer"></span><button class="ad-close" onclick="closeAgentDetail()">Close</button></div>
   </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('mousedown',e=>{if(e.target===ov)closeAgentDetail()});
 }
 function closeAgentDetail(){const o=document.getElementById('ad-overlay');if(o)o.remove()}
-// Halt the running operative; Retask hands its current work to another (you pick via the model picker)
+// Halt the running operative; Restart re-runs the last prompt (one click)
 function haltAgent(){stopStream();artToast('Operative halted','ok');closeAgentDetail()}
-function retaskAgent(){
-  stopStream();
-  const g=(S.goals||[]).slice().reverse().find(x=>x.text);
+function restartAgent(){
+  const working=S.streaming;stopStream();
+  const last=(S.msgs||[]).slice().reverse().find(m=>m.role==='user'&&m.content);
+  const goal=(S.goals||[]).slice().reverse().find(x=>x.text);
+  const text=(last&&last.content)||(goal&&goal.text)||'';
   closeAgentDetail();
-  if(g&&g.text){msgIn.value=g.text;msgIn.dispatchEvent(new Event('input'))}
-  if(typeof toggleModels==='function'&&document.getElementById('models-pop')?.hasAttribute('hidden'))toggleModels();
-  artToast('Halted — tag the operative to retask, then Send','ok');
+  if(!text){artToast('Nothing to restart yet — send a message first','info');return}
+  msgIn.value=text;msgIn.dispatchEvent(new Event('input'));
+  setTimeout(()=>{if(typeof send==='function')send()},working?260:60);
+  artToast('Restarting the last task','run');
 }
+// kept for back-compat
+function retaskAgent(){restartAgent()}
 
 function cardKeys(){const ck=['primary','critic'];if(typeof cloudAgentKeys==='function')ck.push(...cloudAgentKeys());return ck}
 // an operative is "active" when it's working or designated to assist this turn
@@ -2047,11 +2066,11 @@ function updateAEM(){
   document.getElementById('av-iter').innerHTML=`${S.iterations}<span class="u"> / ${S.maxIters||12}</span>`;
   document.getElementById('av-tc').textContent=S.toolCallTotal;
   const e=document.getElementById('av-err');e.textContent=S.errors;e.className='aem-v'+(S.errors>2?' alert':S.errors>0?' warn':'');
-  // ledger burn meter — live token THROUGHPUT (tok/s), heat-scaled
+  // ledger burn meter — burn-DOWN against the designated turn token budget
   const rate=Math.max(0,...AGENT_KEYS.map(k=>(recomputeAgent(k),S.agents[k].rate||0)),S.agents.cloud.rate||0);
-  const heat=Math.min(Math.round(rate/BURN_REF*100),100),lf=document.getElementById('lburn-fill'),lv=document.getElementById('lburn-val');
-  if(lf){lf.style.width=heat+'%';lf.className='lburn-fill'+(heat>=95?' over':heat>=70?' hot':'')}
-  if(lv)lv.textContent=rate+' t/s';
+  const spent=Math.min(Math.round(S.totalTok/budget*100),100),lf=document.getElementById('lburn-fill'),lv=document.getElementById('lburn-val');
+  if(lf){lf.style.width=spent+'%';lf.className='lburn-fill'+(spent>=100?' over':spent>=80?' hot':'')}
+  if(lv)lv.textContent=spent+'% · '+rate+' t/s';
   renderGov();
 }
 function renderTokBudget(over,budget){
@@ -2192,22 +2211,44 @@ function renderTray(){
     const rend=_isRenderable(it.ext);
     const badge=it.saved?(it.rec==='clean'?'<span class="tray-badge ok">in git</span>':(it.rec==='no-repo'||it.rec==='unknown')?'':'<span class="tray-badge warn">uncommitted</span>'):'<span class="tray-badge unsaved">unsaved</span>';
     const meta=(it.ext?it.ext.toUpperCase():'FILE')+(it.lines?' · '+it.lines+' lines':'')+(it.saved?'':' · in chat');
+    // one-click action bar — review, open, copy, terminal, finder, save — each a single click
     let acts='<div class="tray-acts">';
-    acts+=`<button class="tray-act prev" data-i="${i}" title="Preview ${escH(it.name)}">${ICON.eye}</button>`;
-    if(!it.saved){acts+=`<button class="tray-act dl" data-i="${i}" title="Download">${ICON.download}</button>`;
-      acts+=`<button class="tray-act save" data-i="${i}" title="Save to the working folder">${ICON.check}</button>`}
+    acts+=`<button class="tray-act prev" data-i="${i}" title="Preview / review">${ICON.eye}</button>`;
+    if(rend)acts+=`<button class="tray-act openb" data-i="${i}" title="Open in browser">${ICON.globe}</button>`;
+    acts+=`<button class="tray-act copy" data-i="${i}" title="Copy contents">${ICON.copy}</button>`;
+    acts+=`<button class="tray-act term" data-i="${i}" title="Push to terminal">${ICON.terminal}</button>`;
+    if(it.saved)acts+=`<button class="tray-act finder" data-i="${i}" title="Reveal in Finder">${ICON.finder}</button>`;
+    acts+=`<button class="tray-act dl" data-i="${i}" title="Download">${ICON.download}</button>`;
+    if(!it.saved)acts+=`<button class="tray-act save" data-i="${i}" title="Save to the working folder">${ICON.check}</button>`;
     acts+='</div>';
-    return `<div class="tray-card${rend?' rend':''}" data-i="${i}" data-tip="${escH(it.name)} — click to preview"><div class="tray-ic">${rend?_BROWSER_GLYPH:ICON.file}</div><div class="tray-meta"><div class="tray-name">${escH(it.name)}</div><div class="tray-sub">${escH(meta)} ${badge}</div></div>${acts}</div>`;
+    return `<div class="tray-card${rend?' rend':''}" data-i="${i}"><div class="tray-row1"><div class="tray-ic">${rend?_BROWSER_GLYPH:ICON.file}</div><div class="tray-meta"><div class="tray-name">${escH(it.name)}</div><div class="tray-sub">${escH(meta)} ${badge}</div></div></div>${acts}</div>`;
   }).join('');
-  body.querySelectorAll('.tray-card').forEach(card=>{const it=items[+card.dataset.i];
-    card.addEventListener('click',e=>{if(e.target.closest('.tray-act'))return;_trayOpen(it)})});
-  body.querySelectorAll('.tray-act.prev').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_trayOpen(items[+b.dataset.i])}));
-  body.querySelectorAll('.tray-act.dl').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const it=items[+b.dataset.i];downloadFile(it.name,it.code||'',_mimeFor(it.ext))}));
-  body.querySelectorAll('.tray-act.save').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_traySave(items[+b.dataset.i])}));
+  const at=i=>items[+i];
+  body.querySelectorAll('.tray-row1').forEach(r=>r.addEventListener('click',()=>_trayOpen(at(r.parentElement.dataset.i))));
+  body.querySelectorAll('.tray-act.prev').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_trayOpen(at(b.dataset.i))}));
+  body.querySelectorAll('.tray-act.openb').forEach(b=>b.addEventListener('click',async e=>{e.stopPropagation();const it=at(b.dataset.i);const code=await _artContent(it);openInBrowser(it.name,code,it.ext)}));
+  body.querySelectorAll('.tray-act.copy').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();copyArtifact(at(b.dataset.i))}));
+  body.querySelectorAll('.tray-act.term').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();pushToTerminal(at(b.dataset.i))}));
+  body.querySelectorAll('.tray-act.finder').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();revealArtifact(at(b.dataset.i).path,at(b.dataset.i).name)}));
+  body.querySelectorAll('.tray-act.dl').forEach(b=>b.addEventListener('click',async e=>{e.stopPropagation();const it=at(b.dataset.i);downloadFile(it.name,await _artContent(it),_mimeFor(it.ext))}));
+  body.querySelectorAll('.tray-act.save').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_traySave(at(b.dataset.i))}));
   if(foot){const ng=items.filter(x=>x.saved&&x.rec==='clean').length,nu=items.filter(x=>!x.saved).length;
     foot.textContent=`${items.length} file${items.length!==1?'s':''}${ng?' · '+ng+' in git':''}${nu?' · '+nu+' unsaved':''}`;foot.classList.add('show')}
 }
 function _trayOpen(it){if(it.saved)previewArtifact(it.path,it.name);else openPreview(it.name,it.code||'',it.ext)}
+// fetch an artifact's content (saved → from disk; in-chat → from memory)
+async function _artContent(it){if(!it.saved)return it.code||'';const r=await _artRead(it.path);return (r&&r.ok)?r.content:''}
+async function copyArtifact(it){const c=await _artContent(it);try{await navigator.clipboard.writeText(c);artToast('Copied '+it.name,'ok')}catch(_){artToast('Copy failed','err')}}
+async function revealArtifact(path,name){
+  let r;try{r=await fetch('/v1/artifacts/reveal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,cwd:S.cwd})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
+  if(r&&r.ok)artToast('Revealed '+(name||'file')+' in Finder','ok');else artToast('Couldn’t reveal'+(r&&r.error?' — '+r.error:''),'err');
+}
+function pushToTerminal(it){
+  const path=it.saved?(it.path||it.name):('scroll-artifacts/'+it.name);
+  if(typeof toggleCli==='function'&&document.getElementById('cli-panel')&&!document.getElementById('cli-panel').classList.contains('open'))toggleCli();
+  const inp=document.getElementById('cli-in');if(inp){inp.value='open '+path;inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
+  artToast('Sent to terminal — edit & run','ok');
+}
 async function _traySave(it){
   let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path:it.name,content:it.code||''})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
   if(r.ok){bgGraphAdd('write_file',{path:it.name},false);bgGraphAdd('write_file',null,true);
@@ -2311,7 +2352,9 @@ const ICON={
   doc:'<svg viewBox="0 0 16 16" class="ic"><path d="M4 1.8h5l3 3v9.4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2.8a1 1 0 0 1 1-1Z"/><path d="M5.5 7.5h5M5.5 10h5"/></svg>',
   pencil:'<svg viewBox="0 0 16 16" class="ic"><path d="M11.5 2.5l2 2L6 12l-2.6.6L4 10z"/></svg>',
   plus:'<svg viewBox="0 0 16 16" class="ic"><path d="M8 3v10M3 8h10"/></svg>',
-  link:'<svg viewBox="0 0 16 16" class="ic"><path d="M6.5 9.5l3-3M6 4.5 7.5 3a2.5 2.5 0 0 1 3.5 3.5L9.5 8M10 11.5 8.5 13a2.5 2.5 0 0 1-3.5-3.5L6.5 8"/></svg>'
+  link:'<svg viewBox="0 0 16 16" class="ic"><path d="M6.5 9.5l3-3M6 4.5 7.5 3a2.5 2.5 0 0 1 3.5 3.5L9.5 8M10 11.5 8.5 13a2.5 2.5 0 0 1-3.5-3.5L6.5 8"/></svg>',
+  finder:'<svg viewBox="0 0 16 16" class="ic"><path d="M2 4.2a1 1 0 0 1 1-1h3.4l1.2 1.4H13a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1Z"/></svg>',
+  terminal:'<svg viewBox="0 0 16 16" class="ic"><rect x="1.8" y="2.8" width="12.4" height="10.4" rx="1.4"/><path d="M4.4 6l2 2-2 2M8.2 10h3"/></svg>'
 };
 function _mimeFor(ext){return{html:'text/html',css:'text/css',js:'text/javascript',ts:'text/typescript',jsx:'text/javascript',tsx:'text/typescript',json:'application/json',md:'text/markdown',py:'text/x-python',sh:'text/x-shellscript'}[ext]||'text/plain;charset=utf-8'}
 function downloadFile(name,content,mime){try{const blob=new Blob([content],{type:mime||'text/plain;charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name||'download.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);artToast('Downloaded '+(name||'file'),'ok')}catch(_){artToast('Download failed','err')}}
@@ -2633,9 +2676,13 @@ function buildArtifactChip(lang,header,code){
     +`<div class="ta-meta"><div class="ta-name">${escH(fname)}</div><div class="ta-sub">${escH(ext.toUpperCase()||'FILE')} · ${lines} ${lines===1?'line':'lines'} · in Artifacts ↘</div></div>`
     +`<div class="ta-acts"><button class="ta-btn primary prev">${ICON.eye}${rend?'Preview':'View'}</button>`
     +`<button class="ta-btn save">${ICON.check}${path?'Apply':'Save'}</button>`
-    +`<button class="ta-btn icon copy" title="Copy code">${ICON.copy}</button></div>`;
+    +`<button class="ta-btn icon copy" title="Copy code">${ICON.copy}</button>`
+    +`<button class="ta-btn icon term" title="Push to terminal">${ICON.terminal}</button>`
+    +`<button class="ta-btn icon finder" title="Reveal in Finder">${ICON.finder}</button></div>`;
   el.querySelector('.prev').addEventListener('click',e=>{e.stopPropagation();openPreview(fname,code,ext)});
   el.querySelector('.copy').addEventListener('click',async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(code);artToast('Copied '+fname,'ok')}catch(_){artToast('Copy failed','err')}});
+  el.querySelector('.term').addEventListener('click',e=>{e.stopPropagation();pushToTerminal({name:fname,saved:!!path,path:path||('scroll-artifacts/'+fname)})});
+  el.querySelector('.finder').addEventListener('click',e=>{e.stopPropagation();revealArtifact(path||('scroll-artifacts/'+fname),fname)});
   el.querySelector('.save').addEventListener('click',async e=>{e.stopPropagation();const b=e.currentTarget;
     let p=path;if(!p){p=prompt('Save this code to (path relative to working dir):',fname);if(!p)return}
     let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path:p,content:code})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
@@ -3824,14 +3871,14 @@ function renderEffortPop(){
     return `<div class="ef-row ${k===S.effort?'on':''}" onclick="setEffort('${k}')"><span class="ef-dot"></span><span class="ef-meta"><span class="ef-name">${e.label}<span class="ef-cost">${_tokLabel(e.tokens)} · ${e.iters} loops</span></span><span class="ef-blurb">${escH(e.blurb)}</span></span></div>`;
   }).join('');
   p.innerHTML='<div class="mp-hd">How hard to work<span class="mp-sub">per message</span><button class="mp-x" onclick="closeEffort()" title="Close">✕</button></div>'+rows
-    +`<div class="ef-slider"><div class="ef-slider-lab"><span>Token budget / reply</span><b id="ef-tok">${_tokLabel(S.maxTokens)}</b></div><input type="range" min="1024" max="8192" step="1024" value="${S.maxTokens}" oninput="setEffortTokens(this.value)" aria-label="Token budget per reply"></div>`
+    +`<div class="ef-slider"><div class="ef-slider-lab"><span>Burn budget / turn</span><b id="ef-tok">${_tokLabel(S.tokenBudget||EFFORT[S.effort].budget)}</b></div><input type="range" min="8192" max="262144" step="8192" value="${S.tokenBudget||EFFORT[S.effort].budget}" oninput="setEffortBudget(this.value)" aria-label="Token burn budget per turn"></div>`
     +`<div class="ef-note">Higher effort = longer, more complete output and more tool steps. If it nears the budget it will say what's left so you can continue.</div>`;
 }
 function applyEffortBtn(){const b=document.getElementById('effort-btn'),l=document.getElementById('effort-lvl');if(l)l.textContent=EFFORT[S.effort].label;if(b){b.className='';if(S.effort==='deep')b.classList.add('deep');else if(S.effort==='max')b.classList.add('max')}}
-function setEffort(k){if(!EFFORT[k])return;S.effort=k;S.maxTokens=EFFORT[k].tokens;S.maxIters=EFFORT[k].iters;_saveEffort();applyEffortBtn();renderEffortPop();try{updateAEM()}catch(_){}}
-function setEffortTokens(v){S.maxTokens=Math.max(1024,Math.min(8192,parseInt(v,10)||4096));const t=document.getElementById('ef-tok');if(t)t.textContent=_tokLabel(S.maxTokens);_saveEffort()}
+function setEffort(k){if(!EFFORT[k])return;S.effort=k;S.maxTokens=EFFORT[k].tokens;S.maxIters=EFFORT[k].iters;S.tokenBudget=EFFORT[k].budget;_saveEffort();applyEffortBtn();renderEffortPop();try{updateAEM();renderCards()}catch(_){}}
+function setEffortBudget(v){S.tokenBudget=Math.max(8192,Math.min(262144,parseInt(v,10)||16384));const t=document.getElementById('ef-tok');if(t)t.textContent=_tokLabel(S.tokenBudget);_saveEffort();try{updateAEM();renderCards()}catch(_){}}
 function _saveEffort(){try{localStorage.setItem('mlx-effort',JSON.stringify({effort:S.effort,maxTokens:S.maxTokens,maxIters:S.maxIters}))}catch(_){}}
-function loadEffort(){try{const e=JSON.parse(localStorage.getItem('mlx-effort')||'{}');if(e.effort&&EFFORT[e.effort]){S.effort=e.effort;S.maxIters=e.maxIters||EFFORT[e.effort].iters;S.maxTokens=e.maxTokens||EFFORT[e.effort].tokens}}catch(_){}applyEffortBtn()}
+function loadEffort(){try{const e=JSON.parse(localStorage.getItem('mlx-effort')||'{}');if(e.effort&&EFFORT[e.effort]){S.effort=e.effort;S.maxIters=e.maxIters||EFFORT[e.effort].iters;S.maxTokens=e.maxTokens||EFFORT[e.effort].tokens;S.tokenBudget=e.tokenBudget||EFFORT[e.effort].budget}}catch(_){}applyEffortBtn()}
 function effortDirective(){const d=EFFORT[S.effort]&&EFFORT[S.effort].directive;return d?{role:'system',content:'Effort level: '+EFFORT[S.effort].label+'. '+d}:null}
 function renderModelsPop(){
   const p=document.getElementById('models-pop');if(!p)return;
