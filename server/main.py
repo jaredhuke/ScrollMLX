@@ -56,6 +56,13 @@ async def lifespan(app: FastAPI):
     loaded = secrets_mod.load_into_env()  # pull cloud keys from Keychain → env
     if loaded:
         print(f"[secrets] loaded keys for: {', '.join(loaded)}")
+    try:
+        from server import provider_plugins
+        reg = provider_plugins.register_all()  # .md provider plugins → providers
+        if reg:
+            print(f"[plugins] registered providers: {', '.join(p['id'] for p in reg)}")
+    except Exception as exc:
+        print(f"[plugins] provider-plugin load skipped: {exc}")
     # Only preload the local model if it's ALREADY downloaded — otherwise boot would
     # block on an 18 GB download and the onboarding UI could never appear. When it's
     # not cached, the server serves immediately and onboarding installs it on demand.
@@ -424,6 +431,29 @@ async def escalate_endpoint(payload: dict):
     return StreamingResponse(
         _stream_escalate(payload), media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/v1/provider-plugins")
+async def provider_plugins_list():
+    """Droppable .md provider plugins, registered as providers."""
+    from server import provider_plugins
+    return {"plugins": provider_plugins.register_all()}
+
+
+@app.post("/v1/provider-plugins/import")
+async def provider_plugins_import(payload: dict):
+    from server import provider_plugins
+    return provider_plugins.import_path(payload.get("path", ""))
+
+
+@app.post("/v1/provider-plugins/secret")
+async def provider_plugins_secret(payload: dict):
+    """Store a plugin's password/token in the keychain (never in the .md)."""
+    from server import provider_plugins
+    pid = payload.get("id", "")
+    if not pid:
+        raise HTTPException(400, "missing id")
+    return provider_plugins.set_secret(pid, payload.get("secret", ""))
 
 
 @app.get("/v1/codemie/status")

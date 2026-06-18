@@ -1356,6 +1356,12 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">Tools <span class="ds-sub">enabled capabilities</span></div><div id="d-tools"></div></div>
     <div><div class="ds-title">+ Add a tool <span class="ds-sub">Python extension</span></div><input class="din" id="ext-path" placeholder="~/path/to/tool.py"/><button class="dbtn" onclick="loadExt()">Add tool</button></div>
     <div><div class="ds-title">+ Add a plugin <span class="ds-sub">MCP connector</span></div><input class="din" id="mcp-url" placeholder="http://localhost:3000"/><button class="dbtn" onclick="loadMCP()">Connect plugin</button></div>
+    <div>
+      <div class="ds-title">Provider plugins <span class="ds-sub">drop a .md + a password → a cloud model</span></div>
+      <div id="pp-list"></div>
+      <input class="din" id="pp-path" placeholder="…paste path to a provider .md — e.g. ~/Desktop/codemie.md" onkeydown="if(event.key==='Enter')importProviderPlugin()"/>
+      <button class="dbtn ghost" onclick="importProviderPlugin()">Add provider plugin</button>
+    </div>
   </div>
 </div>
 
