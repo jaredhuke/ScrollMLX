@@ -68,3 +68,17 @@ def list_versions(path: str, cwd: str | None) -> list[dict]:
     for m in meta:
         m["path"] = str(d / m["file"])
     return list(reversed(meta))  # newest first
+
+
+def read_version(path: str, cwd: str | None, v: int | None = None) -> str | None:
+    """Text of snapshot v, or the newest snapshot when v is None. None if absent."""
+    vs = list_versions(path, cwd)  # newest-first
+    if not vs:
+        return None
+    pick = vs[0] if v is None else next((m for m in vs if m.get("v") == v), None)
+    if not pick:
+        return None
+    try:
+        return Path(pick["path"]).read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return None

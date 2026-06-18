@@ -805,6 +805,79 @@ async def artifacts_read(payload: dict):
         return {"ok": False, "error": str(exc)}
 
 
+@app.post("/v1/diff")
+async def file_diff(payload: dict):
+    """Plain before/after for a file: its newest snapshot ('before') vs current content ('after').
+    The safety net behind 'What changed' — snapshots already exist via versions.save_version."""
+    import difflib
+    from server.tools.filesystem import _resolve
+    from server import versions
+    path = (payload.get("path") or "").strip()
+    if not path:
+        raise HTTPException(400, "missing path")
+    cwd = payload.get("cwd") or "."
+    try:
+        p = _resolve(path, cwd)
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    if not p.exists() or not p.is_file():
+        return {"ok": True, "status": "gone", "lines": []}
+    try:
+        after = p.read_text(encoding="utf-8", errors="strict")
+    except Exception:
+        return {"ok": True, "status": "binary", "lines": []}   # image/binary — no text diff
+    before = versions.read_version(path, cwd)                   # newest snapshot = the 'before'
+    if before is None:
+        return {"ok": True, "status": "new", "lines": []}      # brand-new file, nothing to compare
+    if before == after:
+        return {"ok": True, "status": "same", "lines": []}
+    add = rem = 0
+    lines = []
+    for ln in difflib.unified_diff(before.splitlines(), after.splitlines(), lineterm="", n=3):
+        if ln.startswith("--- ") or ln.startswith("+++ "):
+            continue
+        if ln.startswith("@@"):
+            lines.append({"t": "gap", "s": "⋯"})
+        elif ln.startswith("+"):
+            lines.append({"t": "add", "s": ln[1:]}); add += 1
+        elif ln.startswith("-"):
+            lines.append({"t": "rem", "s": ln[1:]}); rem += 1
+        else:
+            lines.append({"t": "ctx", "s": ln[1:] if ln[:1] == " " else ln})
+    return {"ok": True, "status": "changed", "added": add, "removed": rem, "lines": lines[:4000]}
+
+
+@app.post("/v1/artifacts/restore")
+async def artifacts_restore(payload: dict):
+    """Loss-proof Undo: snapshot the CURRENT content FIRST, then put back an earlier version.
+    Sandboxed to the working folder (a restore must never write outside cwd)."""
+    from server.tools.filesystem import _resolve
+    from server import versions
+    path = (payload.get("path") or "").strip()
+    if not path:
+        raise HTTPException(400, "missing path")
+    cwd = payload.get("cwd") or "."
+    try:
+        p = _resolve(path, cwd)
+        base = Path(cwd).expanduser().resolve()
+        if not p.resolve().is_relative_to(base):
+            return {"ok": False, "error": "refused — that file is outside the working folder"}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    v = payload.get("v")
+    prev = versions.read_version(path, cwd, int(v) if v is not None else None)
+    if prev is None:
+        return {"ok": False, "error": "no earlier version to put back"}
+    try:
+        if p.exists():
+            versions.save_version(p, cwd)   # capture current FIRST → the undo is itself reversible
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(prev, encoding="utf-8")
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    return {"ok": True, "path": path}
+
+
 # ── Add files / add a repo (for review · summarize · recommend · edit) ──────────
 
 @app.post("/v1/upload")

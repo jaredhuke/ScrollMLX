@@ -802,6 +802,21 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .pv-body{flex:1;overflow:auto;background:var(--bg2)}
 .pv-frame{width:100%;height:100%;border:none;background:#fff}
 .pv-src{margin:0;padding:16px;font-family:var(--font);font-size:12.5px;line-height:1.6;color:var(--text-mid);white-space:pre-wrap;word-break:break-word}
+/* "What changed" — readable before/after, colourblind-safe (+/− glyphs, not colour alone) */
+.pv-diff-msg{padding:22px 18px;font-size:12.5px;color:var(--text-ghost);line-height:1.5}
+.pv-diff-head{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1}
+.pv-diff-head .spacer{flex:1}
+.dh-add{font-size:11px;font-weight:600;color:var(--green-ink);font-variant-numeric:tabular-nums}
+.dh-rem{font-size:11px;font-weight:600;color:var(--red-ink);font-variant-numeric:tabular-nums}
+.pv-diff{font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;padding:4px 0 18px}
+.pv-diff .dl{display:flex;gap:8px;padding:1px 16px;white-space:pre-wrap;word-break:break-word}
+.dl-sym{width:9px;flex-shrink:0;text-align:center;color:var(--text-ghost);user-select:none}
+.dl-add{background:rgba(60,120,70,.10)}.dl-add .dl-sym{color:var(--green-ink)}
+.dl-rem{background:rgba(200,75,49,.09)}.dl-rem .dl-sym{color:var(--red-ink)}
+.dl-gap{color:var(--text-ghost);background:rgba(26,28,34,.03)}
+.dl-ctx{color:var(--text-mid)}
+.ab.undo{border-color:var(--red-ink);color:var(--red-ink)}
+.ab.undo:hover{background:rgba(200,75,49,.08)}
 .art-row.clickable{cursor:pointer;transition:background .12s}
 .art-row.clickable:hover{background:rgba(26,28,34,.03)}
 .art-open{color:var(--text-soft);flex-shrink:0;display:inline-flex}
@@ -3617,14 +3632,17 @@ ${autoMount}
   if(_isHtmlExt(ext)) return _inlineImages(c);
   return null;
 }
-function openPreview(name,content,ext){
-  PV={name,content:content||'',ext:(ext||(name.split('.').pop()||'')).toLowerCase()};
+function openPreview(name,content,ext,path,mode){
+  PV={name,content:content||'',ext:(ext||(name.split('.').pop()||'')).toLowerCase(),path:path||null};
   const canRender=_isPreviewable(PV.ext);
-  PV.mode=canRender?'preview':'source';
+  PV.mode=mode||(canRender?'preview':'source');
   document.getElementById('preview').classList.add('open');
   document.getElementById('pv-name').textContent=name;
-  document.getElementById('pv-tabs').innerHTML=canRender
-    ?`<button class="pv-tab" data-m="preview">Preview</button><button class="pv-tab" data-m="source">Source</button>`:'';
+  const tabs=[];
+  if(canRender)tabs.push('<button class="pv-tab" data-m="preview">Preview</button>');
+  tabs.push('<button class="pv-tab" data-m="source">Source</button>');
+  if(PV.path)tabs.push('<button class="pv-tab" data-m="changed">What changed</button>');
+  document.getElementById('pv-tabs').innerHTML=tabs.join('');
   document.querySelectorAll('#pv-tabs .pv-tab').forEach(b=>b.addEventListener('click',()=>{PV.mode=b.dataset.m;renderPreview()}));
   document.getElementById('pv-dl').onclick=()=>downloadFile(PV.name,PV.content,_mimeFor(PV.ext));
   renderPreview();
@@ -3632,6 +3650,7 @@ function openPreview(name,content,ext){
 function renderPreview(){
   const body=document.getElementById('pv-body');
   document.querySelectorAll('#pv-tabs .pv-tab').forEach(b=>b.classList.toggle('on',b.dataset.m===PV.mode));
+  if(PV.mode==='changed'){_renderDiff(body);return;}
   const doc=PV.mode==='preview'?_previewDoc():null;
   if(doc!=null){
     const f=document.createElement('iframe');f.className='pv-frame';
@@ -3641,11 +3660,33 @@ function renderPreview(){
     body.innerHTML=`<pre class="pv-src"></pre>`;body.querySelector('.pv-src').textContent=PV.content;
   }
 }
+// "What changed" — plain before/after vs the last saved version (+/− glyphs, colourblind-safe)
+async function _renderDiff(body){
+  body.innerHTML='<div class="pv-diff-msg">Comparing to the last saved version…</div>';
+  let r;try{r=await fetch('/v1/diff',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:PV.path,cwd:S.cwd})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
+  if(!r||!r.ok){body.innerHTML='<div class="pv-diff-msg">Couldn’t compare this file.</div>';return}
+  const msg={new:'Brand-new file — nothing to compare to yet. The next change shows up here.',same:'No changes since the last saved version.',binary:'This file can’t be compared as text.',gone:'This file is no longer here.'}[r.status];
+  if(msg){body.innerHTML='<div class="pv-diff-msg">'+msg+'</div>';return}
+  const head=`<div class="pv-diff-head"><span class="dh-add">+${r.added} added</span><span class="dh-rem">−${r.removed} removed</span><span class="spacer"></span><button class="ab undo" id="pv-undo">Put back the earlier version</button></div>`;
+  const rows=r.lines.map(l=>{const sym=l.t==='add'?'+':l.t==='rem'?'−':l.t==='gap'?'⋯':'';return `<div class="dl dl-${l.t}"><span class="dl-sym">${sym}</span><span class="dl-tx">${escH(l.s)}</span></div>`}).join('');
+  body.innerHTML=head+'<div class="pv-diff">'+rows+'</div>';
+  const u=document.getElementById('pv-undo');if(u)u.addEventListener('click',()=>_undoFile(PV.path,PV.name));
+}
+function _undoFile(path,name){
+  notify('Put “'+escH(name)+'” back to the earlier version? Your current version is saved too, so you can switch back.','warn',{persist:true,actions:[{label:'Put it back',onClick:()=>_doUndo(path,name)},{label:'Cancel',onClick:()=>{}}]});
+}
+async function _doUndo(path,name){
+  let r;try{r=await fetch('/v1/artifacts/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,cwd:S.cwd})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){artToast('Put “'+name+'” back to the earlier version','ok');
+    try{const rd=await _artRead(path);if(rd&&rd.ok)PV.content=rd.content}catch(_){}
+    if(document.getElementById('preview').classList.contains('open'))renderPreview();
+  } else artToast('Couldn’t undo'+(r&&r.error?' — '+r.error:''),'err');
+}
 function closePreview(){document.getElementById('preview').classList.remove('open');document.getElementById('pv-body').innerHTML=''}
-async function previewArtifact(path,name){
+async function previewArtifact(path,name,mode){
   let r;try{r=await fetch('/v1/artifacts/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,cwd:S.cwd})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
   if(!r||!r.ok){artToast('Couldn’t open '+name+(r&&r.error?' — '+r.error:''),'err');return}
-  openPreview(name,r.content,r.ext);
+  openPreview(name,r.content,r.ext,path,mode);
 }
 // ─── INLINE ARTIFACT CARD — every file the agent builds shows up as a clear visual ──
 async function _artRead(path){try{return await fetch('/v1/artifacts/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,cwd:S.cwd})}).then(x=>x.ok?x.json():null)}catch(_){return null}}
@@ -3664,11 +3705,15 @@ function appendArtifactCard(path){
       <div class="artcard-acts">
         ${rend?'<button class="ab primary prev">Preview</button>':'<button class="ab prev">Preview</button>'}
         ${browserOK?'<button class="ab openb">Open in browser</button>':''}
+        <button class="ab changed">What changed</button>
+        <button class="ab undo">Undo</button>
         <button class="ab dl">Download</button>
       </div>
     </div>`;
   if(browserOK)card.querySelector('.openb').addEventListener('click',()=>artOpenBrowser(path,name,ext));
   card.querySelector('.prev').addEventListener('click',()=>previewArtifact(path,name));
+  card.querySelector('.changed').addEventListener('click',()=>previewArtifact(path,name,'changed'));
+  card.querySelector('.undo').addEventListener('click',()=>_undoFile(path,name));
   card.querySelector('.dl').addEventListener('click',()=>artDownload(path,name,ext));
   appendEl(card);
   updateArtBadge();
