@@ -157,6 +157,16 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
             sk = skills_mod.as_system_text()  # enabled skill .md files
             if sk:
                 messages = [{"role": "system", "content": sk}] + messages
+            try:  # living plan: if this project has a PRD.md, give it to the operative + ask it to keep it current
+                from server import prd as prd_mod
+                _prd = prd_mod.read(req.cwd)
+                if _prd.get("exists"):
+                    messages = [{"role": "system", "content":
+                        "LIVING PLAN — the file PRD.md is this project's plan. As you complete work, "
+                        "update PRD.md: keep the requirements current and mark each '- [ ]'/'- [x]' "
+                        "status. Here is the current plan:\n\n" + (_prd.get("content") or "")[:6000]}] + messages
+            except Exception:
+                pass
             # (the client also sends the user section so /v1/dual and /v1/escalate honor it)
             ctx = _context_system_msg()  # live macOS context from the native app
             if ctx:
@@ -460,6 +470,13 @@ async def _stream_escalate(payload: dict) -> AsyncGenerator[str, None]:
             ctx = _context_system_msg("code")  # cloud sees code only — never personal context
             if ctx:
                 full.append(ctx)
+            try:  # skills are shared with EVERY operative (cloud too) — they're coding rules, not personal
+                from server import skills as skills_mod
+                sk = skills_mod.as_system_text()
+                if sk:
+                    full.append({"role": "system", "content": sk})
+            except Exception:
+                pass
             full += msgs
             # the conversation MUST end on a user turn — Anthropic (and others) reject an
             # assistant-prefill ending. Drop trailing assistant replies (the one we're
@@ -779,6 +796,20 @@ async def artifacts_reveal(payload: dict):
         return {"ok": True, "path": str(p)}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
+
+
+@app.get("/v1/prd")
+async def prd_get(cwd: str = ".", name: str = ""):
+    """The living plan (PRD.md) for a project — content + done/total checklist counts."""
+    from server import prd
+    return prd.read(cwd, name or "this project")
+
+
+@app.post("/v1/prd")
+async def prd_post(payload: dict):
+    """Save the project's living plan (PRD.md)."""
+    from server import prd
+    return prd.write(payload.get("cwd") or ".", payload.get("content") or "")
 
 
 @app.get("/v1/versions")
