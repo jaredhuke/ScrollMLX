@@ -100,6 +100,8 @@ select.hb{padding:5px 9px}
 .ac.hot,.ac.overheat{border-color:rgba(200,75,49,.2)}
 .ac.drift{border-color:rgba(26,28,34,.18)}.ac.active-glow{border-color:var(--accent-line)}
 .ac-head{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.ac-logo{width:15px;height:15px;flex-shrink:0;color:var(--text-soft);filter:grayscale(1);opacity:.72}
+.card.active .ac-logo,.ac.working .ac-logo{color:var(--text);opacity:.95}
 .ac-dot{width:5px;height:5px;border-radius:50%;background:var(--border-mid);flex-shrink:0;transition:all .3s}
 .ac-dot.on{background:var(--accent);animation:dotPulse 2s infinite}
 .ac-dot.err{background:#8a2818}
@@ -2251,13 +2253,36 @@ function renderActiveOps(){
 // cache of enabled skills feeding the workflow (drawn on the mesh)
 async function refreshSkillsCache(){try{const j=await fetch('/v1/skills').then(r=>r.ok?r.json():null);S.skills=((j&&j.skills)||[]).filter(s=>s.enabled).map(s=>s.name)}catch(_){S.skills=S.skills||[]}}
 function driftPct(hm){return Math.round(Math.abs((hm==null?50:hm)-50)/50*100)}  // 0% = stable; rises with tool failures
+// monochrome (greyscale) provider marks — simple line glyphs, distinctive but trademark-safe
+const _PROV_ICON={
+  mlx:'<rect x="4" y="4" width="8" height="8" rx="1.3"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2"/>',
+  codemie:'<path d="M8 2l5.5 3.2v5.6L8 14 2.5 10.8V5.2z"/><circle cx="8" cy="8" r="1.5"/>',
+  anthropic:'<path d="M8 2.2v11.6M3.2 5l9.6 6M12.8 5l-9.6 6"/>',
+  openai:'<path d="M8 2l5.5 3.2v5.6L8 14 2.5 10.8V5.2z"/>',
+  gemini:'<path d="M8 1.6c.55 3.6 2.85 5.85 6.4 6.4-3.55.55-5.85 2.85-6.4 6.4-.55-3.55-2.85-5.85-6.4-6.4C5.15 7.45 7.45 5.15 8 1.6z"/>',
+  groq:'<path d="M9 1.8L3.4 9H8l-1 5.2L12.6 7H8z"/>',
+  cerebras:'<circle cx="5.6" cy="5.6" r="1.4"/><circle cx="10.4" cy="5.6" r="1.4"/><circle cx="5.6" cy="10.4" r="1.4"/><circle cx="10.4" cy="10.4" r="1.4"/>',
+  openrouter:'<path d="M2.5 8h4.5M11 4.5c-2.4 0-1.6 3.5-4 3.5M11 11.5c-2.4 0-1.6-3.5-4-3.5"/><circle cx="12.5" cy="4.5" r="1.2"/><circle cx="12.5" cy="11.5" r="1.2"/>',
+  glm:'<path d="M8 2l5.5 3.2v5.6L8 14 2.5 10.8V5.2z"/><path d="M8 5.5v5M5.5 8h5"/>',
+  deepseek:'<path d="M8 2l5.5 6L8 14 2.5 8z"/>',
+  mistral:'<path d="M2.6 5h10.8M2.6 8h10.8M2.6 11h10.8"/>',
+  kimi:'<path d="M11.2 3a5.5 5.5 0 1 0 0 10 4.3 4.3 0 0 1 0-10z"/>',
+  'llama-or':'<circle cx="5.7" cy="8" r="3"/><circle cx="10.3" cy="8" r="3"/>',
+  'qwen-coder':'<circle cx="8" cy="8" r="5.8"/><circle cx="8" cy="8" r="2.3"/>'
+};
+function _provId(k){return (k==='primary'||k==='critic')?'mlx':(k.indexOf('cloud:')===0?k.slice(6):k)}
+function _provLogo(k){
+  const id=_provId(k),p=_PROV_ICON[id];
+  if(p)return '<svg class="ac-logo" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+  return '<svg class="ac-logo" viewBox="0 0 16 16" aria-hidden="true"><text x="8" y="11.5" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">'+escH((id||'?').charAt(0).toUpperCase())+'</text></svg>';
+}
 function renderCards(){
   document.getElementById('agent-cards').innerHTML=cardKeys().map(k=>{
     recomputeAgent(k);
     const ag=S.agents[k],bc=burnClass(ag.burn),hmc=hmClass(ag.hm);
     const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.rate||0} tok/s (≈ ${rateHr(ag.rate)} tok/hr)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
     return`<div class="${cardClass(ag)}" role="button" tabindex="0" aria-label="${escH(ag.label)} — ${escH(ag.role)}, details" onclick="openAgentDetail('${k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAgentDetail('${k}')}" data-tip="${tip.replace(/"/g,'&quot;')} · click for details">
-      <div class="ac-head"><div class="ac-dot ${ag.status==='working'?'on':ag.status==='error'?'err':''}"></div>
+      <div class="ac-head">${_provLogo(k)}<div class="ac-dot ${ag.status==='working'?'on':ag.status==='error'?'err':''}"></div>
         <span class="ac-name">${escH(ag.label)}</span>
         <span class="ac-status ${ag.status}">${ag.status.toUpperCase()}</span></div>
       <div class="ac-tech"><span class="ac-techname">${escH(ag.tech)}</span><span class="ac-host">${escH(ag.host)}</span></div>
@@ -3462,9 +3487,23 @@ async function _addImageFromFile(f){
 }
 function _imgDrop(e){
   const fl=e.dataTransfer&&e.dataTransfer.files;if(!fl||!fl.length)return;
-  const imgs=[...fl].filter(f=>_IMG_RE.test(f.name||'')||/^image\//.test(f.type||''));
-  if(!imgs.length)return;
-  e.preventDefault();imgs.forEach(_addImageFromFile);
+  const files=[...fl];
+  const imgs=files.filter(f=>_IMG_RE.test(f.name||'')||/^image\//.test(f.type||''));
+  const mds=files.filter(f=>/\.(md|markdown)$/i.test(f.name||'')||/text\/markdown/.test(f.type||''));
+  if(!imgs.length&&!mds.length)return;
+  e.preventDefault();imgs.forEach(_addImageFromFile);mds.forEach(_installDroppedPlugin);
+}
+function _readText(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=rej;r.readAsText(f)})}
+// drop a provider .md (e.g. codemie.md) into the chat → install it as an operative
+async function _installDroppedPlugin(f){
+  let text;try{text=await _readText(f)}catch(_){return}
+  if(!/^\s*---[\s\S]*?type:\s*provider/i.test(text)){
+    notify('“'+(f.name||'file')+'” isn’t a provider plugin (needs frontmatter with type: provider).','warn');return;
+  }
+  let r;try{r=await fetch('/v1/provider-plugins/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:text})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){artToast('Installed '+(r.name||r.id)+' — now an operative','ok');try{loadProviderPlugins()}catch(_){}
+    if(r.needs_secret&&typeof ppSecretDialog==='function')ppSecretDialog(r.id,r.name);}
+  else notify('Couldn’t install “'+(f.name||'plugin')+'”'+(r&&r.error?' — '+r.error:''),'err');
 }
 document.addEventListener('paste',e=>{
   const items=e.clipboardData&&e.clipboardData.items;if(!items)return;
