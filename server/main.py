@@ -451,6 +451,13 @@ async def artifacts_write(payload: dict):
         return {"ok": False, "error": str(exc)}
 
 
+@app.get("/v1/versions")
+async def artifacts_versions(path: str = "", cwd: str = "."):
+    """Readable version history for a file (newest first); the live filename is unchanged."""
+    from server import versions
+    return {"versions": versions.list_versions(path, cwd)} if path else {"versions": []}
+
+
 @app.post("/v1/artifacts/read")
 async def artifacts_read(payload: dict):
     """Read an artifact's content so the UI can preview it (live render or source)."""

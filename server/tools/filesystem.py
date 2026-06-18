@@ -39,6 +39,12 @@ def read_file(path: str, cwd: str, start_line: int | None = None, end_line: int 
 def write_file(path: str, content: str, cwd: str) -> str:
     p = _resolve(path, cwd)
     try:
+        # snapshot the prior content first — keeps the real filename, saves a readable vN copy
+        try:
+            from server import versions
+            versions.save_version(p, cwd)
+        except Exception:
+            pass
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(content, encoding="utf-8")
         return f"Written {len(content)} bytes to {p}"

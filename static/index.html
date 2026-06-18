@@ -267,6 +267,7 @@ select.hb{padding:5px 9px}
 .ap-chip{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);color:var(--text-soft);font-size:11px;padding:4px 8px;border-radius:var(--r)}
 .ap-chip .ic{width:12px;height:12px;color:var(--accent)}
 .ap-chip .x{cursor:pointer;color:var(--text-ghost);margin-left:2px}.ap-chip .x:hover{color:var(--ext)}
+.ap-thumb{width:22px;height:22px;border-radius:4px;object-fit:cover;border:1px solid var(--border-mid);flex-shrink:0}
 .ap-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px}
 .ap-acts-lbl{color:var(--text-ghost);font-size:11px;margin-right:2px}
 .ap-acts .act{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:12px;padding:7px 14px;border-radius:var(--r);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
@@ -1662,6 +1663,17 @@ function drawAIS(){
     AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(96,116,140,.72)';
     AC.fillText(ag.label,x-rN-3,y+3);
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
+  // ── OUTPUT artifacts — files the agent produced; drawn as page glyphs (not circles), in their own lower zone ──
+  const _arts=(typeof artifactNodes==='function'?artifactNodes():[]).slice(-6);
+  _arts.forEach((nd,i)=>{const nn=_arts.length,a=Math.PI*0.66+(nn>1?(i/(nn-1)):0.5)*Math.PI*0.68,rr=R*0.66;
+    const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
+    AC.beginPath();AC.moveTo(cx+Math.cos(a)*(coreR+3),cy+Math.sin(a)*(coreR+3));AC.lineTo(x,y);AC.strokeStyle='rgba(26,28,34,.07)';AC.lineWidth=1;AC.stroke();
+    const ww=8,hh=10;AC.save();AC.translate(x,y);
+    AC.beginPath();AC.moveTo(-ww/2,-hh/2);AC.lineTo(ww/2-3,-hh/2);AC.lineTo(ww/2,-hh/2+3);AC.lineTo(ww/2,hh/2);AC.lineTo(-ww/2,hh/2);AC.closePath();
+    AC.fillStyle='#f0ece4';AC.fill();AC.strokeStyle='rgba(80,74,66,.7)';AC.lineWidth=1;AC.stroke();
+    AC.beginPath();AC.moveTo(-ww/2+2,0);AC.lineTo(ww/2-2,0);AC.moveTo(-ww/2+2,3);AC.lineTo(ww/2-2,3);AC.strokeStyle='rgba(80,74,66,.4)';AC.lineWidth=.7;AC.stroke();
+    AC.restore();
+    meshHits.push({x,y,r:9,key:'art:'+(nd.path||nd.name),art:nd});});
   // ── GitHub connector node — lights up on git read / push / PR ──
   {const gg=S.git||{},gAct=gg.active||(Date.now()-(gg.last||0)<1700),gx=15,gy=cy;
    if(gAct){const br=.5+.5*Math.sin(t*4);AC.beginPath();AC.arc(gx,gy,5+br*5,0,Math.PI*2);AC.strokeStyle=`rgba(207,122,46,${.34*(1-br)})`;AC.lineWidth=1;AC.stroke();}
@@ -1678,10 +1690,11 @@ function drawAIS(){
   AC.beginPath();AC.arc(cx,cy,vigR+8,0,Math.PI*2);AC.fillStyle=cg;AC.fill();
   AC.beginPath();AC.arc(cx,cy,coreR,0,Math.PI*2);AC.fillStyle='#e9e4db';AC.fill();
   AC.strokeStyle='rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
-  AC.fillStyle='rgba(26,28,34,.85)';AC.textAlign='center';AC.font='300 19px -apple-system,system-ui,sans-serif';
-  AC.fillText(Math.round(M.completion*100)+'%',cx,cy+2);
-  AC.fillStyle='rgba(26,28,34,.5)';AC.font='500 7px -apple-system,system-ui,sans-serif';AC.fillText('COMPLETE',cx,cy+12);
-  if(reqs.length){AC.fillStyle='rgba(207,122,46,.95)';AC.font='600 7px -apple-system,system-ui,sans-serif';AC.fillText(reqs.length+(reqs.length>1?' IN FLIGHT':' IN FLIGHT'),cx,cy+22)}
+  // the core shows ONLY the completion % (fits cleanly); the label + in-flight detail is on hover
+  AC.fillStyle='rgba(26,28,34,.85)';AC.textAlign='center';AC.font='300 20px -apple-system,system-ui,sans-serif';
+  AC.fillText(Math.round(M.completion*100)+'%',cx,cy+coreR*0.28);
+  if(reqs.length){AC.beginPath();AC.arc(cx,cy-coreR+5,2.4,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.95)';AC.fill();}  // tiny in-flight pip, detail on hover
+  meshHits.push({x:cx,y:cy,r:coreR,key:'__core__'});
   // corner readouts (sans, soft)
   AC.font='400 9px -apple-system,system-ui,sans-serif';
   AC.textAlign='left';AC.fillStyle='rgba(60,90,70,.8)';AC.fillText(`vigilance ${Math.round(M.vigilance*100)}`,9,13);
@@ -1700,6 +1713,8 @@ AIS.addEventListener('mousemove',e=>{
   const mx=e.clientX-rect.left,my=e.clientY-rect.top;
   let hit=null;for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){hit=hh;break}}
   if(hit&&hit.key==='__git__'){const g=S.git||{};aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;return}
+  if(hit&&hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length;aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;return}
+  if(hit&&hit.key&&hit.key.indexOf('art:')===0){aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=(hit.art&&hit.art.name||'file')+'\noutput · click to preview';return}
   if(hit&&hit.key==='__skills__'){aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent='Active skills feeding the workflow\nClick to manage skills';return}
   if(hit&&S.agents[hit.key]){const ag=S.agents[hit.key],hmc=hmClass(ag.hm);
     aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';
@@ -1712,7 +1727,7 @@ AIS.addEventListener('mouseleave',()=>{aisTip.style.display='none'});
 AIS.style.cursor='pointer';
 AIS.addEventListener('click',e=>{
   const rect=AIS.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else if(hh.key==='__skills__')openSkillsFull();else if(hh.idle)activateOperative(hh.key);else openAgentDetail(hh.key);return}}
+  for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else if(hh.key==='__core__')openFullAIS();else if(hh.key==='__skills__')openSkillsFull();else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);else if(hh.idle)activateOperative(hh.key);else openAgentDetail(hh.key);return}}
   openFullAIS();   // click anywhere else on the mesh → expand to the full instrument
 });
 
@@ -2524,7 +2539,7 @@ function addMsgActions(afterEl,text){
   row.querySelector('.act-dl').addEventListener('click',()=>downloadFile('response.md',text,'text/markdown'));
   row.querySelector('.vote-up').addEventListener('click',()=>votedMsg('up',row));
   row.querySelector('.vote-down').addEventListener('click',()=>votedMsg('down',row));
-  row.querySelector('.escalate-btn').addEventListener('click',()=>{const p=(typeof SET!=='undefined'?SET.cloud:'anthropic');if(!(window.CLOUD&&window.CLOUD[p])){keyDialog(p);return}escalate()});
+  row.querySelector('.escalate-btn').addEventListener('click',()=>escalate());
   afterEl.appendChild(row);
 }
 // always-on critic: judges every reply, appears as a quiet line under it
@@ -2566,8 +2581,13 @@ async function criticFeedback(accept,note,row){
   artToast(accept?'Learned — Prime will honor this; critic trust ↑':'Noted — critic trust ↓','ok');
 }
 async function escalate(){
-  if(S.streaming)return;
-  const prov=(typeof SET!=='undefined'?SET.cloud:'anthropic');
+  if(S.streaming){notify('Busy — wait for the current reply, then escalate','err');return}
+  if(!S.msgs.some(m=>m.role==='assistant')){notify('Send a message first — escalate hands that reply to a cloud model','err');return}
+  // use the selected cloud model if it's keyed, else the first keyed one; else prompt for a key
+  let prov=(typeof SET!=='undefined'&&SET.cloud&&window.CLOUD&&window.CLOUD[SET.cloud])?SET.cloud:null;
+  if(!prov)prov=['anthropic','openai','gemini','groq','cerebras','openrouter'].find(p=>window.CLOUD&&window.CLOUD[p])||null;
+  if(!prov){notify('No cloud model connected — add a key to escalate','err');keyDialog('anthropic');return}
+  if(typeof SET!=='undefined')SET.cloud=prov;
   const provName={anthropic:'Claude',openai:'GPT-4o',gemini:'Gemini',groq:'Groq · Llama 3.3',openrouter:'OpenRouter · Llama 3.3',cerebras:'Cerebras · Llama 3.3'}[prov]||prov;
   const _rq=reqStart('escalate · '+provName);
   const dest=lastThreadBody();
@@ -2591,6 +2611,7 @@ async function escalate(){
         if(evt.type==='token'){txt+=evt.content;bodyEl.textContent=txt;bodyEl.appendChild(cur);S.totalTok++;const cc=S.agents[_cak];cc.tokens++;cc.turnTokens=(cc.turnTokens||0)+1;recomputeAgent(_cak);if(S.totalTok%15===0){updateAEM();renderAISInfo();renderCards()}}
         else if(evt.type==='error'){throw new Error(evt.message)}}}
   }catch(e){cur.remove();bodyEl.innerHTML=`<span style="color:var(--red);font-weight:500">Escalation failed.</span> <span style="color:var(--text-ghost);font-size:12px">${escH(e.message)}</span>`;
+    notify('Escalation failed · '+(e&&e.message?e.message:'check the key/engine'),'err');if(typeof checkHealth==='function')checkHealth();
     reqEnd(_rq);_cloudIdle();S.streaming=false;setSending(false);setStatus(false);return;}
   cur.remove();
   if(txt){renderAssistantBody(bodyEl,txt);S.msgs.push({role:'assistant',content:txt});addMsgActions(aEl,txt)}
@@ -2706,7 +2727,10 @@ function toggleAdd(){const p=document.getElementById('add-panel'),b=document.get
 const _IMG_RE=/\.(png|jpe?g|gif|bmp|webp|tiff?|heic|heif)$/i;
 function renderAdded(){
   const el=document.getElementById('ap-added');if(!el)return;
-  el.innerHTML=S.added.map((a,i)=>`<span class="ap-chip${a.kind==='image'?' img':''}"><i data-icon="${a.kind==='repo'?'git':a.kind==='image'?'eye':'file'}"></i><span>${escH(a.name)}</span><span class="x" onclick="removeAdded(${i})" title="Remove">×</span></span>`).join('');
+  el.innerHTML=S.added.map((a,i)=>{
+    const lead=a.kind==='image'&&a.b64?`<img class="ap-thumb" src="data:${a.mime||'image/png'};base64,${a.b64}" alt="">`:`<i data-icon="${a.kind==='repo'?'git':'file'}"></i>`;
+    return `<span class="ap-chip${a.kind==='image'?' img':''}">${lead}<span>${escH(a.name)}</span><span class="x" onclick="removeAdded(${i})" title="Remove">×</span></span>`;
+  }).join('');
   paintIcons(el);
   document.querySelectorAll('.ap-acts .act').forEach(b=>{S.added.length?b.removeAttribute('disabled'):b.setAttribute('disabled','')});
   const hasImg=S.added.some(a=>a.kind==='image');const vb=document.getElementById('act-vision');if(vb)vb.hidden=!hasImg;
