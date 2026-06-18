@@ -280,7 +280,7 @@ class CodeMieProvider(Provider):
         return self._bin() is not None
 
     def stream(self, messages, max_tokens, temperature, tools=None):
-        import subprocess, tempfile
+        import subprocess, tempfile, os, select, time
         binp = self._bin()
         if not binp:
             yield ErrorEvent(message="CodeMie CLI not found — install it (npm i -g @codemieai/code; codemie install claude) then sign in (codemie profile login)")
@@ -293,25 +293,48 @@ class CodeMieProvider(Provider):
             parts.append(c if role in ("system", "user") else f"Assistant (earlier): {c}")
         prompt = "\n\n".join(parts) or "Respond."
         from server import env as env_mod
+        # Stream the CLI's stdout as it's produced (os.read on the fd → whatever is available),
+        # so token burn updates in REAL TIME instead of spiking once at the end.
+        total = 0
         try:
             with tempfile.TemporaryDirectory() as td:
-                r = subprocess.run([binp, "-p", prompt], cwd=td, capture_output=True,
-                                   text=True, timeout=600, env=env_mod.login_env())
-        except subprocess.TimeoutExpired:
-            yield ErrorEvent(message="CodeMie timed out after 600s")
-            return
+                proc = subprocess.Popen([binp, "-p", prompt], cwd=td,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        env=env_mod.login_env())
+                fd = proc.stdout.fileno()
+                deadline = time.monotonic() + 600
+                while True:
+                    if time.monotonic() > deadline:
+                        proc.kill()
+                        yield ErrorEvent(message="CodeMie timed out after 600s")
+                        return
+                    rl, _, _ = select.select([fd], [], [], 0.5)
+                    if rl:
+                        chunk = os.read(fd, 4096)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        yield TokenEvent(content=chunk.decode("utf-8", "replace"))
+                    elif proc.poll() is not None:
+                        break
+                rest = proc.stdout.read()
+                if rest:
+                    total += len(rest)
+                    yield TokenEvent(content=rest.decode("utf-8", "replace"))
+                rc = proc.wait()
         except Exception as exc:
             yield ErrorEvent(message=f"CodeMie error: {exc}")
             return
-        out = (r.stdout or "").strip()
-        if r.returncode != 0 and not out:
-            err = (r.stderr or "").strip()[:400]
+        if rc != 0 and total == 0:
+            err = ""
+            try:
+                err = (proc.stderr.read() or b"").decode("utf-8", "replace").strip()[:400]
+            except Exception:
+                pass
             yield ErrorEvent(message="CodeMie failed: " + (err or "non-zero exit") +
                              " — your SSO may have expired (run: codemie profile login)")
             return
-        for i in range(0, len(out), 400):   # chunk so the UI fills progressively
-            yield TokenEvent(content=out[i:i + 400])
-        yield DoneEvent(total_tokens=max(1, len(out) // 4))
+        yield DoneEvent(total_tokens=max(1, total // 4))
 
 
 # ── Registry ──────────────────────────────────────────────────────────────────
