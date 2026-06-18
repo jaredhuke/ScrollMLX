@@ -306,6 +306,10 @@ select.hb{padding:5px 9px}
 /* right */
 #rpanel{width:var(--rw);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
 #ais-canvas{display:block;width:100%;height:248px;flex-shrink:0}
+#mesh-narration{flex-shrink:0;padding:7px 12px;font-size:10.5px;line-height:1.45;color:var(--text-mid);background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border);min-height:30px;display:flex;align-items:center;gap:7px}
+#mesh-narration.live{color:var(--text)}
+#mesh-narration.live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:dotPulse 1.6s infinite}
+#mesh-narration.idle::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
 #ais-info{flex:1 1 auto;min-height:110px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
 /* docked artifact tray — primary output surface, lower-right */
 #art-tray{flex:0 0 auto;max-height:46%;min-height:150px;display:flex;flex-direction:column;border-top:1px solid var(--border-mid);background:var(--bg2)}
@@ -1263,6 +1267,7 @@ select.hb{padding:5px 9px}
       <button onclick="openFullAIS()" style="background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-size:8px;padding:2px 8px;border-radius:5px;cursor:pointer;letter-spacing:.1em;font-family:var(--font);text-transform:uppercase" data-tip="Open the full mesh instrument">Expand ↗</button>
     </div>
     <canvas id="ais-canvas"></canvas>
+    <div id="mesh-narration" data-tip="What the operatives are doing right now">Idle — describe what you want to make.</div>
     <div id="ais-info">
       <div id="ais-gov" class="ok" role="button" tabindex="0" aria-label="Governance status — open details" onclick="openGovernance()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openGovernance()}" data-tip="AIS governance — watching live agentic values against policy">
         <span class="gov-dot"></span><span class="gov-state">OK</span><span class="gov-why">all operatives within policy</span>
@@ -1711,15 +1716,26 @@ let meshHits=[];
 function _fitPx(ctx,text,maxW,startPx,weight){weight=weight||'300';let px=Math.max(8,startPx|0);for(;px>8;px--){ctx.font=weight+' '+px+'px -apple-system,system-ui,sans-serif';if(ctx.measureText(text).width<=maxW)break}return px}
 // rounded-rect path (artifacts on the mesh draw as rounded rectangles)
 function _rrectPath(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+// ONE mesh renderer for both the docked panel and the full-screen view — they draw in a
+// fixed 248-unit reference space and scale to fill any canvas, so they are always identical.
+const MESH_D={hits:[],xf:{s:1,ox:0,oy:0}},MESH_F={hits:[],xf:{s:1,ox:0,oy:0}};
+function _meshHitAt(state,mx,my){const xf=state.xf||{s:1,ox:0,oy:0};const rx=(mx-xf.ox)/xf.s,ry=(my-xf.oy)/xf.s;for(const hh of state.hits){if(Math.hypot(hh.x-rx,hh.y-ry)<hh.r)return hh}return null}
 function drawAIS(){
   const d=window.devicePixelRatio||1;
   AC.setTransform(d,0,0,d,0,0);
-  const w=AIS.width/d,h=AIS.height/d;
-  AC.clearRect(0,0,w,h);
-  AC.fillStyle='#e9e4db';AC.fillRect(0,0,w,h);
+  const W=AIS.width/d,H=AIS.height/d;
+  AC.clearRect(0,0,W,H);
+  _renderMesh(AC,W,H,false,MESH_D);
+  requestAnimationFrame(drawAIS);
+}
+function _renderMesh(AC,W,H,big,state){
+  const REF=248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2;
+  state.xf={s,ox,oy};const meshHits=state.hits;meshHits.length=0;
+  AC.fillStyle=big?'#f0ece4':'#e9e4db';AC.fillRect(0,0,W,H);
+  AC.save();AC.translate(ox,oy);AC.scale(s,s);
+  const w=REF,h=REF;
   const cx=w/2,cy=h/2-3,R=Math.min(w,h)/2-15,t=Date.now()*0.001;
   const M=meshMetrics(),anyBusy=AGENT_KEYS.some(k=>S.agents[k].status==='working');
-  meshHits=[];
   // abstract outer marks — sparse + slightly irregular (not a literal compass)
   const TICKS=24;
   for(let i=0;i<TICKS;i++){const a=(i/TICKS)*Math.PI*2,major=i%6===0,len=major?7:3+((i*37)%3);
@@ -1851,31 +1867,76 @@ function drawAIS(){
   const gov=(S._gov&&S._gov.overall)||'ok';
   AC.textAlign='right';AC.fillStyle=gov==='intervene'?'rgba(200,75,49,.85)':gov==='watch'?'rgba(176,122,16,.85)':'rgba(26,28,34,.55)';
   AC.fillText('govern '+govLabel(gov).toLowerCase(),w-9,13);
-  requestAnimationFrame(drawAIS);
+  AC.restore();
 }
 const aisTip=document.getElementById('ais-tip');
+// shared tooltip text for a mesh hit (docked + full-screen)
+function _meshTipText(hit){
+  if(!hit)return null;
+  if(hit.key==='__git__'){const g=S.git||{};return `GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;}
+  if(hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length;return `${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;}
+  if(hit.key&&hit.key.indexOf('art:')===0)return (hit.art&&hit.art.name||'file')+'\noutput · click to preview';
+  if(hit.key==='__skills__')return 'Active skills feeding the workflow\nClick to manage skills';
+  if(S.agents[hit.key]){const ag=S.agents[hit.key],hmc=hmClass(ag.hm);
+    return hit.idle?`${ag.label}  ·  ${ag.size}\nIdle — click to enlist on the task${ag.access==='code'?'\n(cloud · code-only access)':''}`
+      :`${ag.label}  ·  ${ag.size}\nStatus: ${ag.status.toUpperCase()}\nBurn:   ${ag.rate||0} t/s\nDrift:  ${ag.hm.toFixed(0)}%  (${hmLabel(hmc)})`;}
+  return null;
+}
 AIS.addEventListener('mousemove',e=>{
   const rect=AIS.getBoundingClientRect();
-  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  let hit=null;for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){hit=hh;break}}
-  if(hit&&hit.key==='__git__'){const g=S.git||{};aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;return}
-  if(hit&&hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length;aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=`${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;return}
-  if(hit&&hit.key&&hit.key.indexOf('art:')===0){aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=(hit.art&&hit.art.name||'file')+'\noutput · click to preview';return}
-  if(hit&&hit.key==='__skills__'){aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent='Active skills feeding the workflow\nClick to manage skills';return}
-  if(hit&&S.agents[hit.key]){const ag=S.agents[hit.key],hmc=hmClass(ag.hm);
-    aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';
-    aisTip.textContent=hit.idle
-      ? `${ag.label}  ·  ${ag.size}\nIdle — click to enlist on the task${ag.access==='code'?'\n(cloud · code-only access)':''}`
-      : `${ag.label}  ·  ${ag.size}\nStatus: ${ag.status.toUpperCase()}\nBurn:   ${ag.rate||0} t/s\nDrift:  ${ag.hm.toFixed(0)}%  (${hmLabel(hmc)})`;}
+  const hit=_meshHitAt(MESH_D,e.clientX-rect.left,e.clientY-rect.top);
+  const txt=_meshTipText(hit);
+  if(txt){aisTip.style.display='block';aisTip.style.left=(e.clientX+14)+'px';aisTip.style.top=(e.clientY-10)+'px';aisTip.textContent=txt;}
   else aisTip.style.display='none';
 });
 AIS.addEventListener('mouseleave',()=>{aisTip.style.display='none'});
 AIS.style.cursor='pointer';
 AIS.addEventListener('click',e=>{
   const rect=AIS.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else if(hh.key==='__core__')openFullAIS();else if(hh.key==='__skills__')openDrawer();else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);else if(hh.idle)activateOperative(hh.key);else openAgentDetail(hh.key);return}}
+  const hh=_meshHitAt(MESH_D,mx,my);
+  if(hh){_meshAction(hh);return}
   openFullAIS();   // click anywhere else on the mesh → expand to the full instrument
 });
+// shared click routing for a mesh hit (docked + full-screen)
+function _meshAction(hh){
+  if(hh.key==='__git__')openGitHub();
+  else if(hh.key==='__core__')openFullAIS();
+  else if(hh.key==='__skills__')openDrawer();
+  else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);
+  else if(hh.idle)activateOperative(hh.key);
+  else openAgentDetail(hh.key);
+}
+// ─── MESH NARRATION — a plain-language line describing what's happening right now ──
+function _humanTool(t){t=(t||'').toLowerCase();
+  if(/write|create|edit|apply|save/.test(t))return 'writing';
+  if(/read|cat|view|open|get/.test(t))return 'reading';
+  if(/list|ls|dir|tree|scan/.test(t))return 'scanning the folder';
+  if(/run|bash|exec|sh|cmd|test|npm|build/.test(t))return 'running a command';
+  if(/search|grep|find/.test(t))return 'searching the code';
+  if(/fetch|url|http|web|curl/.test(t))return 'fetching from the web';
+  return 'using '+t;
+}
+function meshNarration(){
+  const busy=cardKeys().filter(k=>S.agents[k].status==='working'),reqs=(S.requests||[]).length;
+  if(!S.streaming&&!busy.length){const n=artifactNodes().length;
+    return n?`Idle — ${n} artifact${n>1?'s':''} this session. Ready for your next task.`:'Idle — describe what you want to make.';}
+  const who=(busy.length?busy:['primary']).map(k=>S.agents[k].label).join(' + ');
+  const tools=[...(S.activeTools||[])];let act='thinking';
+  if(tools.length){act=_humanTool(tools[tools.length-1]);
+    if(/writing|reading/.test(act)){const la=artifactNodes().slice(-1)[0];if(la&&la.name)act+=' '+String(la.name).split('/').pop();}}
+  else if(busy.includes('critic'))act='reviewing the reply';
+  else if(busy.some(k=>k.indexOf('cloud')===0))act='drafting a response';
+  const cap=S.tokenBudget||16384,pct=Math.min(Math.round((S.totalTok||0)/cap*100),100),meta=[];
+  if(S.iterations)meta.push(`loop ${S.iterations}/${S.maxIters||12}`);
+  if(S.totalTok)meta.push(`${pct}% of budget`);
+  if(reqs>1)meta.push(`${reqs} in flight`);
+  return `${who} is ${act}`+(meta.length?` · ${meta.join(' · ')}`:'')+'.';
+}
+function renderNarration(){
+  const txt=meshNarration(),live=!!(S.streaming||cardKeys().some(k=>S.agents[k].status==='working'));
+  const d=document.getElementById('mesh-narration');if(d){d.textContent=txt;d.className=live?'live':'idle'}
+  const sub=document.getElementById('ais-full-sub');if(sub&&document.getElementById('ais-full')&&document.getElementById('ais-full').classList.contains('open'))sub.textContent=txt;
+}
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function hmClass(p){const d=Math.abs(p-50);return d>40?'crit':d>28?'drift':d>18?'warn':''}
@@ -2098,6 +2159,7 @@ function updateAEM(){
   if(lf){lf.style.width=spent+'%';lf.className='lburn-fill'+(spent>=100?' over':spent>=80?' hot':'')}
   if(lv)lv.textContent=spent+'% · '+rate+' t/s';
   renderGov();
+  try{renderNarration()}catch(_){}
 }
 function renderTokBudget(over,budget){
   const el=document.getElementById('tok-budget');if(!el)return;
@@ -4098,171 +4160,55 @@ const _fsBgPts=Array.from({length:55},()=>({
   col:Math.random()<.6?[45,210,255]:Math.random()<.6?[120,200,255]:[210,235,255]
 }));
 
+let _fsRaf=null;
 function openFullAIS(){
   const el=document.getElementById('ais-full');
   el.classList.add('open');
   fsCanvas=document.getElementById('ais-full-canvas');
   fsCx=fsCanvas.getContext('2d');
   fsDpr=window.devicePixelRatio||1;
-  const W=fsCanvas.clientWidth,H=fsCanvas.clientHeight;
-  fsCanvas.width=W*fsDpr;fsCanvas.height=H*fsDpr;
-  fsCx.setTransform(fsDpr,0,0,fsDpr,0,0);
-  buildFSGraph(W,H);
   document.addEventListener('keydown',_fsEsc);
   fsCanvas.addEventListener('mousemove',_fsMouse);
   fsCanvas.addEventListener('mouseleave',_fsLeave);
-  if(FSG.rafId)cancelAnimationFrame(FSG.rafId);
+  fsCanvas.addEventListener('click',_fsClick);
+  fsCanvas.style.cursor='pointer';
+  if(_fsRaf)cancelAnimationFrame(_fsRaf);
   drawFullAIS();
+  try{renderNarration()}catch(_){}
 }
 
 function closeFullAIS(){
   document.getElementById('ais-full').classList.remove('open');
   document.removeEventListener('keydown',_fsEsc);
-  if(fsCanvas){fsCanvas.removeEventListener('mousemove',_fsMouse);fsCanvas.removeEventListener('mouseleave',_fsLeave);}
-  if(FSG.rafId){cancelAnimationFrame(FSG.rafId);FSG.rafId=null;}
-  document.getElementById('fs-node-tip').style.display='none';
+  if(fsCanvas){fsCanvas.removeEventListener('mousemove',_fsMouse);fsCanvas.removeEventListener('mouseleave',_fsLeave);fsCanvas.removeEventListener('click',_fsClick);}
+  if(_fsRaf){cancelAnimationFrame(_fsRaf);_fsRaf=null;}
+  const tip=document.getElementById('fs-node-tip');if(tip)tip.style.display='none';
 }
 
 function _fsEsc(e){if(e.key==='Escape')closeFullAIS();}
-function _fsLeave(){document.getElementById('fs-node-tip').style.display='none';}
+function _fsLeave(){const t=document.getElementById('fs-node-tip');if(t)t.style.display='none';}
 function _fsMouse(e){
   if(!fsCanvas)return;
   const rect=fsCanvas.getBoundingClientRect();
-  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  let hit=null,best=Infinity;
-  FSG.nodes.forEach(n=>{const d=Math.hypot(n.x-mx,n.y-my);if(d<n.r+14&&d<best){hit=n;best=d;}});
-  const tip=document.getElementById('fs-node-tip');
-  if(hit){
-    const lines=[hit.label];
-    if(hit.subtype==='agent'){lines.push('Status: '+(S.agents[hit.agentKey]?.status||'idle'));lines.push('Burn: '+(S.agents[hit.agentKey]?.burn||0)+'%');}
-    if(hit.subtype==='tool'){lines.push('Calls: '+(S.toolCalls[hit.label]||0));if(hit.source)lines.push('Source: '+hit.source);}
-    if(hit.subtype==='file')lines.push('Type: '+hit.fileType);
-    if(hit.subtype==='run')lines.push('Count: '+(hit.ct||1));
-    if(hit.subtype==='connector')lines.push('Provider');
-    tip.textContent=lines.join('\n');
-    tip.style.display='block';
-    tip.style.left=(e.clientX+16)+'px';
-    tip.style.top=(e.clientY-8)+'px';
-  }else tip.style.display='none';
+  const hit=_meshHitAt(MESH_F,e.clientX-rect.left,e.clientY-rect.top);
+  const tip=document.getElementById('fs-node-tip');if(!tip)return;
+  const txt=_meshTipText(hit);
+  if(txt){tip.textContent=txt;tip.style.display='block';tip.style.left=(e.clientX+16)+'px';tip.style.top=(e.clientY-8)+'px';}
+  else tip.style.display='none';
 }
-
-function buildFSGraph(W,H){
-  // Radial layout snapshot — concentric rings, no physics.
-  const nodes=[],edges=[];
-  const cx=W/2,cy=H/2,R=Math.min(W,H)/2-90;
-  FSG.cx=cx;FSG.cy=cy;FSG.R=R;
-  const agKeys=Object.keys(S.agents);
-  agKeys.forEach((key,i)=>{const ag=S.agents[key];const a=-Math.PI/2+(i/agKeys.length)*Math.PI*2;
-    nodes.push({id:'ag_'+key,agentKey:key,subtype:'agent',label:ag.label,a,
-      x:cx+Math.cos(a)*R*0.34,y:cy+Math.sin(a)*R*0.34,r:24,col:[47,156,139]});});
-  const enabled=allTools.filter(t=>t.enabled);
-  enabled.forEach((t,i)=>{const a=-Math.PI/2+(i/Math.max(enabled.length,1))*Math.PI*2;const ct=S.toolCalls[t.name]||0;
-    nodes.push({id:'tool_'+t.name,subtype:'tool',label:t.name,source:t.source,ct,a,
-      x:cx+Math.cos(a)*R*0.60,y:cy+Math.sin(a)*R*0.60,r:Math.min(5+ct*1.6,13),col:[80,74,66],active:ct>0});});
-  const arts=BGR.nodes.slice(-30);
-  arts.forEach((bn,i)=>{const a=-Math.PI/2+(i/Math.max(arts.length,1))*Math.PI*2+0.12;
-    let col=[80,74,66],subtype='file';
-    if(bn.type==='write')col=[200,75,49];else if(bn.type==='read')col=[100,90,80];else if(bn.type==='run'){col=[140,110,70];subtype='run';}
-    nodes.push({id:'bgr_'+bn.id,bgrId:bn.id,subtype,fileType:bn.type,label:bn.name,ct:bn.ct,active:bn.active,a,
-      x:cx+Math.cos(a)*R*0.78,y:cy+Math.sin(a)*R*0.78,r:bn.active?6:4,col});});
-  const srcKeys=Object.keys(_srcMap());
-  srcKeys.forEach((src,i)=>{const a=-Math.PI/2+(i/Math.max(srcKeys.length,1))*Math.PI*2+0.3;
-    nodes.push({id:'src_'+src,subtype:'connector',label:src,a,spoke:true,
-      x:cx+Math.cos(a)*R*0.93,y:cy+Math.sin(a)*R*0.93,r:7,col:[60,90,70]});});
-  // interaction edges
-  agKeys.forEach(key=>Object.keys(S.toolCalls).forEach(name=>{if(nodes.find(n=>n.id==='tool_'+name))edges.push({from:'ag_'+key,to:'tool_'+name,w:Math.min(S.toolCalls[name]/4,1)})}));
-  nodes.filter(n=>n.subtype==='tool'&&n.source).forEach(n=>{if(nodes.find(o=>o.id==='src_'+n.source))edges.push({from:n.id,to:'src_'+n.source,w:0.3})});
-  BGR.edges.slice(-28).forEach(e=>{if(nodes.find(n=>n.id==='bgr_'+e.from)&&nodes.find(n=>n.id==='bgr_'+e.to))edges.push({from:'bgr_'+e.from,to:'bgr_'+e.to,w:0.4,lineage:true})});
-  agKeys.forEach(key=>BGR.nodes.filter(bn=>bn.active).forEach(bn=>{if(nodes.find(n=>n.id==='bgr_'+bn.id))edges.push({from:'ag_'+key,to:'bgr_'+bn.id,w:0.7,active:true})}));
-  FSG.nodes=nodes;FSG.edges=edges;
-  document.getElementById('fs-stat-nodes').textContent=agKeys.length;
-  document.getElementById('fs-stat-edges').textContent=S.toolCallTotal;
-  document.getElementById('fs-stat-tools').textContent=srcKeys.length;
-}
+function _fsClick(e){if(!fsCanvas)return;const rect=fsCanvas.getBoundingClientRect();const hit=_meshHitAt(MESH_F,e.clientX-rect.left,e.clientY-rect.top);if(hit&&hit.key!=='__core__')_meshAction(hit);}
 
 function drawFullAIS(){
   if(!document.getElementById('ais-full').classList.contains('open'))return;
-  FSG.rafId=requestAnimationFrame(drawFullAIS);
+  _fsRaf=requestAnimationFrame(drawFullAIS);
   const W=fsCanvas.clientWidth,H=fsCanvas.clientHeight;
-  if(fsCanvas.width!==W*fsDpr||fsCanvas.height!==H*fsDpr){
-    fsCanvas.width=W*fsDpr;fsCanvas.height=H*fsDpr;
-    fsCx.setTransform(fsDpr,0,0,fsDpr,0,0);
-  }
-  buildFSGraph(W,H); // live polar snapshot
-  const N=FSG.nodes,cx=FSG.cx,cy=FSG.cy,R=FSG.R,t=performance.now()/1000;
-  const M=meshMetrics(),anyBusy=AGENT_KEYS.some(k=>S.agents[k].status==='working');
-  const byId=id=>N.find(n=>n.id===id);
-  fsCx.clearRect(0,0,W,H);
-  fsCx.fillStyle='#f0ece4';fsCx.fillRect(0,0,W,H);
-  // background pencil dots
-  _fsBgPts.forEach(p=>{if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;p.x+=p.vx;p.y+=p.vy;
-    fsCx.beginPath();fsCx.arc(p.x,p.y,p.r,0,Math.PI*2);fsCx.fillStyle=`rgba(80,74,66,${p.o*.32})`;fsCx.fill();});
-  // radial gridlines
-  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;fsCx.beginPath();fsCx.moveTo(cx,cy);fsCx.lineTo(cx+Math.cos(a)*R*0.99,cy+Math.sin(a)*R*0.99);fsCx.strokeStyle='rgba(26,28,34,.03)';fsCx.lineWidth=1;fsCx.stroke();}
-  // concentric guide circles
-  [0.30,0.44,0.52,0.60,0.78,0.93,1].forEach(f=>{fsCx.beginPath();fsCx.arc(cx,cy,R*f,0,Math.PI*2);fsCx.strokeStyle='rgba(26,28,34,.05)';fsCx.lineWidth=1;fsCx.stroke();});
-  // outer tick scale
-  const OT=120;for(let i=0;i<OT;i++){const a=i/OT*Math.PI*2,major=i%10===0,r2=R-(major?12:6);fsCx.beginPath();fsCx.moveTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);fsCx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);fsCx.strokeStyle=`rgba(26,28,34,${major?.14:.06})`;fsCx.lineWidth=1;fsCx.stroke();}
-  // slow radar sweep
-  {const sa=(t*0.45)%(Math.PI*2);const g=fsCx.createRadialGradient(cx,cy,0,cx,cy,R);g.addColorStop(0,'rgba(200,75,49,.05)');g.addColorStop(1,'rgba(200,75,49,0)');fsCx.beginPath();fsCx.moveTo(cx,cy);fsCx.arc(cx,cy,R,sa,sa+0.55);fsCx.closePath();fsCx.fillStyle=g;fsCx.fill();}
-  // completion gauge (RED)
-  fsCx.beginPath();fsCx.arc(cx,cy,R*0.44,0,Math.PI*2);fsCx.strokeStyle='rgba(26,28,34,.07)';fsCx.lineWidth=4;fsCx.stroke();
-  if(M.completion>0){fsCx.beginPath();fsCx.arc(cx,cy,R*0.44,-Math.PI/2,-Math.PI/2+Math.PI*2*M.completion);fsCx.strokeStyle='rgba(47,156,139,.9)';fsCx.lineWidth=4;fsCx.lineCap='round';fsCx.stroke();fsCx.lineCap='butt';}
-  // requests in flight — one thin rotating arc each
-  const fReqs=(S.requests||[]);
-  fReqs.forEach((rq,i)=>{const rr=R*0.44-9-i*9;if(rr<R*0.2)return;const a0=-Math.PI/2+t*0.85+i*1.7;
-    fsCx.beginPath();fsCx.arc(cx,cy,rr,a0,a0+Math.PI*0.5);fsCx.strokeStyle='rgba(207,122,46,.78)';fsCx.lineWidth=2;fsCx.lineCap='round';fsCx.stroke();fsCx.lineCap='butt';});
-  // burn gauge (AMBER, its own inner track — separate from completion)
-  const gbf=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].burn));
-  fsCx.beginPath();fsCx.arc(cx,cy,R*0.36,0,Math.PI*2);fsCx.strokeStyle='rgba(26,28,34,.06)';fsCx.lineWidth=3;fsCx.stroke();
-  if(gbf>0){fsCx.beginPath();fsCx.arc(cx,cy,R*0.36,-Math.PI/2,-Math.PI/2+Math.PI*2*(gbf/100));fsCx.strokeStyle=gbf>85?'rgba(138,40,24,.7)':'rgba(176,122,16,.72)';fsCx.lineWidth=3;fsCx.lineCap='round';fsCx.stroke();fsCx.lineCap='butt';}
-  // error dot-matrix ring
-  const ET=72,errCount=Math.round(M.errorRate*ET);for(let i=0;i<ET;i++){const a=-Math.PI/2+i/ET*Math.PI*2,x=cx+Math.cos(a)*R*0.52,y=cy+Math.sin(a)*R*0.52,isErr=i<errCount;fsCx.beginPath();fsCx.arc(x,y,isErr?2.4:1.4,0,Math.PI*2);fsCx.fillStyle=isErr?'rgba(200,75,49,.78)':'rgba(26,28,34,.1)';fsCx.fill();}
-  // ── woven interaction edges ──
-  FSG.edges.forEach(e=>{const a=byId(e.from),b=byId(e.to);if(!a||!b)return;
-    const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,k=0.82,ccx=cx+(mx-cx)*k,ccy=cy+(my-cy)*k;
-    fsCx.beginPath();fsCx.moveTo(a.x,a.y);fsCx.quadraticCurveTo(ccx,ccy,b.x,b.y);
-    fsCx.strokeStyle=e.active?'rgba(200,75,49,.42)':e.lineage?'rgba(140,110,70,.22)':`rgba(26,28,34,${0.05+e.w*0.12})`;
-    fsCx.lineWidth=e.active?1.6:0.6+e.w*1;fsCx.stroke();});
-  // ── nodes ──
-  N.forEach(n=>{const[r,g,b]=n.col;const busy=n.subtype==='agent'&&S.agents[n.agentKey]?.status==='working';
-    const pulse=0.5+0.5*Math.sin(t*3);
-    if(busy){const aura=fsCx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*2.6);aura.addColorStop(0,`rgba(${r},${g},${b},${.1+pulse*.08})`);aura.addColorStop(1,`rgba(${r},${g},${b},0)`);fsCx.beginPath();fsCx.arc(n.x,n.y,n.r*2.6,0,Math.PI*2);fsCx.fillStyle=aura;fsCx.fill();}
-    if(n.subtype==='agent'){const ag=S.agents[n.agentKey];if(ag.burn>0){fsCx.beginPath();fsCx.arc(n.x,n.y,n.r+5,-Math.PI/2,-Math.PI/2+Math.PI*2*(ag.burn/100));fsCx.strokeStyle=ag.burn>85?'rgba(138,40,24,.8)':ag.burn>60?'rgba(176,122,16,.7)':'rgba(200,75,49,.55)';fsCx.lineWidth=2.5;fsCx.stroke();}}
-    fsCx.beginPath();fsCx.arc(n.x,n.y,n.r,0,Math.PI*2);fsCx.fillStyle=`rgba(${r},${g},${b},${(n.active||busy)?.14:.08})`;fsCx.fill();
-    fsCx.strokeStyle=`rgba(${r},${g},${b},${(n.active||busy)?.85:.55})`;fsCx.lineWidth=n.subtype==='agent'?2:1.4;fsCx.stroke();
-    fsCx.beginPath();fsCx.arc(n.x,n.y,n.subtype==='agent'?4.5:2.4,0,Math.PI*2);fsCx.fillStyle=`rgba(${r},${g},${b},.9)`;fsCx.fill();
-    if(busy){fsCx.beginPath();fsCx.arc(n.x,n.y,n.r+7+pulse*9,0,Math.PI*2);fsCx.strokeStyle=`rgba(${r},${g},${b},${.18+pulse*.18})`;fsCx.lineWidth=1;fsCx.setLineDash([4,6]);fsCx.stroke();fsCx.setLineDash([]);}
-    // labels
-    if(n.spoke){const la=n.a,lx=cx+Math.cos(la)*(R+6),ly=cy+Math.sin(la)*(R+6),right=Math.cos(la)>=0;
-      fsCx.beginPath();fsCx.moveTo(n.x,n.y);fsCx.lineTo(lx,ly);fsCx.strokeStyle='rgba(26,28,34,.18)';fsCx.lineWidth=1;fsCx.stroke();
-      fsCx.textAlign=right?'left':'right';fsCx.font='500 11px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(26,28,34,.6)';fsCx.fillText(n.label,lx+(right?5:-5),ly+3);}
-    else if(n.subtype==='agent'){const ag=S.agents[n.agentKey];const above=Math.sin(n.a)<0,ly=above?n.y-n.r-17:n.y+n.r+16;
-      fsCx.textAlign='center';fsCx.font='600 12px -apple-system,system-ui,sans-serif';fsCx.fillStyle=`rgba(${r},${g},${b},.95)`;fsCx.fillText(n.label,n.x,ly);
-      fsCx.font='400 9px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(26,28,34,.42)';fsCx.fillText(ag.role+' · '+ag.tech,n.x,above?ly-12:ly+12);}
-    else if(n.r>=5||n.active){const lbl=n.label.length>12?n.label.slice(0,11)+'…':n.label;fsCx.textAlign='center';fsCx.font='400 8px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(26,28,34,.45)';fsCx.fillText(lbl,n.x,n.y+n.r+10);}});
-  // ── clean center well: the completion circle is never crossed by lines ──
-  const coreR=Math.max(46,R*0.19);
-  const vigR=coreR+6; // still — no bouncing (ch'an)
-  const cg=fsCx.createRadialGradient(cx,cy,0,cx,cy,vigR+18);cg.addColorStop(0,`rgba(80,74,66,${0.07*M.vigilance})`);cg.addColorStop(1,'rgba(80,74,66,0)');  // neutral halo — teal reserved for 100%
-  fsCx.beginPath();fsCx.arc(cx,cy,vigR+18,0,Math.PI*2);fsCx.fillStyle=cg;fsCx.fill();
-  fsCx.beginPath();fsCx.arc(cx,cy,coreR,0,Math.PI*2);fsCx.fillStyle='#f0ece4';fsCx.fill();
-  fsCx.strokeStyle=M.completion>=1?'rgba(47,156,139,.55)':'rgba(207,122,46,.4)';fsCx.lineWidth=1.5;fsCx.stroke();
-  // center readout — only the big % + a short label, sized to fit the well (no overlap, no spill)
-  const _fpct=Math.round(M.completion*100)+'%',_done=M.completion>=1;
-  fsCx.textAlign='center';fsCx.textBaseline='middle';
-  fsCx.font='200 '+_fitPx(fsCx,_fpct,coreR*1.3,Math.round(coreR*0.66),'200')+'px -apple-system,system-ui,sans-serif';
-  fsCx.fillStyle=_done?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
-  fsCx.fillText(_fpct,cx,cy-coreR*0.16);
-  fsCx.textBaseline='alphabetic';
-  fsCx.fillStyle=_done?'rgba(47,156,139,.85)':'rgba(26,28,34,.42)';fsCx.font='600 '+Math.round(coreR*0.16)+'px -apple-system,system-ui,sans-serif';
-  fsCx.fillText('COMPLETE',cx,cy+coreR*0.30);
-  if(fReqs.length){fsCx.fillStyle='rgba(207,122,46,.95)';fsCx.font='600 '+Math.round(coreR*0.15)+'px -apple-system,system-ui,sans-serif';fsCx.fillText(fReqs.length+' in flight',cx,cy+coreR*0.56)}
-  // vigilance / burn / why → corner readout, never crowding the core
-  fsCx.textAlign='left';fsCx.font='400 10px -apple-system,system-ui,sans-serif';
-  const maxRate2=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
-  fsCx.fillStyle='rgba(60,90,70,.85)';fsCx.fillText('vigilance '+Math.round(M.vigilance*100)+(maxRate2?'   ·   burn '+maxRate2+' t/s':''),18,H-22);
-  if(M.vigWhy){fsCx.font='400 9px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(176,122,16,.85)';fsCx.fillText('↓ '+M.vigWhy+' — the model is learning from these',18,H-8)}
+  if(fsCanvas.width!==W*fsDpr||fsCanvas.height!==H*fsDpr){fsCanvas.width=W*fsDpr;fsCanvas.height=H*fsDpr;}
+  fsCx.setTransform(fsDpr,0,0,fsDpr,0,0);
+  _renderMesh(fsCx,W,H,true,MESH_F);   // SAME renderer as the docked mesh — always identical
+  try{const $=id=>document.getElementById(id);
+    if($('fs-stat-nodes'))$('fs-stat-nodes').textContent=cardKeys().length;
+    if($('fs-stat-edges'))$('fs-stat-edges').textContent=S.toolCallTotal;
+    if($('fs-stat-tools'))$('fs-stat-tools').textContent=Object.keys(_srcMap()).length;}catch(_){}
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -4270,7 +4216,7 @@ window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
-loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
+loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray(); renderNarration(); setInterval(renderNarration,800);
 loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadCodemie(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
