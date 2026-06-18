@@ -876,6 +876,26 @@ select.hb{padding:5px 9px}
 .thread.live .thread-chev{color:var(--accent)}
 .ds-sub{font-size:8px;color:var(--text-ghost);font-weight:400;letter-spacing:.02em;text-transform:none;margin-left:4px}
 
+/* thread search + archive — keep long histories skimmable, still searchable */
+#thread-search{display:flex;align-items:center;gap:9px;padding:7px 13px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+#thread-search[hidden]{display:none}
+#thread-search .ts-ico{font-size:14px;color:var(--text-ghost);line-height:1}
+#thr-q{flex:1;min-width:0;border:none;background:transparent;font:inherit;font-size:12px;color:var(--text);outline:none}
+#thr-q::placeholder{color:var(--text-ghost)}
+.ts-chip{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-ghost);background:transparent;border:1px solid var(--border-mid);border-radius:9px;padding:2px 9px;cursor:pointer;transition:color .15s,border-color .15s,background .15s;flex-shrink:0}
+.ts-chip[hidden]{display:none}
+.ts-chip:hover{color:var(--text-dim);border-color:var(--text-ghost)}
+.ts-chip.on{color:var(--accent-ink);border-color:var(--accent);background:rgba(207,122,46,.07)}
+.ts-count{font-size:9px;color:var(--text-ghost);font-variant-numeric:tabular-nums;flex-shrink:0;min-width:0}
+.thread-arch{font-size:12px;line-height:1;color:var(--text-ghost);background:transparent;border:none;cursor:pointer;padding:0 1px;opacity:0;transition:opacity .15s,color .15s}
+.thread-head:hover .thread-arch{opacity:.6}
+.thread-arch:hover{color:var(--accent-ink);opacity:1}
+.thread.archived .thread-arch{opacity:.7}
+.thread.archived .thread-head{border-left-color:var(--border-mid);background:rgba(26,28,34,.012)}
+.thread.archived:not(.open) .thread-prompt{color:var(--text-dim);font-weight:400}
+.thread.archived .thread-chev{opacity:.4}
+.thread.archived:not(.open) .thread-summary{display:block;color:var(--text-ghost)}
+
 /* goal banner */
 #goal-banner{display:none;padding:15px 18px 15px;border-bottom:1px solid var(--border-mid);flex-shrink:0;background:var(--bg2)}
 #goal-banner.on{display:block}
@@ -1259,6 +1279,12 @@ select.hb{padding:5px 9px}
       <div id="gantt-rows"></div>
     </div>
     <div id="goal-banner"></div>
+    <div id="thread-search" hidden>
+      <span class="ts-ico">⌕</span>
+      <input id="thr-q" type="text" placeholder="Search threads — archived included" oninput="onThreadSearch(this.value)" aria-label="Search threads" />
+      <button id="ts-arch" class="ts-chip" title="Hide archived threads" onclick="toggleHideArchived()" hidden>archived</button>
+      <span id="ts-count" class="ts-count"></span>
+    </div>
     <div id="timeline">
       <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22.5" r="15" fill="none" stroke-width="2"/><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg><span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Send a message to begin</span></div>
     </div>
@@ -4063,21 +4089,57 @@ function newThread(promptText){
   const emp=document.getElementById('empty');if(emp)emp.remove();
   const th=document.createElement('div');th.className='thread open live';
   const proj=S.activeProject||'Ad hoc';
-  th.innerHTML=`<div class="thread-head"><span class="thread-chev">${ICON.chev}</span><div class="thread-q"><div class="thread-prompt"></div><div class="thread-summary">working…</div></div><div class="thread-meta"><span class="thread-proj${proj==='Ad hoc'?' adhoc':''}" title="Move this thread to a project">${escH(proj)} ⌄</span></div></div><div class="thread-body"></div>`;
+  th.innerHTML=`<div class="thread-head"><span class="thread-chev">${ICON.chev}</span><div class="thread-q"><div class="thread-prompt"></div><div class="thread-summary">working…</div></div><div class="thread-meta"><button class="thread-arch" title="Archive — compress to a summary" aria-label="Archive thread">⊟</button><span class="thread-proj${proj==='Ad hoc'?' adhoc':''}" title="Move this thread to a project">${escH(proj)} ⌄</span></div></div><div class="thread-body"></div>`;
   th.querySelector('.thread-prompt').textContent=promptText;
-  th.dataset.project=proj;
+  th.dataset.project=proj;th.dataset.archived='0';
   th.querySelector('.thread-head').addEventListener('click',()=>th.classList.toggle('open'));
   th.querySelector('.thread-proj').addEventListener('click',e=>{e.stopPropagation();moveThreadMenu(th,e.currentTarget)});
+  th.querySelector('.thread-arch').addEventListener('click',e=>{e.stopPropagation();toggleArchive(th)});
   timeline.appendChild(th);renderThreadScope();timeline.scrollTop=timeline.scrollHeight;
   return {el:th,body:th.querySelector('.thread-body'),summary:th.querySelector('.thread-summary'),meta:th.querySelector('.thread-meta')};
 }
 // Threads are scoped to the active project — switching projects shows only that project's chats.
-function renderThreadScope(){
-  const active=S.activeProject||'Ad hoc';let shown=0;
-  timeline.querySelectorAll('.thread').forEach(t=>{const belongs=(t.dataset.project||'Ad hoc')===active;t.style.display=belongs?'':'none';if(belongs)shown++});
+function renderThreadScope(){applyThreadFilter()}
+// scope by project + narrow by the search query + optionally hide archived — all via inline display
+function applyThreadFilter(){
+  const active=S.activeProject||'Ad hoc';
+  const q=(S._threadQ||'').toLowerCase().trim();
+  const hideArch=!!S._hideArchived;
+  let total=0,shown=0,arch=0;
+  timeline.querySelectorAll('.thread').forEach(t=>{
+    const belongs=(t.dataset.project||'Ad hoc')===active;if(belongs)total++;
+    const isArch=t.dataset.archived==='1';if(belongs&&isArch)arch++;
+    let vis=belongs;
+    if(vis&&hideArch&&isArch&&!q)vis=false;
+    if(vis&&q)vis=(t.textContent||'').toLowerCase().includes(q);
+    t.style.display=vis?'':'none';if(vis)shown++;
+  });
   const emp=document.getElementById('empty');
-  if(!shown){if(!emp)timeline.insertAdjacentHTML('beforeend',emptyHTML())}
+  if(!shown&&!q&&total===0){if(!emp)timeline.insertAdjacentHTML('beforeend',emptyHTML())}
   else if(emp)emp.remove();
+  // search bar: visible once a project has any threads
+  const bar=document.getElementById('thread-search'),archChip=document.getElementById('ts-arch'),ct=document.getElementById('ts-count');
+  if(bar){bar.hidden=total===0;
+    if(archChip){archChip.hidden=arch===0;archChip.textContent='archived '+arch;archChip.classList.toggle('on',hideArch)}
+    if(ct){ct.textContent=q?(shown+' match'+(shown===1?'':'es')):(hideArch?(shown+' shown · '+arch+' archived'):(total+' thread'+(total===1?'':'s')+(arch?' · '+arch+' archived':'')));}
+  }
+}
+function onThreadSearch(v){S._threadQ=v;applyThreadFilter()}
+function toggleHideArchived(){S._hideArchived=!S._hideArchived;applyThreadFilter()}
+// archive = compress a thread to a concise, still-searchable summary (body stays in the DOM)
+function toggleArchive(th){
+  const on=th.dataset.archived==='1',b=th.querySelector('.thread-arch');
+  if(on){th.dataset.archived='0';th.classList.remove('archived');if(b){b.textContent='⊟';b.title='Archive — compress to a summary'}}
+  else{
+    const s=th.querySelector('.thread-summary');
+    if(s&&(!s.textContent||/^working/i.test(s.textContent))){
+      const body=th.querySelector('.thread-body'),txt=(body?body.textContent:'').replace(/\s+/g,' ').trim();
+      s.textContent=txt.slice(0,140)||'(no output)';
+    }
+    th.classList.remove('open');th.dataset.archived='1';th.classList.add('archived');
+    if(b){b.textContent='⊞';b.title='Unarchive — expand again'}
+  }
+  applyThreadFilter();
 }
 // move a thread's work into a project (or back to Ad hoc) — re-tags + switches the active project
 function moveThreadMenu(th,anchor){
