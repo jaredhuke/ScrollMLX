@@ -30,8 +30,12 @@ ScrollMLX/
 # anything that still lands at the root, plus a parking spot for throwaway test output.
 scratch/
 scroll-artifacts/
-# stray test outputs the local agent has produced here before (reservoir drafts, demos)
-ip-*.md
+# Any markdown the agent drops at the REPO ROOT is throwaway test output — ignore it,
+# but keep the real top-level docs. (docs/*.md are unaffected — only root-level matches.)
+/*.md
+!/README.md
+!/CONTRIBUTING.md
+# stray non-md test output seen at the root
 tip_splitter.py
 
 # Xcode per-user state
