@@ -282,6 +282,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Scroll;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Scroll reads your current Finder selection to give the agent useful local context.";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Scroll reads today's calendar to give the agent useful local context. Stays on your Mac.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Scroll reads today's calendar to give the agent useful local context.";
@@ -376,6 +377,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Scroll;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Scroll reads your current Finder selection to give the agent useful local context.";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Scroll reads today's calendar to give the agent useful local context. Stays on your Mac.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Scroll reads today's calendar to give the agent useful local context.";

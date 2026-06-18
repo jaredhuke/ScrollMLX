@@ -59,6 +59,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #hdr{height:var(--hh);flex-shrink:0;position:relative;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px}
 #logo{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;user-select:none;color:var(--text);cursor:default}
 #logo .r{color:var(--red)}
+#logo .mlx{color:var(--red);margin-left:.22em}
 #logo .logo-mark{width:19px;height:19px;flex-shrink:0;color:var(--text)}
 #empty .logo-mark{width:46px;height:46px;color:var(--text-soft);margin-bottom:14px}
 #model-lbl{font-size:10px;color:var(--text-dim);letter-spacing:.03em;font-weight:400;white-space:nowrap}
@@ -175,6 +176,7 @@ select.hb{padding:5px 9px}
 #timeline{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
 #empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
 #empty .big{font-size:36px;letter-spacing:.3em;font-weight:300;color:rgba(26,28,34,.1)}
+#empty .big .mlx{color:rgba(210,85,46,.22);margin-left:.06em}
 #empty .sub{font-size:10px;letter-spacing:.12em;color:var(--text-ghost);font-weight:400}
 .starters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px;margin-top:14px;pointer-events:auto}
 .starter{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:11px;padding:7px 13px;border-radius:16px;cursor:pointer;transition:color .15s,border-color .15s;min-height:26px}
@@ -1063,7 +1065,7 @@ select.hb{padding:5px 9px}
 </div>
 
 <div id="hdr">
-  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" stroke-width="3.4"/><path d="M36.4 16.6 l3.4 -2" stroke-width="1.8" opacity="0.45"/><circle cx="37.4" cy="25.4" r="2.7" fill="#d2552e" stroke="none"/></svg>SCROLL</span>
+  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>SCROLL<span class="mlx">MLX</span></span>
   <span id="model-lbl" data-tip="Primary LLM loaded in memory">loading…</span>
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
@@ -1117,7 +1119,7 @@ select.hb{padding:5px 9px}
     </div>
     <div id="goal-banner"></div>
     <div id="timeline">
-      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" stroke-width="3.4"/><path d="M36.4 16.6 l3.4 -2" stroke-width="1.8" opacity="0.45"/><circle cx="37.4" cy="25.4" r="2.7" fill="#d2552e" stroke="none"/></svg><span class="big">Scroll</span><span class="sub">Send a message to begin</span></div>
+      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg><span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Send a message to begin</span></div>
     </div>
     <div id="add-panel" hidden>
       <div class="ap-row">
@@ -1826,7 +1828,7 @@ function renderGov(){
   const why=offenders.length?`${S.agents[offenders[0]].label}: ${g.per[offenders[0]].why[0]||g.per[offenders[0]].level}`:'all operatives within policy';
   const stop=(g.overall==='intervene'&&S.streaming)?`<button class="gov-stop" onclick="event.stopPropagation();stopStream()">Stop</button>`:'';
   el.innerHTML=`<span class="gov-dot"></span><span class="gov-state">${govLabel(g.overall)}</span><span class="gov-why">${escH(why)}</span>${stop}`;
-  if(g.overall==='intervene'&&S.streaming&&!S.govFlagged){S.govFlagged=true;artToast('AIS · '+why+' — review or stop','err')}
+  if(g.overall==='intervene'&&S.streaming&&!S.govFlagged){S.govFlagged=true;notify('AIS · '+why+' — review or halt','err',{persist:true,actions:[{label:'Halt',onClick:()=>stopStream()}]})}
   if(!S.streaming)S.govFlagged=false;
 }
 function openGovernance(){const g=S._gov||aisGovern();const worst=AGENT_KEYS.slice().sort((a,b)=>_rank(g.per[b].level)-_rank(g.per[a].level))[0];openAgentDetail(worst)}
@@ -3404,9 +3406,9 @@ function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('s
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
 // Empty state — gives a novice something to do (single source of truth, used at init + on Clear)
-const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" stroke-width="3.4"/><path d="M36.4 16.6 l3.4 -2" stroke-width="1.8" opacity="0.45"/><circle cx="37.4" cy="25.4" r="2.7" fill="#d2552e" stroke="none"/></svg>';
+const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>';
 const STARTERS=['Make a landing page for my café','Build a Pomodoro timer I can run','Explain this folder of code to me','Make a tip-splitting calculator'];
-function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll</span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
+function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
 function useStarter(t){const m=document.getElementById('msg-in');if(!m)return;m.value=t;m.dispatchEvent(new Event('input'));m.focus()}
 function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';updateArtBadge();patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual);renderActiveOps()}
@@ -3623,7 +3625,7 @@ async function sendMulti(text,models){
 async function streamRun(text,th){
   const _rq=reqStart(S.dual?'review pass':'local');
   S.streaming=true;setSending(true);setStatus(true);patchAgent('primary',{status:'working',task:text.slice(0,60)});
-  AGENT_KEYS.forEach(k=>S.agents[k].turnTokens=0);S.agents.primary.calls++;S.agents.primary.startMs=Date.now();S.govFlagged=false;
+  AGENT_KEYS.forEach(k=>S.agents[k].turnTokens=0);S.iterations=0;S.agents.primary.calls++;S.agents.primary.startMs=Date.now();S.govFlagged=false;
   S.ganttStart=Date.now();S.gantt.primary.start=S.ganttStart;if(S.dual)showGantt(true);
   const ep=S.dual?'/v1/dual':'/v1/agent';
   // /v1/agent injects the standing-context file server-side; only send it for the dual path here (avoids duplication)
