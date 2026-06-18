@@ -79,6 +79,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .sg-k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
 .sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
 .sg-v.warn{color:var(--amber)}.sg-v.alert{color:var(--red)}.sg-v.na{color:var(--text-ghost);font-weight:400}
+.sg{border-radius:6px;padding:3px 5px;margin:-3px -2px;transition:background .15s}
+.sg:hover{background:var(--bg3)}
+.sysdetail{position:fixed;z-index:520;background:var(--bg2);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 14px 44px rgba(26,28,34,.28);padding:11px 13px;width:286px;animation:kdIn .16s ease}
+.sd-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:7px}
+.sd-row{display:flex;flex-direction:column;gap:3px;padding:7px 0;border-top:1px solid var(--border)}
+.sd-row:first-of-type{border-top:none}
+.sd-lab{display:flex;align-items:baseline;gap:8px}
+.sd-k{font-size:11px;font-weight:600;color:var(--text)}
+.sd-v{font-size:12px;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.sd-pk{margin-left:auto;font-size:9px;color:var(--text-ghost);font-variant-numeric:tabular-nums}
+.sd-spark{width:100%;height:34px;display:block}
 @media(max-width:1200px){#sysbar{display:none}}
 .hb{background:transparent;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:500;padding:5px 13px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;transition:all .18s;white-space:nowrap;flex-shrink:0}
 .hb:hover{color:var(--text);border-color:rgba(26,28,34,.28);background:rgba(26,28,34,.04)}
@@ -4642,7 +4653,7 @@ loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadredacted(); lo
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
-const SYS={cpu:[],mem:[],temp:[],fan:[]};
+const SYS={cpu:[],mem:[],temp:[],fan:[],burn:[]};
 function _sgPush(k,v){SYS[k].push(v==null?null:v);if(SYS[k].length>30)SYS[k].shift()}
 // intensity ramp — quiet grey → cool blue/teal → orange → red at peak load
 const _SG_STOPS=[[0,[128,132,140]],[0.22,[96,124,150]],[0.46,[58,150,156]],[0.72,[207,122,46]],[1,[200,75,49]]];
@@ -4653,10 +4664,14 @@ function _intensityRGB(f){
   return[k(0),k(1),k(2)];
 }
 function drawSG(id,vals,text,level,denom){
-  denom=denom||100;
   const cell=document.getElementById(id);if(!cell)return;
-  const cv=cell.querySelector('.sg-spark'),vEl=cell.querySelector('.sg-v');
+  const vEl=cell.querySelector('.sg-v');
   vEl.textContent=text;vEl.className='sg-v'+(text==='—'?' na':level>=.9?' alert':level>=.7?' warn':'');
+  _drawSpark(cell.querySelector('.sg-spark'),vals,level,denom);
+}
+function _drawSpark(cv,vals,level,denom){
+  if(!cv)return;
+  denom=denom||100;
   const dpr=window.devicePixelRatio||1,W=cv.clientWidth||56,H=cv.clientHeight||15;
   cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
   const clean=vals.filter(v=>v!=null);
@@ -4684,7 +4699,29 @@ function drawSG(id,vals,text,level,denom){
   const cur=_intensityRGB(level);
   if(started){c.beginPath();c.arc(lastX,lastY,1.9,0,Math.PI*2);c.fillStyle=`rgba(${cur[0]},${cur[1]},${cur[2]},.95)`;c.fill()}
 }
+// click any header gauge → a detail card with larger graphs (CPU · MEM · TEMP · FAN · token burn)
+const _SYS_META=[['cpu','CPU','%',100],['mem','Memory','%',100],['temp','Temp','°',100],['fan','Fan',' rpm',6000],['burn','Token burn','%',100]];
+function _sysFmt(v,unit){return v==null?'—':(unit===' rpm'?Math.round(v)+unit:Math.round(v)+unit)}
+function sysDetailPop(){
+  closeSysDetail();
+  const ov=document.createElement('div');ov.id='sysdetail';ov.className='sysdetail';
+  ov.innerHTML='<div class="sd-h">System &amp; burn — last ~75s</div>'+_SYS_META.map(m=>{
+    const clean=(SYS[m[0]]||[]).filter(v=>v!=null),cur=clean.length?clean[clean.length-1]:null,pk=clean.length?Math.max(...clean):null;
+    return `<div class="sd-row"><div class="sd-lab"><span class="sd-k">${m[1]}</span><span class="sd-v">${_sysFmt(cur,m[2])}</span><span class="sd-pk">peak ${_sysFmt(pk,m[2])}</span></div><canvas class="sd-spark" data-k="${m[0]}" data-d="${m[3]}"></canvas></div>`;
+  }).join('');
+  document.body.appendChild(ov);
+  const bar=document.getElementById('sysbar'),r=bar.getBoundingClientRect();
+  ov.style.top=(r.bottom+7)+'px';ov.style.left=Math.max(8,Math.min(r.left,window.innerWidth-300))+'px';
+  ov.querySelectorAll('.sd-spark').forEach(cv=>{const k=cv.dataset.k,d=+cv.dataset.d,clean=(SYS[k]||[]).filter(v=>v!=null),lvl=clean.length?clean[clean.length-1]/d:0;_drawSpark(cv,SYS[k]||[],lvl,d)});
+  const off=e=>{if(!ov.contains(e.target)&&!e.target.closest('#sysbar'))closeSysDetail()};
+  setTimeout(()=>document.addEventListener('mousedown',off,true),0);ov._off=off;
+  document.addEventListener('keydown',_sysEsc);
+}
+function closeSysDetail(){const ov=document.getElementById('sysdetail');if(ov){if(ov._off)document.removeEventListener('mousedown',ov._off,true);ov.remove()}document.removeEventListener('keydown',_sysEsc)}
+function _sysEsc(e){if(e.key==='Escape')closeSysDetail()}
+(function(){const bar=document.getElementById('sysbar');if(bar)bar.querySelectorAll('.sg').forEach(el=>{el.style.cursor='pointer';el.setAttribute('title','Click for detail graphs');el.addEventListener('click',sysDetailPop)})})();
 async function pollSys(){
+  try{_sgPush('burn',Math.max(0,...AGENT_KEYS.map(k=>(S.agents[k]&&S.agents[k].burn)||0)))}catch(_){}
   let j;try{j=await fetch('/v1/sys').then(r=>r.ok?r.json():null)}catch(_){j=null}
   if(!j)return;
   _sgPush('cpu',j.cpu);_sgPush('mem',j.mem_pct);
