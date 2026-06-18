@@ -491,6 +491,20 @@ async def provider_plugins_list():
     return {"plugins": provider_plugins.register_all()}
 
 
+@app.get("/v1/provider-plugins/library")
+async def provider_plugins_library():
+    """The bundled model library — GLM + open-source models, each shipped as a .md plugin."""
+    from server import provider_plugins
+    return {"library": provider_plugins.library()}
+
+
+@app.post("/v1/provider-plugins/install")
+async def provider_plugins_install(payload: dict):
+    """One-click install a bundled library model by id."""
+    from server import provider_plugins
+    return provider_plugins.install(payload.get("id", ""))
+
+
 @app.post("/v1/provider-plugins/import")
 async def provider_plugins_import(payload: dict):
     from server import provider_plugins
