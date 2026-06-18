@@ -1,8 +1,22 @@
 import SwiftUI
 import AppKit
 
+/// Forces the Dock icon at launch from the bundled image — robust even if the asset
+/// catalog wasn't compiled (e.g. a SwiftPM run) or macOS cached an old/blank icon.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ note: Notification) {
+        if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "png"),
+           let img = NSImage(contentsOf: url) {
+            NSApplication.shared.applicationIconImage = img
+        } else if let img = NSImage(named: "AppIcon") {
+            NSApplication.shared.applicationIconImage = img
+        }
+    }
+}
+
 @main
 struct ScrollApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var app = AppState()
 
     var body: some Scene {
