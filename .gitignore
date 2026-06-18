@@ -38,6 +38,12 @@ scroll-artifacts/
 # stray non-md test output seen at the root
 tip_splitter.py
 
+# redacted is EPAM-private — it must NEVER be published to this public repo. It lives as a
+# runtime plugin (~/.scroll/provider-plugins/redacted.md) and is shared via git.epam.com.
+# Belt-and-suspenders: ignore any redacted plugin/setup artifact that lands in the tree.
+**/redacted*.md
+**/redacted-setup.command
+
 # Xcode per-user state
 **/xcuserdata/
 *.xcuserstate
