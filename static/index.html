@@ -2141,7 +2141,7 @@ function renderTray(){
   if(!items.length){body.innerHTML='<div class="tray-empty">Files the agent builds land here — preview, open or save them. The conversation stays clean.</div>';if(foot)foot.classList.remove('show');return}
   body.innerHTML=items.map((it,i)=>{
     const rend=_isRenderable(it.ext);
-    const badge=it.saved?(it.rec==='clean'?'<span class="tray-badge ok">in git</span>':(it.rec==='uncommitted'||it.rec==='dirty'||it.rec==='modified'||it.rec==='added'||it.rec==='untracked')?'<span class="tray-badge warn">uncommitted</span>':''):'<span class="tray-badge unsaved">unsaved</span>';
+    const badge=it.saved?(it.rec==='clean'?'<span class="tray-badge ok">in git</span>':(it.rec==='no-repo'||it.rec==='unknown')?'':'<span class="tray-badge warn">uncommitted</span>'):'<span class="tray-badge unsaved">unsaved</span>';
     const meta=(it.ext?it.ext.toUpperCase():'FILE')+(it.lines?' · '+it.lines+' lines':'')+(it.saved?'':' · in chat');
     let acts='<div class="tray-acts">';
     acts+=`<button class="tray-act prev" data-i="${i}" title="Preview ${escH(it.name)}">${ICON.eye}</button>`;
