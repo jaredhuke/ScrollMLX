@@ -410,6 +410,9 @@ select.hb{padding:5px 9px}
 .dbtn{background:var(--accent);border:none;color:#fff;font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.08em;padding:7px 12px;cursor:pointer;width:100%;text-transform:uppercase;border-radius:7px;transition:opacity .15s}
 .dbtn:hover{opacity:.85}
 .dbtn.ghost{background:none;border:1px solid var(--border-mid);color:var(--text-dim)}.dbtn.ghost:hover{border-color:var(--red);color:var(--red);opacity:1}
+.ds-title.danger{color:var(--red-ink)}
+.set-danger{font-size:10.5px;color:var(--text-soft);line-height:1.55;margin-bottom:8px}
+.dbtn.danger{background:none;border:1px solid var(--red);color:var(--red-ink)}.dbtn.danger:hover{background:var(--red);color:#fff;opacity:1}
 .skill-body{font-family:var(--font);min-height:74px;resize:vertical;line-height:1.5}
 .skill-acts{display:flex;gap:6px}.skill-acts .dbtn{width:auto;flex:1}
 .skill-mini{background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px}.skill-mini:hover{color:var(--accent)}.skill-mini.rm:hover{color:var(--red)}
@@ -1380,6 +1383,9 @@ select.hb{padding:5px 9px}
     <div><div class="ds-title">API keys <span class="ds-sub">stored in the Keychain, never in the browser</span></div><div id="set-keys"></div></div>
     <div><div class="ds-title">Git</div><div id="set-git"></div></div>
     <div><div class="ds-title">Phone relay <span class="ds-sub">drive Scroll from your phone</span></div><div id="set-relay"></div></div>
+    <div><div class="ds-title danger">Danger zone <span class="ds-sub">start completely fresh</span></div>
+      <div class="set-danger">Erase ALL previous work — chats, projects, artifacts, context &amp; ledger. Every project becomes its own clean world. <b>Your API keys and downloaded model are kept.</b></div>
+      <button class="dbtn danger" onclick="eraseAllWork()">Erase all work — start fresh</button></div>
   </div>
 </div>
 
@@ -3903,10 +3909,15 @@ function _switchProjectContext(next){
   const cur=S.activeProject||'Ad hoc';
   if(cur===next)return;
   S._ctx=S._ctx||{};
-  S._ctx[cur]={msgs:S.msgs,goals:S.goals};
+  // every project is its own world — save & swap chat AND outputs (artifacts/build graph)
+  S._ctx[cur]={msgs:S.msgs,goals:S.goals,bgrNodes:BGR.nodes,bgrEdges:BGR.edges,threadArtifacts:S.threadArtifacts,autosaved:[..._AUTOSAVED]};
   const saved=S._ctx[next];
   S.msgs=saved?saved.msgs:[];
   S.goals=saved?saved.goals:[];
+  BGR.nodes=saved&&saved.bgrNodes?saved.bgrNodes:[];BGR.edges=saved&&saved.bgrEdges?saved.bgrEdges:[];BGR.lastId=null;
+  S.threadArtifacts=saved&&saved.threadArtifacts?saved.threadArtifacts:[];
+  try{_AUTOSAVED.clear();(saved&&saved.autosaved||[]).forEach(k=>_AUTOSAVED.add(k))}catch(_){}
+  try{renderTray();updateArtBadge();drawBuildGraph();document.getElementById('bg-node-ct').textContent=BGR.nodes.length||''}catch(_){}
 }
 async function activateProject(id){
   const p=(S.projects||[]).find(x=>x.id===id);if(!p)return;
@@ -3929,6 +3940,20 @@ async function _doRemoveProject(id){
   let r;try{r=await fetch('/v1/projects/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
   if(r&&r.ok){if((S.projects||[]).find(p=>p.id===id&&p.path===S.cwd))S.activeProject=null;artToast('Project removed','ok');loadProjects()}
   else artToast('Couldn’t remove — restart the server','err');
+}
+// Erase ALL previous work — a clean slate. Keeps API keys + the downloaded model.
+function eraseAllWork(){
+  notify('Erase ALL previous work? Chats, projects, artifacts, context & ledger are wiped — every project starts as its own clean world. Your API keys and model are kept. This cannot be undone.','warn',{persist:true,actions:[
+    {label:'Erase everything',onClick:_doEraseAll},
+    {label:'Cancel',onClick:()=>{}},
+  ]});
+}
+async function _doEraseAll(){
+  let r;try{r=await fetch('/v1/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+  try{Object.keys(localStorage).filter(k=>/^mlx-|^scroll-/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(_){}
+  try{S._ctx={};S.msgs=[];S.goals=[];BGR.nodes=[];BGR.edges=[];S.threadArtifacts=[]}catch(_){}
+  if(r&&r.ok){artToast('Erased — starting fresh…','ok');setTimeout(()=>location.reload(),700)}
+  else{artToast('Couldn’t erase server data — restart the server','err');setTimeout(()=>location.reload(),900)}
 }
 function renderSettings(){
   const keys=window.CLOUD||{};
