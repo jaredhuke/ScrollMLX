@@ -8,6 +8,15 @@ import json
 from .filesystem import _resolve
 
 
+def _snap(p, cwd: str) -> None:
+    """Snapshot the about-to-change file so 'What changed' / Undo always has a 'before'."""
+    try:
+        from server import versions
+        versions.save_version(p, cwd)
+    except Exception:
+        pass
+
+
 def edit_file(path: str, find: str, replace: str, cwd: str) -> str:
     """Replace exact text in a file (all occurrences). Safer than rewriting the whole file."""
     p = _resolve(path, cwd)
@@ -17,6 +26,7 @@ def edit_file(path: str, find: str, replace: str, cwd: str) -> str:
     n = text.count(find)
     if n == 0:
         return f"ERROR: text not found in {path} (nothing changed)"
+    _snap(p, cwd)  # capture the 'before' for the safety net
     p.write_text(text.replace(find, replace), encoding="utf-8")
     return f"Edited {path} — replaced {n} occurrence{'s' if n != 1 else ''}."
 
@@ -25,6 +35,7 @@ def append_file(path: str, content: str, cwd: str) -> str:
     """Append content to the end of a file (creates it if missing)."""
     p = _resolve(path, cwd)
     p.parent.mkdir(parents=True, exist_ok=True)
+    _snap(p, cwd)  # no-op if the file is new; otherwise records the 'before'
     with p.open("a", encoding="utf-8") as f:
         f.write(content)
     return f"Appended {len(content)} chars to {path}."
