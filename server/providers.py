@@ -273,7 +273,8 @@ class redactedProvider(Provider):
     @staticmethod
     def _bin() -> str | None:
         import shutil
-        return shutil.which("redacted-cli")
+        from server import env as env_mod
+        return shutil.which("redacted-cli", path=env_mod.login_path()) or shutil.which("redacted-cli")
 
     def available(self) -> bool:
         return self._bin() is not None
@@ -291,10 +292,11 @@ class redactedProvider(Provider):
                 continue
             parts.append(c if role in ("system", "user") else f"Assistant (earlier): {c}")
         prompt = "\n\n".join(parts) or "Respond."
+        from server import env as env_mod
         try:
             with tempfile.TemporaryDirectory() as td:
                 r = subprocess.run([binp, "-p", prompt], cwd=td, capture_output=True,
-                                   text=True, timeout=600)
+                                   text=True, timeout=600, env=env_mod.login_env())
         except subprocess.TimeoutExpired:
             yield ErrorEvent(message="redacted timed out after 600s")
             return
