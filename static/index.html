@@ -734,11 +734,23 @@ select.hb{padding:5px 9px}
 #kd-input::placeholder{color:var(--text-ghost);letter-spacing:normal}
 .kd-eye{position:absolute;right:6px;background:none;border:none;color:var(--text-ghost);cursor:pointer;padding:6px;display:flex}.kd-eye:hover{color:var(--accent)}.kd-eye .ic{width:15px;height:15px}
 .kd-note{display:flex;align-items:flex-start;gap:7px;margin-top:12px;font-size:11px;line-height:1.55;color:var(--text-soft)}
-.cmd-list{margin-top:12px;display:flex;flex-direction:column;gap:7px}
-.cmd-step{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-soft)}
+.cmd-list{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.cmd-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font-size:11px;color:var(--text-soft);background:transparent;border:1px solid transparent;border-radius:var(--r);padding:5px 8px;cursor:pointer;font-family:var(--font);transition:background .15s,border-color .15s}
+.cmd-step:hover{background:var(--accent-soft);border-color:var(--border-mid)}
 .cmd-step>span{flex-shrink:0;width:16px;height:16px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cmd-step:hover>span{background:var(--accent);color:#fff}
 .cmd-step code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:5px;padding:2px 7px}
 .cmd-step i{color:var(--text-ghost);font-style:normal;font-size:10px}
+.cmd-step .cmd-copy{margin-left:auto;display:inline-flex;align-items:center;color:var(--text-ghost);opacity:0;transition:opacity .15s}
+.cmd-step:hover .cmd-copy{opacity:.85}
+.cmd-step .cmd-copy svg{width:12px;height:12px}
+.kd-hero{margin-top:13px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:var(--font);font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:11px 16px;cursor:pointer;transition:opacity .15s,transform .06s}
+.kd-hero:hover{opacity:.9}.kd-hero:active{transform:translateY(1px)}.kd-hero svg{width:15px;height:15px}
+.kd-hint{margin-top:9px;font-size:10.5px;line-height:1.5;color:var(--text-ghost)}
+.kd-hint code,.kd-note code{font-family:ui-monospace,Menlo,monospace;font-size:10px;background:rgba(26,28,34,.06);padding:1px 5px;border-radius:4px;color:var(--text)}
+.kd-epam{margin-top:14px;display:flex;gap:7px;align-items:flex-start;font-size:10.5px;line-height:1.5;color:var(--text-soft);border-top:1px solid var(--border);padding-top:12px}
+.kd-epam svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;color:var(--accent-ink)}
+.kd-epam b{color:var(--text)}
 .kd-note .ic{width:13px;height:13px;color:rgba(60,100,60,.9);flex-shrink:0;margin-top:2px}
 .kd-getkey{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:11.5px;color:var(--accent);text-decoration:none}
 .kd-getkey .ic{width:13px;height:13px}.kd-getkey:hover span{border-bottom:1px solid var(--accent)}
@@ -1812,21 +1824,24 @@ function drawAIS(){
   requestAnimationFrame(drawAIS);
 }
 function _renderMesh(AC,W,H,big,state){
-  const REF=big?360:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2;  // full-screen zooms out → more delicate, refined
+  // full-screen zooms out (bigger REF → smaller scale → thinner, more delicate lines) and
+  // sits with generous margin (LW thins the structural frame so big reads refined, not heavy).
+  const REF=big?470:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2,LW=big?0.6:1;
   state.xf={s,ox,oy};const meshHits=state.hits;meshHits.length=0;
   AC.fillStyle=big?'#f0ece4':'#e9e4db';AC.fillRect(0,0,W,H);
   AC.save();AC.translate(ox,oy);AC.scale(s,s);
   const w=REF,h=REF;
-  const cx=w/2,cy=h/2-3,R=Math.min(w,h)/2-15,t=Date.now()*0.001;
+  const cx=w/2,cy=h/2-3,R=Math.min(w,h)/2-(big?70:15),t=Date.now()*0.001;
   const M=meshMetrics(),anyBusy=AGENT_KEYS.some(k=>S.agents[k].status==='working');
-  // abstract outer marks — sparse + slightly irregular (not a literal compass)
-  const TICKS=24;
-  for(let i=0;i<TICKS;i++){const a=(i/TICKS)*Math.PI*2,major=i%6===0,len=major?7:3+((i*37)%3);
+  // abstract outer marks — finer + denser when zoomed out (more detail, slightly irregular)
+  const TICKS=big?60:24,MAJ=big?12:6;
+  for(let i=0;i<TICKS;i++){const a=(i/TICKS)*Math.PI*2,major=i%MAJ===0,len=major?(big?9:7):(big?2.6:3)+((i*37)%3);
     AC.beginPath();AC.moveTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);AC.lineTo(cx+Math.cos(a)*(R-len),cy+Math.sin(a)*(R-len));
-    AC.strokeStyle=`rgba(26,28,34,${major?0.12:0.05})`;AC.lineWidth=1;AC.stroke();}
-  // abstract orbits — broken dashed arcs at varied spans, not closed circles
-  AC.save();AC.setLineDash([5,9]);
-  [[R*0.69,-0.6,3.9],[R*0.40,2.2,3.4],[R*0.55,4.5,2.1]].forEach(o=>{AC.beginPath();AC.arc(cx,cy,o[0],o[1],o[1]+o[2]);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=1;AC.stroke();});
+    AC.strokeStyle=`rgba(26,28,34,${major?0.12:0.05})`;AC.lineWidth=LW;AC.stroke();}
+  // abstract orbits — broken dashed arcs at varied spans, not closed circles (more arcs when big)
+  AC.save();AC.setLineDash(big?[3,8]:[5,9]);
+  const orbits=big?[[R*0.69,-0.6,3.9],[R*0.40,2.2,3.4],[R*0.55,4.5,2.1],[R*0.30,1.1,2.6],[R*0.83,3.4,1.7]]:[[R*0.69,-0.6,3.9],[R*0.40,2.2,3.4],[R*0.55,4.5,2.1]];
+  orbits.forEach(o=>{AC.beginPath();AC.arc(cx,cy,o[0],o[1],o[1]+o[2]);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=LW;AC.stroke();});
   AC.restore();
   // data-source markers on outer ring
   const srcs=Object.keys(_srcMap()),sN=srcs.length;
@@ -1835,9 +1850,9 @@ function _renderMesh(AC,W,H,big,state){
     AC.beginPath();AC.arc(x,y,2,0,Math.PI*2);AC.fillStyle='rgba(60,90,70,.65)';AC.fill();});
   // ── completion gauge (RED, outermost track) ──
   const compR=R*0.88;
-  AC.beginPath();AC.arc(cx,cy,compR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=3;AC.stroke();
+  AC.beginPath();AC.arc(cx,cy,compR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=big?2:3;AC.stroke();
   if(M.completion>0){AC.beginPath();AC.arc(cx,cy,compR,-Math.PI/2,-Math.PI/2+Math.PI*2*M.completion);
-    AC.strokeStyle='rgba(47,156,139,.9)';AC.lineWidth=3;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
+    AC.strokeStyle='rgba(47,156,139,.9)';AC.lineWidth=big?2:3;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
   // ── requests in flight — one thin rotating arc each (concurrent threads/fan-out) ──
   const reqs=(S.requests||[]);
   reqs.forEach((rq,i)=>{const rr=compR-7-i*6;if(rr<R*0.46)return;
@@ -2951,18 +2966,19 @@ async function ppSecret(id){
 function codemieDialog(){
   closeKeyDialog();
   const ok=window.CODEMIE&&window.CODEMIE.available,ver=(window.CODEMIE&&window.CODEMIE.version)||'';
+  const steps=[['npm install -g @codemieai/code','install the CLI'],['codemie setup','EPAM SSO · pick Claude Opus'],['codemie install claude','wire up the claude shim'],['codemie profile login','sign in · re-auth every 24h']];
+  const stepHTML=steps.map((s,i)=>`<button class="cmd-step" type="button" data-cmd="${escH(s[0])}" title="Copy — then paste into a terminal"><span>${i+1}</span><code>${escH(s[0])}</code><i>${escH(s[1])}</i><b class="cmd-copy">${ICON.copy}</b></button>`).join('');
   const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
   ov.innerHTML=`<div class="kd" role="dialog" aria-modal="true" aria-label="CodeMie setup">
     <div class="kd-head"><span class="kd-title">Connect CodeMie · Claude Opus</span><button class="kd-x" title="Close" aria-label="Close">✕</button></div>
     <div class="kd-body">
-      <div class="kd-note">${ICON.check}<span>${ok?('Detected '+escH(ver?('· codemie '+ver):'')+' — routes Claude through EPAM CodeMie (SSO + corporate budget). No API key needed; nothing leaves EPAM infra.'):'Not detected. CodeMie runs Claude through EPAM’s CLI — set it up once in a terminal:'}</span></div>
-      ${ok?'<div class="kd-note" style="margin-top:8px">If a request fails with an auth error, your SSO expired (24h) — run <b>codemie profile login</b> in a terminal.</div>'
-        :`<div class="cmd-list">
-          <div class="cmd-step"><span>1</span><code>npm install -g @codemieai/code</code></div>
-          <div class="cmd-step"><span>2</span><code>codemie setup</code><i>(EPAM SSO + pick Claude Opus)</i></div>
-          <div class="cmd-step"><span>3</span><code>codemie install claude</code></div>
-          <div class="cmd-step"><span>4</span><code>codemie profile login</code><i>(re-auth every 24h)</i></div>
-        </div>`}
+      <div class="kd-note">${ICON.check}<span>${ok?('Detected '+escH(ver?('· codemie '+ver):'')+' — routes Claude through EPAM CodeMie (SSO + corporate budget). No API key; nothing leaves EPAM infra.'):'CodeMie runs Claude Opus through EPAM’s CLI (SSO + corporate budget). No API key needed — set it up once:'}</span></div>
+      ${ok?`<div class="kd-note" style="margin-top:8px">Auth expired (every 24h)? Re-run <code>codemie profile login</code> in a terminal.</div>`
+        :`<button class="kd-hero" id="cm-setup">${ICON.terminal}<span>Open Terminal &amp; run setup</span></button>
+          <div class="kd-hint">Sign-in opens your browser (EPAM SSO), so setup runs in Terminal — Scroll’s in-app terminal can’t complete the interactive login. Prefer to do it yourself? Click a step to copy it:</div>
+          <div class="cmd-list">${stepHTML}</div>`}
+      <div class="kd-epam">${ICON.check}<span>CodeMie is <b>EPAM-private</b> — it belongs on git.epam.com, not GitHub. Save it as a droppable plugin to share with your EPAM group:</span></div>
+      <button class="kd-cmd" id="cm-plugin" type="button">${ICON.copy}<span>Save as EPAM plugin (reveal in Finder)</span></button>
     </div>
     <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary">Re-check</button></div>
   </div>`;
@@ -2970,7 +2986,24 @@ function codemieDialog(){
   ov.querySelector('.kd-x').onclick=closeKeyDialog;
   ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
   ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
+  ov.querySelectorAll('.cmd-step').forEach(b=>b.addEventListener('click',()=>copyText(b.dataset.cmd,'Copied — paste into a terminal')));
+  const setupBtn=ov.querySelector('#cm-setup');if(setupBtn)setupBtn.onclick=codemieSetup;
+  const plugBtn=ov.querySelector('#cm-plugin');if(plugBtn)plugBtn.onclick=saveCodemiePlugin;
   ov.querySelector('.kd-save').onclick=async()=>{await loadCodemie();const okk=!!(window.CODEMIE&&window.CODEMIE.available);artToast(okk?'CodeMie connected':'CodeMie still not detected',okk?'ok':'err');closeKeyDialog();if(okk)codemieDialog()};
+}
+// One button: write + open the setup script in Terminal.app so the user can finish EPAM SSO
+// (the embedded terminal has no PTY/browser for the interactive sign-in).
+async function codemieSetup(){
+  artToast('Opening Terminal…','ok');
+  let r;try{r=await fetch('/v1/codemie/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok)notify('Terminal opened — finish the EPAM sign-in there, then click Re-check.','ok');
+  else notify('Couldn’t open Terminal'+(r&&r.error?' — '+r.error:''),'err');
+}
+// CodeMie travels with the EPAM group, not GitHub — export it as a droppable plugin .md.
+async function saveCodemiePlugin(){
+  let r;try{r=await fetch('/v1/codemie/plugin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reveal:true})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok)artToast('Saved CodeMie plugin — drop it into your EPAM (git.epam.com) repo','ok');
+  else artToast('Couldn’t save plugin'+(r&&r.error?' — '+r.error:''),'err');
 }
 
 // ─── SECURE KEY DIALOG — paste a key once; it goes straight to the OS keychain ──

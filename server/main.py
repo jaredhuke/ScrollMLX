@@ -35,7 +35,7 @@ try:
 except Exception:
     _log = logging.getLogger("scroll")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
@@ -53,6 +53,16 @@ from server.schemas import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
+    # Scroll.app is a GUI app — its PATH is the minimal launchd one, so npm/node/codemie/git
+    # aren't found. Graft on the login-shell PATH so every subprocess (terminal, git, codemie)
+    # resolves binaries the way Terminal.app does.
+    try:
+        from server import env as env_mod
+        # off-thread: the login-shell probe can take up to 8s on a heavy .zshrc — don't block the loop
+        _p = await loop.run_in_executor(None, env_mod.apply_to_process)
+        print(f"[env] PATH → {_p.split(':',3)[0]}:… ({_p.count(':')+1} dirs)")
+    except Exception as exc:
+        print(f"[env] login-PATH graft skipped: {exc}")
     loaded = secrets_mod.load_into_env()  # pull cloud keys from Keychain → env
     if loaded:
         print(f"[secrets] loaded keys for: {', '.join(loaded)}")
@@ -77,6 +87,33 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Scroll", lifespan=lifespan)
 
 _STATIC = Path(__file__).parent.parent / "static"
+
+
+def _guard_local(request: Request) -> None:
+    """Refuse cross-origin calls to powerful endpoints (shell, codemie setup).
+
+    CORS is allow_origins=["*"] (handy for phone relay / dev), and the server is on loopback —
+    but loopback does NOT stop a public web page the user visits from issuing a cross-origin POST
+    that runs a shell command or auto-launches Terminal.app. Same-origin requests omit Origin
+    (allowed); the app + a LAN phone send a loopback/private-IP origin (allowed); a real public
+    site sends its own origin (refused)."""
+    import ipaddress
+    from urllib.parse import urlparse
+    origin = request.headers.get("origin") or ""
+    if not origin:
+        return  # same-origin fetches don't send Origin
+    try:
+        host = urlparse(origin).hostname or ""
+    except Exception:
+        host = ""
+    if host in ("localhost", "127.0.0.1", "::1"):
+        return
+    try:
+        if ipaddress.ip_address(host).is_private or ipaddress.ip_address(host).is_loopback:
+            return
+    except ValueError:
+        pass
+    raise HTTPException(403, "cross-origin request refused for this endpoint")
 
 
 @app.get("/")
@@ -467,23 +504,117 @@ async def provider_plugins_secret(payload: dict):
 async def codemie_status():
     """Is the EPAM CodeMie CLI available? (No API key — auth is the CLI's SSO session.)"""
     import shutil, subprocess
-    binp = shutil.which("codemie-claude")
+    from server import env as env_mod
+    binp = shutil.which("codemie-claude", path=env_mod.login_path()) or shutil.which("codemie-claude")
     if not binp:
         return {"available": False, "detail": "codemie-claude CLI not installed"}
     ver = ""
     try:
-        r = subprocess.run([binp, "--version"], capture_output=True, text=True, timeout=15)
+        r = subprocess.run([binp, "--version"], capture_output=True, text=True, timeout=15, env=env_mod.login_env())
         ver = (r.stdout or r.stderr or "").strip().splitlines()[0][:40] if r.returncode == 0 else ""
     except Exception:
         ver = ""
     return {"available": True, "bin": binp, "version": ver}
 
 
+# The 4 documented CodeMie setup commands — single source of truth (steps UI + Terminal script).
+CODEMIE_STEPS = [
+    {"cmd": "npm install -g @codemieai/code", "note": "install the CLI"},
+    {"cmd": "codemie setup", "note": "EPAM SSO + pick Claude Opus"},
+    {"cmd": "codemie install claude", "note": "wire up the claude shim"},
+    {"cmd": "codemie profile login", "note": "sign in (re-auth every 24h)"},
+]
+
+
+def _codemie_setup_script() -> str:
+    """A .command script that runs the CodeMie setup in Terminal.app. The interactive SSO /
+    model-pick steps need a real TTY + browser, which the embedded (no-PTY) terminal can't do."""
+    shell = os.environ.get("SHELL") or "/bin/zsh"
+    chain = " && \\\n  ".join(s["cmd"] for s in CODEMIE_STEPS)
+    return (
+        f"#!{shell}\n"
+        "echo '── Scroll · CodeMie (EPAM) setup ──'\n"
+        "echo 'Finish the EPAM sign-in below, then return to Scroll and click Re-check.'\n"
+        "echo\n"
+        f"  {chain}\n"
+        "echo\n"
+        "echo '✓ CodeMie setup finished — back to Scroll → Re-check.'\n"
+    )
+
+
+@app.post("/v1/codemie/setup")
+async def codemie_setup(request: Request, payload: dict | None = None):
+    """One button: write the setup script and open it in Terminal.app so the user can complete
+    EPAM SSO in a real terminal. Commands are fixed constants (no user input → no injection)."""
+    _guard_local(request)
+    payload = payload or {}
+    import subprocess
+    script = Path.home() / ".scroll" / "codemie-setup.command"
+    try:
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.write_text(_codemie_setup_script(), encoding="utf-8")
+        script.chmod(0o755)
+    except Exception as exc:
+        return {"ok": False, "error": f"could not write setup script: {exc}"}
+    if payload.get("dry_run"):
+        return {"ok": True, "path": str(script), "opened": False, "steps": CODEMIE_STEPS}
+    try:
+        # `open <file>.command` launches Terminal.app and runs it — no extra automation perms.
+        subprocess.run(["open", str(script)], check=False, timeout=8)
+    except Exception as exc:
+        return {"ok": False, "error": f"could not open Terminal: {exc}", "path": str(script)}
+    return {"ok": True, "path": str(script), "opened": True, "steps": CODEMIE_STEPS}
+
+
+def _codemie_plugin_md() -> str:
+    """A self-contained CodeMie provider plugin (.md). EPAM-private: it lives in the runtime
+    plugin dir (outside this repo) and is shared via git.epam.com, never the public GitHub."""
+    return (
+        "---\n"
+        "type: provider\n"
+        "id: codemie\n"
+        "name: CodeMie · Claude Opus\n"
+        "kind: command\n"
+        "command: codemie-claude -p {prompt}\n"
+        "---\n\n"
+        "# CodeMie · Claude Opus (EPAM)\n\n"
+        "Routes Claude Opus through EPAM's CodeMie CLI (corporate SSO + budget). No API key —\n"
+        "auth is the CLI's SSO session. **EPAM-private: share via git.epam.com, not GitHub.**\n\n"
+        "Setup (run once in a terminal):\n\n"
+        + "".join(f"{i+1}. `{s['cmd']}`  — {s['note']}\n" for i, s in enumerate(CODEMIE_STEPS))
+    )
+
+
+@app.post("/v1/codemie/plugin")
+async def codemie_plugin(request: Request, payload: dict | None = None):
+    """Save CodeMie as a droppable provider plugin into the EPAM-private runtime dir
+    (~/.scroll/provider-plugins/codemie.md) so it travels with the EPAM group, not GitHub.
+    Optionally reveal it in Finder so it can be dropped into a git.epam.com repo."""
+    _guard_local(request)
+    payload = payload or {}
+    from server import provider_plugins
+    dest = provider_plugins._DIR / "codemie.md"
+    try:
+        provider_plugins._DIR.mkdir(parents=True, exist_ok=True)
+        dest.write_text(_codemie_plugin_md(), encoding="utf-8")
+        provider_plugins.register_all()
+    except Exception as exc:
+        return {"ok": False, "error": f"could not write plugin: {exc}"}
+    if payload.get("reveal"):
+        try:
+            import subprocess
+            subprocess.run(["open", "-R", str(dest)], check=False, timeout=8)
+        except Exception:
+            pass
+    return {"ok": True, "path": str(dest)}
+
+
 # ── Embedded CLI + Apply-code ──────────────────────────────────────────────────
 
 @app.post("/v1/shell")
-async def shell_endpoint(payload: dict):
+async def shell_endpoint(request: Request, payload: dict):
     """Run a shell command in the working dir (same guard as the agent's tool)."""
+    _guard_local(request)
     from server.tools.shell import run_command
     cmd = (payload.get("command") or "").strip()
     if not cmd:

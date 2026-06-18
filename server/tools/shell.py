@@ -1,6 +1,7 @@
 import subprocess
 import shlex
 from server.config import SHELL_TIMEOUT, SHELL_BLOCKED
+from server.env import login_env
 
 
 def run_command(command: str, cwd: str, timeout: int | None = None) -> str:
@@ -19,6 +20,7 @@ def run_command(command: str, cwd: str, timeout: int | None = None) -> str:
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=login_env(),  # GUI-app PATH is minimal — use the Terminal.app PATH so npm/node/git resolve
         )
         out = result.stdout
         err = result.stderr

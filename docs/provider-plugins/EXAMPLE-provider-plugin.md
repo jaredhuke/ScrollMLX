@@ -1,13 +1,13 @@
 ---
 type: provider
-id: codemie-plugin
-name: CodeMie · Claude (plugin)
+id: my-cli
+name: My CLI · Some Model
 kind: command
-command: codemie-claude -p {prompt}
-secret_env: CODEMIE_TOKEN
+command: my-llm-cli -p {prompt}
+secret_env: MYCLI_TOKEN
 ---
 
-# Provider plugin example — CodeMie (command kind)
+# Provider plugin example (command kind)
 
 This is a **droppable provider plugin**: one markdown file with a frontmatter block.
 Drop it into Scroll (Skills & Plugins → *Add a provider plugin* → paste this file's path),
@@ -37,3 +37,7 @@ model: gpt-4o
 secret_env: MYAPI_KEY
 ---
 ```
+
+> Note: provider plugins specific to a private/corporate environment (e.g. an internal SSO CLI)
+> should be kept out of public repos. Generate and share those through your own private remote —
+> see the in-app CodeMie dialog's "Save as EPAM plugin" for that pattern.
