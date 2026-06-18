@@ -453,6 +453,24 @@ async def artifacts_write(payload: dict):
         return {"ok": False, "error": str(exc)}
 
 
+@app.post("/v1/artifacts/reveal")
+async def artifacts_reveal(payload: dict):
+    """Reveal a file in Finder (macOS `open -R`). The server runs on the user's Mac."""
+    from server.tools.filesystem import _resolve
+    path = payload.get("path")
+    if not path:
+        raise HTTPException(400, "missing path")
+    p = _resolve(path, payload.get("cwd") or ".")
+    if not p.exists():
+        return {"ok": False, "error": f"not found: {p}"}
+    try:
+        import subprocess
+        subprocess.run(["open", "-R", str(p)], check=False, timeout=8)
+        return {"ok": True, "path": str(p)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 @app.get("/v1/versions")
 async def artifacts_versions(path: str = "", cwd: str = "."):
     """Readable version history for a file (newest first); the live filename is unchanged."""
