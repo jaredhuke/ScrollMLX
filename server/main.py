@@ -426,6 +426,22 @@ async def escalate_endpoint(payload: dict):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+@app.get("/v1/redacted/status")
+async def redacted_status():
+    """Is the EPAM redacted CLI available? (No API key — auth is the CLI's SSO session.)"""
+    import shutil, subprocess
+    binp = shutil.which("redacted-cli")
+    if not binp:
+        return {"available": False, "detail": "redacted-cli CLI not installed"}
+    ver = ""
+    try:
+        r = subprocess.run([binp, "--version"], capture_output=True, text=True, timeout=15)
+        ver = (r.stdout or r.stderr or "").strip().splitlines()[0][:40] if r.returncode == 0 else ""
+    except Exception:
+        ver = ""
+    return {"available": True, "bin": binp, "version": ver}
+
+
 # ── Embedded CLI + Apply-code ──────────────────────────────────────────────────
 
 @app.post("/v1/shell")

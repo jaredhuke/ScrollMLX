@@ -257,9 +257,65 @@ class OpenAICompatProvider(Provider):
         yield DoneEvent(total_tokens=total)
 
 
+# ── redacted (EPAM) — Claude via the corporate CLI/SSO, no API key ──────────────
+
+class redactedProvider(Provider):
+    """Routes Claude (Opus) through EPAM redacted's `redacted-cli` CLI in print mode.
+    Auth is the CLI's own SSO session (no API key); spending goes to the corporate budget.
+    Runs in a throwaway working dir so an escalation answer can't touch the user's files —
+    the code it needs is already in the prompt."""
+    id = "redacted"
+    display_name = "redacted · Claude"
+
+    def __init__(self, model: str = "claude-opus (redacted)") -> None:
+        self.model = model
+
+    @staticmethod
+    def _bin() -> str | None:
+        import shutil
+        return shutil.which("redacted-cli")
+
+    def available(self) -> bool:
+        return self._bin() is not None
+
+    def stream(self, messages, max_tokens, temperature, tools=None):
+        import subprocess, tempfile
+        binp = self._bin()
+        if not binp:
+            yield ErrorEvent(message="redacted CLI not found — install it (npm i -g @redacted/code; redacted install claude) then sign in (redacted profile login)")
+            return
+        parts = []
+        for m in messages:
+            role, c = m.get("role", "user"), (m.get("content") or "").strip()
+            if not c:
+                continue
+            parts.append(c if role in ("system", "user") else f"Assistant (earlier): {c}")
+        prompt = "\n\n".join(parts) or "Respond."
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                r = subprocess.run([binp, "-p", prompt], cwd=td, capture_output=True,
+                                   text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            yield ErrorEvent(message="redacted timed out after 600s")
+            return
+        except Exception as exc:
+            yield ErrorEvent(message=f"redacted error: {exc}")
+            return
+        out = (r.stdout or "").strip()
+        if r.returncode != 0 and not out:
+            err = (r.stderr or "").strip()[:400]
+            yield ErrorEvent(message="redacted failed: " + (err or "non-zero exit") +
+                             " — your SSO may have expired (run: redacted profile login)")
+            return
+        for i in range(0, len(out), 400):   # chunk so the UI fills progressively
+            yield TokenEvent(content=out[i:i + 400])
+        yield DoneEvent(total_tokens=max(1, len(out) // 4))
+
+
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 _REGISTRY: dict[str, Provider] = {
+    "redacted":    redactedProvider(),
     "mlx":        MLXProvider(),
     "openai":     OpenAIProvider(),
     "anthropic":  AnthropicProvider(),
