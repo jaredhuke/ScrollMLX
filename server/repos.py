@@ -75,6 +75,39 @@ def repo_info(path: str) -> dict:
     return out
 
 
+def discover(explicit: list[str]) -> list[str]:
+    """Every git repo Scroll touches — not just registered projects. Includes the explicit roots
+    (app repo + registered projects) AND anything cloned into the workspace: project folders under
+    ~/ScrollProjects, plus repos cloned one level inside them (e.g. ad-hoc clones land in
+    ~/ScrollProjects/Ad hoc/<repo>, agent/`/v1/repo/clone` clones land in <cwd>/<repo>)."""
+    out, seen = [], set()
+
+    def add(p) -> None:
+        if not p:
+            return
+        s = str(Path(p).expanduser())
+        if s not in seen:
+            seen.add(s)
+            out.append(s)
+
+    for p in explicit:
+        add(p)
+    base = Path.home() / "ScrollProjects"
+    if base.is_dir():
+        for child in sorted(base.iterdir()):
+            if not child.is_dir():
+                continue
+            if (child / ".git").exists():
+                add(str(child))               # a project folder that is itself a repo
+            try:
+                for sub in sorted(child.iterdir()):   # repos cloned INTO a project / Ad hoc
+                    if sub.is_dir() and (sub / ".git").exists():
+                        add(str(sub))
+            except Exception:
+                pass
+    return out
+
+
 def scan(paths: list[str]) -> list[dict]:
     seen, repos = set(), []
     for p in paths:
