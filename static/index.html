@@ -605,6 +605,11 @@ select.hb{padding:5px 9px}
 .prose strong{font-weight:650;color:var(--text)}
 .prose em{font-style:italic;color:var(--text-mid)}
 .prose code.md-ic{font-family:var(--mono);font-size:.92em;background:var(--bg3);color:var(--text);padding:1px 5px;border-radius:4px}
+/* long URLs collapse to a compact copy-chip */
+.url-chip{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-ink);font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.02em;line-height:1.4;padding:1px 9px;border-radius:7px;cursor:pointer;transition:background .15s}
+.url-chip:hover{background:rgba(207,122,46,.18)}
+.url-chip::before{content:'↗';font-size:9px;opacity:.7}
+.url-chip::after{content:'⧉';font-size:10px;opacity:.65;margin-left:1px}
 .msg.assistant{gap:5px}
 .msg-steps{display:flex;flex-direction:column;gap:3px;margin:1px 0 3px}
 .step-line{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);transition:opacity .3s,color .3s}
@@ -1198,7 +1203,7 @@ select.hb{padding:5px 9px}
 </div>
 
 <div id="hdr">
-  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>SCROLL<span class="mlx">MLX</span></span>
+  <span id="logo" data-tip="Scroll — Local AI on Apple Silicon"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22.5" r="15" fill="none" stroke-width="2"/><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>SCROLL<span class="mlx">MLX</span></span>
   <span id="model-lbl" data-tip="Primary LLM loaded in memory">loading…</span>
   <span id="cwd-lbl" onclick="promptCwd()" data-tip="Click to change working directory">~/</span>
   <div id="status-pill" data-tip="Current agent execution state">
@@ -1252,7 +1257,7 @@ select.hb{padding:5px 9px}
     </div>
     <div id="goal-banner"></div>
     <div id="timeline">
-      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg><span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Send a message to begin</span></div>
+      <div id="empty"><svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22.5" r="15" fill="none" stroke-width="2"/><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg><span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Send a message to begin</span></div>
     </div>
     <div id="add-panel" hidden>
       <div class="ap-row">
@@ -1775,7 +1780,7 @@ function drawAIS(){
   requestAnimationFrame(drawAIS);
 }
 function _renderMesh(AC,W,H,big,state){
-  const REF=248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2;
+  const REF=big?360:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2;  // full-screen zooms out → more delicate, refined
   state.xf={s,ox,oy};const meshHits=state.hits;meshHits.length=0;
   AC.fillStyle=big?'#f0ece4':'#e9e4db';AC.fillRect(0,0,W,H);
   AC.save();AC.translate(ox,oy);AC.scale(s,s);
@@ -2597,8 +2602,17 @@ function _renderProseAndCode(bodyEl,txt){
 }
 // Light, safe markdown: escape first, then style headings (### → small elegant teal),
 // bold, and inline code. Headings no longer show as literal "###".
+function _urlChip(escUrl){
+  const real=escUrl.replace(/&amp;/g,'&');   // escUrl is already HTML-escaped
+  let host='link';try{host=new URL(real).hostname.replace(/^www\./,'')}catch(_){}
+  const label=host==='git.epam.com'?'epam':host==='github.com'?'github':(host.split('.').slice(-2,-1)[0]||host);
+  return `<button class="url-chip" data-url="${escH(real)}" title="${escUrl}" onclick="event.stopPropagation();copyText(this.dataset.url,'Copied '+'${escH(label)}'+' link')">${escH(label)}</button>`;
+}
 function _mdInline(x){
   x=escH(x);
+  // long URLs → a compact copy-chip (drop a leading "PUSHED:" label too)
+  x=x.replace(/\bPUSHED:\s*(https?:\/\/\S+)/gi,'$1');
+  x=x.replace(/https?:\/\/[^\s<)\]]+/g,m=>_urlChip(m));
   x=x.replace(/\*\*(?!\s)([^*]+?)\*\*/g,'<strong>$1</strong>');
   x=x.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
   x=x.replace(/`([^`]+?)`/g,'<code class="md-ic">$1</code>');
@@ -3904,11 +3918,17 @@ async function activateProject(id){
   renderProjects();renderProjectsMini();updateProjectsBtn();renderThreadScope();renderGoal();renderAISInfo();
   artToast('Working in '+p.name+' — its own chat, scoped here','ok');
 }
-async function removeProject(id,name){
-  if(!confirm('Remove "'+name+'" from the list? Files on disk are kept.'))return;
-  await fetch('/v1/projects/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});
-  if((S.projects||[]).find(p=>p.id===id&&p.path===S.cwd)){S.activeProject=null}
-  loadProjects();
+function removeProject(id,name){
+  // native WKWebView swallows window.confirm() — use the in-app notification instead
+  notify('Delete "'+name+'" from the list? (files on disk are kept)','warn',{persist:true,actions:[
+    {label:'Delete',onClick:()=>_doRemoveProject(id)},
+    {label:'Cancel',onClick:()=>{}},
+  ]});
+}
+async function _doRemoveProject(id){
+  let r;try{r=await fetch('/v1/projects/remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+  if(r&&r.ok){if((S.projects||[]).find(p=>p.id===id&&p.path===S.cwd))S.activeProject=null;artToast('Project removed','ok');loadProjects()}
+  else artToast('Couldn’t remove — restart the server','err');
 }
 function renderSettings(){
   const keys=window.CLOUD||{};
@@ -3944,7 +3964,7 @@ function setSending(b){if(b){sendBtn.textContent='Stop';sendBtn.classList.add('s
 function setStatus(busy,err){const dot=document.getElementById('spill-dot'),lbl=document.getElementById('spill-lbl');if(err){dot.className='err';lbl.textContent='Error';return}if(busy){dot.className='on';lbl.textContent='Working';return}dot.className='';lbl.textContent='Idle'}
 function confirmClear(){if(confirm('Clear the entire session — messages, artifacts and metrics? This cannot be undone.'))clearChat()}
 // Empty state — gives a novice something to do (single source of truth, used at init + on Clear)
-const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>';
+const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22.5" r="15" fill="none" stroke-width="2"/><path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" stroke-width="3.4"/><circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e" stroke="none"/><circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e" stroke="none"/></svg>';
 const STARTERS=['Make a landing page for my café','Build a Pomodoro timer I can run','Explain this folder of code to me','Make a tip-splitting calculator'];
 function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
 function useStarter(t){const m=document.getElementById('msg-in');if(!m)return;m.value=t;m.dispatchEvent(new Event('input'));m.focus()}

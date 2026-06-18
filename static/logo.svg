@@ -1,6 +1,7 @@
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ScrollMLX">
   <title>ScrollMLX</title>
-  <!-- an S (Scroll) with a dot in each bowl -->
+  <!-- an S (Scroll), circumscribed in a circle, with a dot in each bowl -->
+  <circle cx="24" cy="22.5" r="15" fill="none" stroke="currentColor" stroke-width="2"/>
   <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
   <circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e"/>
   <circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e"/>

@@ -396,6 +396,13 @@ async def _stream_escalate(payload: dict) -> AsyncGenerator[str, None]:
             if ctx:
                 full.append(ctx)
             full += msgs
+            # the conversation MUST end on a user turn — Anthropic (and others) reject an
+            # assistant-prefill ending. Drop trailing assistant replies (the one we're
+            # improving on) and, if needed, add an explicit ask.
+            while len(full) > 1 and full[-1].get("role") == "assistant":
+                full.pop()
+            if full[-1].get("role") != "user":
+                full.append({"role": "user", "content": "Provide an improved, complete answer to the request above."})
             for evt in prov.stream(full, mt, temp, tools=None):
                 asyncio.run_coroutine_threadsafe(queue.put(evt), loop)
         except Exception as exc:
