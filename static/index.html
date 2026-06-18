@@ -1173,7 +1173,7 @@ select.hb{padding:5px 9px}
   </div>
   <div id="hdr-right">
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — files the agent built">Artifacts<span id="art-hdr-ct" class="hb-ct" style="display:none"></span></button>
-    <button class="hb" onclick="openSkillsFull()" data-tip="Skills &amp; plugins — full screen">Skills</button>
+    <button class="hb" onclick="openDrawer()" data-tip="Skills, tools &amp; plugins">Skills</button>
     <button class="hb" onclick="openSettings()" data-tip="Models, API keys, git">Settings</button>
   </div>
 </div>
@@ -1308,6 +1308,9 @@ select.hb{padding:5px 9px}
       <textarea class="din skill-body" id="skill-body" placeholder="Markdown — capabilities or rules the agent should follow"></textarea>
       <div class="skill-acts"><button class="dbtn" onclick="addSkill()">Add skill</button><button class="dbtn ghost" onclick="document.getElementById('skill-file').click()">Upload .md</button></div>
       <input type="file" id="skill-file" accept=".md,.markdown,.txt" hidden onchange="uploadSkill(event)"/>
+      <input class="din" id="dk-path" placeholder="…or paste a file/folder path — e.g. ~/skills" onkeydown="if(event.key==='Enter')importSkillPath('dk-path')" style="margin-top:6px"/>
+      <button class="dbtn ghost" onclick="importSkillPath('dk-path')">Import from path</button>
+      <div class="dr-empty" style="font-style:normal">Most reliable on this Mac — the local engine reads the path directly.</div>
     </div>
     <div><div class="ds-title">Tools <span class="ds-sub">enabled capabilities</span></div><div id="d-tools"></div></div>
     <div><div class="ds-title">+ Add a tool <span class="ds-sub">Python extension</span></div><input class="din" id="ext-path" placeholder="~/path/to/tool.py"/><button class="dbtn" onclick="loadExt()">Add tool</button></div>
@@ -1847,7 +1850,7 @@ AIS.addEventListener('mouseleave',()=>{aisTip.style.display='none'});
 AIS.style.cursor='pointer';
 AIS.addEventListener('click',e=>{
   const rect=AIS.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else if(hh.key==='__core__')openFullAIS();else if(hh.key==='__skills__')openSkillsFull();else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);else if(hh.idle)activateOperative(hh.key);else openAgentDetail(hh.key);return}}
+  for(const hh of meshHits){if(Math.hypot(hh.x-mx,hh.y-my)<hh.r){if(hh.key==='__git__')openGitHub();else if(hh.key==='__core__')openFullAIS();else if(hh.key==='__skills__')openDrawer();else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);else if(hh.idle)activateOperative(hh.key);else openAgentDetail(hh.key);return}}
   openFullAIS();   // click anywhere else on the mesh → expand to the full instrument
 });
 
@@ -3368,11 +3371,11 @@ async function addSkillFull(){
 // ─── IMPORT SKILLS — point at a file or folder; name comes from the filename ────
 const _SKILL_EXT=/\.(md|markdown|txt)$/i;
 function importSkills(ev){const fl=ev.target.files;ev.target.value='';if(fl&&fl.length)_importSkillFiles(fl)}
-async function importSkillPath(){
-  const inp=document.getElementById('sf-path');const path=(inp&&inp.value||'').trim();
+async function importSkillPath(srcId){
+  const inp=document.getElementById(srcId||'sf-path');const path=(inp&&inp.value||'').trim();
   if(!path){artToast('Paste a file or folder path','err');if(inp)inp.focus();return}
   let r,neterr=false;try{const x=await fetch('/v1/skills/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})});r=x.ok?await x.json():null}catch(_){neterr=true;r=null}
-  if(r&&r.ok){if(inp)inp.value='';artToast('Imported '+r.added+' skill'+(r.added>1?'s':'')+(r.skipped?' · '+r.skipped+' skipped':''),'ok');renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
+  if(r&&r.ok){if(inp)inp.value='';artToast('Imported '+r.added+' skill'+(r.added>1?'s':'')+(r.skipped?' · '+r.skipped+' skipped':''),'ok');if(typeof renderSkillsFull==='function')renderSkillsFull();if(typeof loadSkills==='function')loadSkills()}
   else if(neterr){checkHealth();artToast('Can’t reach the local engine — is the server running?','err')}
   else artToast('Import failed · '+((r&&r.error)||'check the path & restart the server'),'err');
 }
