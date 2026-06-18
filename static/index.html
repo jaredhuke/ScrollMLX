@@ -3548,7 +3548,15 @@ async function loadProjects(){
 }
 const _PJ_PLAY='<svg viewBox="0 0 16 16" class="pjm-ic"><path d="M5 3.4l7.5 4.6L5 12.6z"/></svg>';
 const _PJ_STOP='<svg viewBox="0 0 16 16" class="pjm-ic"><rect x="4.3" y="4.3" width="7.4" height="7.4" rx="1.2"/></svg>';
-const ADHOC_PATH='.';                      // Ad hoc = the default home for non-project work
+let ADHOC_PATH='.';                        // Ad hoc home — replaced on boot with ~/ScrollProjects/Ad hoc (outside the app repo)
+// Fetch the real workspace from the server so ad-hoc work never lands in the Scroll app repo
+async function loadWorkspace(){
+  let w;try{w=await fetch('/v1/workspace').then(r=>r.ok?r.json():null)}catch(_){w=null}
+  if(w&&w.adhoc){ADHOC_PATH=w.adhoc;S.workspace=w;
+    if(isAdhoc()){S.cwd=ADHOC_PATH;const c=document.getElementById('cwd-lbl');if(c)c.textContent=_shortPath(ADHOC_PATH);const cc=document.getElementById('cli-cwd');if(cc)cc.textContent=ADHOC_PATH;try{fetchArtStatus()}catch(_){}}
+  }
+}
+function _shortPath(p){const s=String(p||'').replace(/\/+$/,'');return s.split('/').pop()||s||'~/'}
 function isAdhoc(){return !S.activeProject||S.activeProject==='Ad hoc'||S.cwd===ADHOC_PATH}
 function activateAdhoc(){if(S.activeProject==='Ad hoc'){renderThreadScope();return}_switchProjectContext('Ad hoc');S.cwd=ADHOC_PATH;S.activeProject='Ad hoc';try{document.getElementById('cli-cwd').textContent=S.cwd}catch(_){}try{loadStanding()}catch(_){}try{fetchArtStatus()}catch(_){}renderProjects();renderProjectsMini();updateProjectsBtn();renderThreadScope();renderGoal();renderAISInfo();artToast('Ad hoc — its own chat','ok')}
 function renderProjectsMini(){
@@ -4198,7 +4206,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
-loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
+loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────

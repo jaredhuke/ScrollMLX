@@ -20,7 +20,24 @@ from pathlib import Path
 
 _DIR = Path.home() / ".scroll"
 _FILE = _DIR / "projects.json"
-_BASE = Path.home() / "ScrollProjects"          # where repos clone to when no path is given
+_BASE = Path.home() / "ScrollProjects"          # every project lives in its own folder here
+
+
+def _slugname(name: str) -> str:
+    import re
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+def adhoc_dir() -> Path:
+    """Dedicated home for non-project ('Ad hoc') work — kept OUT of the Scroll app repo."""
+    d = _BASE / "Ad hoc"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def app_dir() -> Path:
+    """The Scroll application's own directory — work must not land here unless it IS the project."""
+    return Path(__file__).resolve().parent.parent
 
 # in-memory runtime: id -> {proc, logs(deque), started}
 _RUN: dict[str, dict] = {}
@@ -125,7 +142,15 @@ def add(name: str, path: str = "", repo: str = "", start: str = "", port: int = 
             if r.returncode != 0:
                 raise RuntimeError((r.stderr or r.stdout).strip()[:300])
         path = str(dest)
-    path = str(Path(path).expanduser()) if path else str(Path.cwd())
+    # Rigid separation: a project never defaults to the app's own working directory.
+    # No explicit path → give it a clean, dedicated folder under ~/ScrollProjects/<name>.
+    if path:
+        path = str(Path(path).expanduser())
+    else:
+        _BASE.mkdir(parents=True, exist_ok=True)
+        dest = _BASE / (_slugname(name) or "project")
+        dest.mkdir(parents=True, exist_ok=True)
+        path = str(dest)
 
     if not start:
         start, dport = detect_start(path)
