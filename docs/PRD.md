@@ -39,6 +39,15 @@ calm, visual instrument rather than a wall of logs.
   for graphics (it's local & text-only — no raster generation).
 - **Projects:** a project = a git repo + a runnable product (launch/stop/logs, inline
   details). **Each project has its own conversation** — switching swaps the whole chat.
+  Edit / delete projects from the Projects drawer.
+- **Rigid workspace separation:** every project lives in its own folder under
+  `~/ScrollProjects/<name>`; non-project ("Ad hoc") work goes to `~/ScrollProjects/Ad hoc`.
+  Work **never** defaults to the Scroll app's own directory — the app source and user
+  output stay cleanly separated. `GET /v1/workspace` reports `{base, adhoc, app_dir}`;
+  a project created without an explicit path gets a fresh `~/ScrollProjects/<name>` (it no
+  longer inherits the server's cwd). The only project allowed to point at the app repo is
+  the self-improvement project (ScrollMLX itself). Auto-saved artifacts land in the active
+  workspace's `scroll-artifacts/`, never in the product source.
 - **Skills/Tools/Plugins:** drop a `.md` file or folder (or paste a path) to add skills;
   enabled skills inject into every run and show ON-state + on the mesh.
 - **Standing/learned context** per project; **vigilance** shows *why* it dropped (edits/

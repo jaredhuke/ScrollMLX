@@ -25,6 +25,15 @@ Screenshot*.png
 # Nested clone of the GitHub repo — not part of this tree
 ScrollMLX/
 
+# Agent work products — NEVER part of the product source. Ad-hoc/project work now
+# writes to ~/ScrollProjects/* (outside this repo); these are belt-and-suspenders for
+# anything that still lands at the root, plus a parking spot for throwaway test output.
+scratch/
+scroll-artifacts/
+# stray test outputs the local agent has produced here before (reservoir drafts, demos)
+ip-*.md
+tip_splitter.py
+
 # Xcode per-user state
 **/xcuserdata/
 *.xcuserstate

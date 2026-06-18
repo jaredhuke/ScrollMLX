@@ -605,6 +605,15 @@ async def vision(payload: dict):
 
 # ── Projects — a git repo + a runnable "product"; launch & manage from here ─────
 
+@app.get("/v1/workspace")
+async def workspace():
+    """Where work lands. Ad-hoc work goes to a dedicated folder OUTSIDE the app repo so
+    projects and the Scroll source stay cleanly separated."""
+    from server import projects
+    return {"base": str(projects._BASE), "adhoc": str(projects.adhoc_dir()),
+            "app_dir": str(projects.app_dir())}
+
+
 @app.get("/v1/projects")
 async def projects_list():
     from server import projects
