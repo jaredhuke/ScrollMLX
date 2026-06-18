@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
     max_tokens: int = 8192
     temperature: float = 0.15
     cwd: str = "."
+    max_iterations: int = 12  # tool-use loops per turn — raised by the composer's Effort control
 
 
 # SSE event shapes sent to clients

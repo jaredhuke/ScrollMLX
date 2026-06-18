@@ -24,6 +24,7 @@
   --red:#d2552e;        /* extremes: errors, over-budget, stop, critic flags, intent accent */
   --teal:#2f9c8b;       /* KEY MOMENTS ONLY — goal completion. Not for everyday accents. */
   --accent:#cf7a2e;--accent-soft:rgba(207,122,46,.12);--accent-line:rgba(207,122,46,.42);  /* warm accent — the everyday thin-element colour (with --red for extremes) */
+  --accent-ink:#9c540f;--red-ink:#ad3a1a;--green-ink:#2f6b3a;  /* text-grade variants — AA (>=4.5:1) on parchment for labels/badges/hover text */
   --amber:#b0791a;      /* burn / caution */
   --ext:var(--red);     /* alias — "extremes" accent */
   --border:rgba(26,28,34,.07);--border-mid:rgba(26,28,34,.14);
@@ -237,6 +238,27 @@ select.hb{padding:5px 9px}
 #models-btn.multi{color:var(--accent);border-color:var(--accent);background:rgba(207,122,46,.08)}
 #models-btn #models-ct{font-size:13px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 #models-btn .mb-cap{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost)}
+/* EFFORT control — how hard to work per message */
+#effort-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);min-width:58px;height:40px;flex-shrink:0;border-radius:var(--r);cursor:pointer;align-self:flex-end;transition:color .15s,border-color .15s,background .15s}
+#effort-btn:hover{color:var(--accent-ink);border-color:var(--accent)}
+#effort-btn #effort-lvl{font-size:11px;font-weight:600;line-height:1.1}
+#effort-btn .mb-cap{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost)}
+#effort-btn.deep,#effort-btn.max{color:var(--accent-ink);border-color:var(--accent);background:rgba(207,122,46,.08)}
+#effort-pop{border-top:1px solid var(--border);background:var(--bg2);padding:9px;display:flex;flex-direction:column;gap:3px;animation:apIn .25s ease}
+.ef-row{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--r);cursor:pointer;transition:background .12s;min-height:44px}
+.ef-row:hover{background:rgba(26,28,34,.04)}
+.ef-row.on{box-shadow:inset 2px 0 0 var(--accent);background:rgba(207,122,46,.06)}
+.ef-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--border-mid)}
+.ef-row.on .ef-dot{background:var(--accent)}
+.ef-meta{flex:1;min-width:0}
+.ef-name{font-size:12px;font-weight:600;color:var(--text)}
+.ef-name .ef-cost{font-weight:400;color:var(--text-ghost);font-size:9.5px;margin-left:6px;letter-spacing:.02em}
+.ef-blurb{font-size:10px;color:var(--text-soft);margin-top:1px}
+.ef-slider{padding:10px 10px 4px;border-top:1px solid var(--border);margin-top:4px}
+.ef-slider-lab{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:7px}
+.ef-slider-lab b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.ef-slider input[type=range]{width:100%;accent-color:var(--accent);height:20px}
+.ef-note{font-size:9.5px;color:var(--text-ghost);padding:7px 10px 2px;line-height:1.5}
 #models-pop{border-top:1px solid var(--border);background:var(--bg2);padding:8px;display:flex;flex-direction:column;gap:2px;animation:apIn .25s ease}
 .mp-hd{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);padding:4px 8px 7px;display:flex;align-items:center;gap:8px}
 .mp-x{margin-left:auto;background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:12px;line-height:1;padding:0 2px}.mp-x:hover{color:var(--text)}
@@ -290,7 +312,7 @@ select.hb{padding:5px 9px}
 .tray-ttl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text);font-weight:600}
 .tray-ct{font-family:var(--mono);font-size:9px;color:var(--text-dim)}
 .tray-exp{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font);padding:3px 8px;border-radius:5px;cursor:pointer;transition:color .15s,border-color .15s}
-.tray-exp:hover{color:var(--accent);border-color:var(--accent)}
+.tray-exp:hover{color:var(--accent-ink);border-color:var(--accent)}
 .tray-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:2px 9px 6px;display:flex;flex-direction:column;gap:6px}
 .tray-card{display:flex;align-items:center;gap:10px;padding:8px 9px;border:1px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
 .tray-card:hover{border-color:var(--border-mid);background:rgba(26,28,34,.025)}
@@ -300,15 +322,14 @@ select.hb{padding:5px 9px}
 .tray-meta{flex:1;min-width:0}
 .tray-name{font-size:11.5px;color:var(--text);font-weight:600;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tray-sub{font-size:9px;color:var(--text-ghost);letter-spacing:.02em;margin-top:2px;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
-.tray-badge{font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;font-family:var(--font)}
+.tray-badge{font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;font-family:var(--font)}
 .tray-badge.ok{background:rgba(60,100,60,.1);color:rgba(50,90,50,.95)}
-.tray-badge.warn{background:rgba(210,85,46,.1);color:var(--red)}
-.tray-badge.unsaved{background:rgba(176,122,16,.12);color:#8a6a10}
-.tray-acts{display:flex;gap:4px;flex-shrink:0;opacity:.6;transition:opacity .15s}
-.tray-card:hover .tray-acts,.tray-card:focus-within .tray-acts{opacity:1}
-.tray-act{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:27px;height:27px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
-.tray-act:hover{color:var(--accent);border-color:var(--accent)}
-.tray-act.save:hover{color:var(--red);border-color:var(--red)}
+.tray-badge.warn{background:rgba(210,85,46,.12);color:var(--red-ink)}
+.tray-badge.unsaved{background:rgba(176,122,16,.14);color:#6f520a}
+.tray-acts{display:flex;gap:5px;flex-shrink:0}
+.tray-act{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
+.tray-act:hover{color:var(--accent-ink);border-color:var(--accent)}
+.tray-act.save:hover{color:var(--red-ink);border-color:var(--red)}
 .tray-act svg{width:13px;height:13px}
 .tray-empty{font-size:9.5px;color:var(--text-ghost);font-style:italic;padding:14px 8px;text-align:center;line-height:1.6}
 .tray-foot{flex-shrink:0;padding:6px 11px 9px;font-size:8.5px;color:var(--text-ghost);font-family:var(--mono);letter-spacing:.02em;border-top:1px solid var(--border);display:none}
@@ -347,6 +368,11 @@ select.hb{padding:5px 9px}
 .ais-t-name{flex:1;font-size:9px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
 .ais-t-time{font-size:8px;color:var(--text-ghost);font-family:var(--mono);flex-shrink:0}
 .ais-empty{font-size:9px;color:var(--text-ghost);padding:6px 11px;font-style:italic}
+.ais-clarify{padding:7px 11px 9px}
+.ais-clarify-hd{font-size:9.5px;color:var(--text-mid);font-weight:600;margin-bottom:5px;letter-spacing:.02em}
+.ais-clarify-q{list-style:none;display:flex;flex-direction:column;gap:3px}
+.ais-clarify-q li{font-size:10px;color:var(--text-soft);line-height:1.4;padding-left:11px;position:relative}
+.ais-clarify-q li::before{content:'?';position:absolute;left:0;color:var(--accent-ink);font-weight:700}
 
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(26,28,34,.14);border-radius:2px}
 
@@ -365,9 +391,9 @@ select.hb{padding:5px 9px}
 .dr-name{flex:1;font-size:11px;color:var(--text)}.dr-src{font-size:9px;color:var(--text-ghost);font-family:var(--mono)}
 .toggle{display:inline-flex;align-items:center;cursor:pointer}.toggle input{display:none}
 .ttrack{width:28px;height:15px;background:var(--border);border-radius:8px;position:relative;transition:background .2s;border:1px solid var(--border-mid)}
-.toggle input:checked~.ttrack{background:rgba(200,75,49,.2);border-color:rgba(200,75,49,.4)}
+.toggle input:checked~.ttrack{background:rgba(26,28,34,.14);border-color:rgba(26,28,34,.22)}
 .tthumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--text-ghost);transition:left .2s,background .2s}
-.toggle input:checked~.ttrack .tthumb{left:15px;background:var(--red)}
+.toggle input:checked~.ttrack .tthumb{left:15px;background:#2f9c5a;box-shadow:0 0 4px rgba(47,156,90,.5)}
 .prov-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;border-radius:6px;transition:background .15s}
 .prov-row:hover{background:rgba(26,28,34,.04)}
 .pdot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);transition:all .25s}
@@ -494,12 +520,12 @@ select.hb{padding:5px 9px}
 .ta-name{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ta-sub{font-size:9.5px;color:var(--text-ghost);letter-spacing:.02em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ta-acts{display:flex;gap:6px;flex-shrink:0}
-.ta-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:10px;font-weight:500;padding:6px 12px;border-radius:7px;cursor:pointer;min-height:30px;transition:color .15s,border-color .15s}
+.ta-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:10.5px;font-weight:500;padding:8px 13px;border-radius:8px;cursor:pointer;min-height:34px;transition:color .15s,border-color .15s}
 .ta-btn:hover{color:var(--text);border-color:var(--text-soft)}
 .ta-btn.primary{background:var(--red);border-color:var(--red);color:#fff}
 .ta-btn.primary:hover{opacity:.88;color:#fff}
 .ta-btn:disabled{opacity:.6;cursor:default;border-color:rgba(60,100,60,.4);color:rgba(60,100,60,.95)}
-.ta-btn.icon{padding:6px 9px}
+.ta-btn.icon{padding:0;width:34px;height:34px}
 .ta-btn.icon svg{width:13px;height:13px}
 .ta-btn svg{width:13px;height:13px}
 /* floating two-squares copy affordance — snaps to a code line on hover, or to a selection */
@@ -706,7 +732,7 @@ select.hb{padding:5px 9px}
 .sk-remove{background:none;border:none;color:var(--text-ghost);cursor:pointer;font-size:13px;padding:2px 6px}.sk-remove:hover{color:var(--ext)}
 
 /* artifact preview — live render for HTML, source for the rest */
-#preview{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.5);backdrop-filter:blur(6px)}
+#preview{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(26,28,34,.5);backdrop-filter:blur(6px)}  /* below the header so the menu bar stays visible */
 #preview.open{display:flex}
 .pv-card{width:min(1000px,94vw);height:min(800px,90vh);background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 24px 70px rgba(26,28,34,.32);display:flex;flex-direction:column;overflow:hidden}
 .pv-head{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border-mid)}
@@ -899,6 +925,8 @@ select.hb{padding:5px 9px}
 .pj-row{border:1px solid var(--border);border-radius:var(--r);padding:11px;margin-bottom:9px;background:var(--bg);transition:border-color .15s}
 .pj-row.on{border-color:var(--accent-line)}
 .pj-row.active{box-shadow:inset 2px 0 0 var(--accent)}
+.pj-edit{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.pj-edit-acts{display:flex;gap:6px;margin-top:2px}.pj-edit-acts .pj-b{flex:0 0 auto}
 .pj-top{display:flex;align-items:center;gap:8px}
 .pj-dot{width:7px;height:7px;border-radius:50%;background:var(--border-mid);flex-shrink:0}
 .pj-dot.up{background:var(--accent);animation:dotPulse 1.8s infinite}.pj-dot.starting{background:var(--amber)}.pj-dot.gone{background:var(--red)}
@@ -956,6 +984,16 @@ select.hb{padding:5px 9px}
 .thr-move-h{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);padding:5px 8px}
 .thr-move-row{font-size:12px;color:var(--text);padding:7px 9px;border-radius:6px;cursor:pointer}
 .thr-move-row:hover{background:var(--accent-soft);color:var(--accent)}
+.rl-qr{display:flex;gap:14px;align-items:center;padding:13px;border:1px solid var(--border);border-radius:var(--r2);background:var(--bg);margin-bottom:10px}
+.rl-qr-box{flex-shrink:0;width:108px;height:108px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border-mid);border-radius:8px;padding:6px}
+.rl-qr-box svg{width:100%;height:100%;display:block}
+.rl-qr-fallback{font-size:9px;color:var(--text-ghost);text-align:center}
+.rl-qr-side{flex:1;min-width:0}
+.rl-qr-hd{font-size:12px;font-weight:600;color:var(--text)}
+.rl-qr-sub{font-size:10px;color:var(--text-soft);line-height:1.5;margin:4px 0 7px}
+.rl-qr-url{font-size:11px;color:var(--accent-ink);font-weight:600;word-break:break-all;margin-bottom:8px}
+.rl-divider{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin:6px 0 9px;display:flex;align-items:center;gap:8px}
+.rl-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .rl-note{font-size:11px;color:var(--text-soft);line-height:1.55;margin-bottom:9px}
 .rl-row{display:flex;align-items:center;gap:8px;margin-top:8px}
 .rl-stat{display:flex;align-items:center;gap:8px}
@@ -985,7 +1023,7 @@ select.hb{padding:5px 9px}
 #ais-tip{position:fixed;display:none;z-index:300;background:var(--bg);border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:10px;line-height:1.6;padding:8px 12px;border-radius:9px;pointer-events:none;box-shadow:0 4px 20px rgba(26,28,34,.15);white-space:pre}
 
 /* ── shared full-screen overlays (Ledger, Operatives) ── */
-.fs-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
+.fs-overlay{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}  /* below the header so the menu bar stays visible */
 .fs-overlay.open{display:flex}
 .fs-hdr{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--border-mid);flex-shrink:0;background:var(--bg2)}
 .fs-title{font-size:12px;letter-spacing:.22em;color:var(--text);text-transform:uppercase;font-weight:600}
@@ -1073,10 +1111,10 @@ select.hb{padding:5px 9px}
 .sf-row2 .pj-in{margin-bottom:0}
 .sf-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2)}
 .sf-item.off{opacity:.5}
-.sf-item.on{border-color:rgba(47,156,139,.42)}
+.sf-item.on{border-color:rgba(47,156,90,.45)}
 .sf-dot{width:7px;height:7px;border-radius:50%;background:var(--border-mid);flex-shrink:0;transition:background .15s,box-shadow .15s}
-.sf-dot.on{background:var(--teal);box-shadow:0 0 0 3px rgba(47,156,139,.14)}
-.sf-onlbl{color:var(--teal);font-weight:600;letter-spacing:.04em}
+.sf-dot.on{background:#2f9c5a;box-shadow:0 0 0 3px rgba(47,156,90,.16)}
+.sf-onlbl{color:var(--green-ink);font-weight:600;letter-spacing:.04em}
 .sf-iname{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sf-imeta{font-size:11px;color:var(--text-ghost);flex-shrink:0}
 .sf-ico{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:13px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center}
@@ -1084,7 +1122,7 @@ select.hb{padding:5px 9px}
 .sf-ico.rm:hover{color:var(--red);border-color:var(--red)}
 .sf-empty{font-size:12px;color:var(--text-ghost);padding:14px;border:1px dashed var(--border);border-radius:var(--r);text-align:center}
 /* ── FULL-SCREEN AIS ── */
-#ais-full{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
+#ais-full{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}  /* below the header so the menu bar stays visible */
 #ais-full.open{display:flex}
 #ais-full-hdr{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border-mid);flex-shrink:0;background:var(--bg2)}
 #ais-full-title{font-size:11px;letter-spacing:.2em;color:var(--text);text-transform:uppercase;font-weight:600}
@@ -1188,6 +1226,7 @@ select.hb{padding:5px 9px}
       </div>
     </div>
     <div id="models-pop" hidden></div>
+    <div id="effort-pop" hidden></div>
     <div id="ctx-tray"></div>
     <div id="at-pop" hidden></div>
     <div id="active-ops" aria-label="Active operatives"></div>
@@ -1195,6 +1234,7 @@ select.hb{padding:5px 9px}
       <button id="add-btn" onclick="toggleAdd()" aria-label="Add files or a git repo to work on" data-tip="Add files or a git repo to work on"><i data-icon="plus"></i></button>
       <button id="term-btn" onclick="toggleCli()" aria-label="Open terminal" data-tip="Terminal — run shell commands in the working directory"><svg viewBox="0 0 16 16" class="ic"><path d="M3.5 5l3 3-3 3M8.5 11h4"/></svg></button>
       <button id="models-btn" onclick="toggleModels()" aria-label="Choose which models answer" data-tip="Tag which models answer — pick more than one for parallel replies"><span id="models-ct">1</span><span class="mb-cap">models</span></button>
+      <button id="effort-btn" onclick="toggleEffort()" aria-label="Set how hard to work on this message" data-tip="Effort — how hard to work &amp; how much to generate per message"><span id="effort-lvl">Deep</span><span class="mb-cap">effort</span></button>
       <textarea id="msg-in" rows="1" placeholder="Describe what you want to make…   ( @claude · @all to target a model )"></textarea>
       <button id="send-btn" onclick="send()" data-tip="Send (Enter)">Send</button>
     </div>
@@ -1439,7 +1479,16 @@ select.hb{padding:5px 9px}
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx'],threadArtifacts:[]};
+const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx'],threadArtifacts:[],effort:'deep',maxTokens:8192,maxIters:24};
+// EFFORT — how hard to work on each message. Raises generation length + tool-loop budget
+// and injects a "work thoroughly / produce complete output" directive. The headline lever
+// against light/weak output. Persisted in localStorage.
+const EFFORT={
+  quick:   {label:'Quick',    tokens:2048, iters:6,  blurb:'Fast, short answers',        directive:'Keep it brief and direct.'},
+  standard:{label:'Standard', tokens:4096, iters:12, blurb:'Balanced effort',            directive:''},
+  deep:    {label:'Deep',     tokens:8192, iters:24, blurb:'Thorough, complete output',  directive:'Work thoroughly. Plan first, then implement COMPLETELY — no placeholders, no TODOs, no "rest is similar". Handle edge cases and finish every file you start. Prefer complete, production-quality output over brevity.'},
+  max:     {label:'Max',      tokens:8192, iters:40, blurb:'Exhaustive — spend freely',  directive:'Maximum effort. Decompose the task, implement every part exhaustively and correctly, and keep iterating with tools until it is fully done and self-verified. Do not stop early. Completeness and correctness matter far more than speed or length. If you near the loop budget, say what remains so it can be continued.'},
+};
 const AGENT_KEYS=['primary','critic'];
 
 // ─── BACKGROUND PARTICLE WAVE ─────────────────────────────────────────────────
@@ -1745,7 +1794,7 @@ function drawAIS(){
   // ── clean center well: nothing crosses the completion circle ──
   const vigR=coreR+4; // still — no bouncing (ch'an)
   const cg=AC.createRadialGradient(cx,cy,0,cx,cy,vigR+8);
-  cg.addColorStop(0,`rgba(47,156,139,${0.09*M.vigilance})`);cg.addColorStop(1,'rgba(47,156,139,0)');
+  cg.addColorStop(0,`rgba(80,74,66,${0.06*M.vigilance})`);cg.addColorStop(1,'rgba(80,74,66,0)');  // neutral calm halo — teal is reserved for the 100% moment only
   AC.beginPath();AC.arc(cx,cy,vigR+8,0,Math.PI*2);AC.fillStyle=cg;AC.fill();
   AC.beginPath();AC.arc(cx,cy,coreR,0,Math.PI*2);AC.fillStyle='#e9e4db';AC.fill();
   AC.strokeStyle=M.completion>=1?'rgba(47,156,139,.5)':'rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
@@ -1760,13 +1809,13 @@ function drawAIS(){
   meshHits.push({x:cx,y:cy,r:coreR,key:'__core__'});
   // corner readouts (sans, soft)
   AC.font='400 9px -apple-system,system-ui,sans-serif';
-  AC.textAlign='left';AC.fillStyle='rgba(60,90,70,.8)';AC.fillText(`vigilance ${Math.round(M.vigilance*100)}`,9,13);
-  if(M.vigWhy){AC.font='400 8px -apple-system,system-ui,sans-serif';AC.fillStyle='rgba(176,122,16,.82)';AC.fillText('↓ '+M.vigWhy,9,23);AC.font='400 9px -apple-system,system-ui,sans-serif'}
+  AC.textAlign='left';AC.fillStyle='rgba(26,28,34,.6)';AC.fillText(`vigilance ${Math.round(M.vigilance*100)}`,9,13);
+  if(M.vigWhy){AC.font='400 8px -apple-system,system-ui,sans-serif';AC.fillStyle='rgba(176,122,16,.85)';AC.fillText('↓ '+M.vigWhy,9,23);AC.font='400 9px -apple-system,system-ui,sans-serif'}
   const maxRate=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
-  AC.fillStyle=gb>60?'rgba(176,122,16,.85)':'rgba(26,28,34,.34)';AC.fillText(`burn ${maxRate} t/s`,9,h-7);
-  AC.textAlign='right';AC.fillStyle=M.errorRate>0?'rgba(200,75,49,.7)':'rgba(26,28,34,.34)';AC.fillText(`${Math.round(M.errorRate*100)}% err`,w-9,h-7);
+  AC.fillStyle=gb>60?'rgba(176,122,16,.85)':'rgba(26,28,34,.5)';AC.fillText(`burn ${maxRate} t/s`,9,h-7);
+  AC.textAlign='right';AC.fillStyle=M.errorRate>0?'rgba(200,75,49,.75)':'rgba(26,28,34,.5)';AC.fillText(`${Math.round(M.errorRate*100)}% err`,w-9,h-7);
   const gov=(S._gov&&S._gov.overall)||'ok';
-  AC.textAlign='right';AC.fillStyle=gov==='intervene'?'rgba(200,75,49,.85)':gov==='watch'?'rgba(176,122,16,.85)':'rgba(60,90,70,.7)';
+  AC.textAlign='right';AC.fillStyle=gov==='intervene'?'rgba(200,75,49,.85)':gov==='watch'?'rgba(176,122,16,.85)':'rgba(26,28,34,.55)';
   AC.fillText('govern '+govLabel(gov).toLowerCase(),w-9,13);
   requestAnimationFrame(drawAIS);
 }
@@ -1876,7 +1925,7 @@ function aisGovern(){
     if(ag.errs>=AIS_POLICY.errMax){lvl='intervene';why.push(`${ag.errs} errors`)}
     else if(ag.errs>=AIS_POLICY.errWatch){lvl=_worse(lvl,'watch');why.push(`${ag.errs} error${ag.errs>1?'s':''}`)}
     if(ag.iters>=3&&er>AIS_POLICY.errRate){lvl='intervene';why.push(`${Math.round(er*100)}% tool-fail rate`)}
-    if(k==='primary'&&S.iterations>AIS_POLICY.iterMax){lvl='intervene';why.push(`loop limit exceeded (${S.iterations}/${AIS_POLICY.iterMax})`)}
+    if(k==='primary'){const _cap=S.maxIters||AIS_POLICY.iterMax;if(S.iterations>_cap){lvl='intervene';why.push(`loop limit exceeded (${S.iterations}/${_cap})`)}}
     per[k]={level:lvl,why};overall=_worse(overall,lvl);
   });
   return{per,overall};
@@ -1995,7 +2044,7 @@ function updateAEM(){
   document.getElementById('tg-num').innerHTML=fmtNum(S.totalTok);
   const arc=document.getElementById('tg-arc');if(arc){arc.style.strokeDashoffset=String(169.6*(1-frac));arc.classList.toggle('over',over)}
   renderTokBudget(over,budget);
-  document.getElementById('av-iter').innerHTML=`${S.iterations}<span class="u"> / 12</span>`;
+  document.getElementById('av-iter').innerHTML=`${S.iterations}<span class="u"> / ${S.maxIters||12}</span>`;
   document.getElementById('av-tc').textContent=S.toolCallTotal;
   const e=document.getElementById('av-err');e.textContent=S.errors;e.className='aem-v'+(S.errors>2?' alert':S.errors>0?' warn':'');
   // ledger burn meter — live token THROUGHPUT (tok/s), heat-scaled
@@ -2033,7 +2082,7 @@ function renderAISInfo(){
     +gitRow
     +Object.values(sources).map(s=>`<div class="ais-c-row" data-tip="${s.n} — ${s.en}/${s.tot} enabled"><div class="ais-c-dot ${s.en>0?'live':'warn'}"></div><span class="ais-c-name">${s.n}</span><span class="ais-c-badge ${s.en>0?'live':''}">${s.en}/${s.tot}</span></div>`).join('');
   document.getElementById('ais-conn-ct').textContent=Object.keys(sources).length+2+cloudAgentKeys().length;
-  document.getElementById('ais-goals-list').innerHTML=S.goals.length?S.goals.slice(-5).reverse().map(g=>`<div class="ais-g-row" data-tip="${g.active?'Active':'Done'}"><span class="ais-g-ic ${g.active?'active':g.done?'done':''}">${g.active?'→':g.done?'✓':'·'}</span><span class="ais-g-txt ${g.active?'active':''}">${escH(g.text)}</span></div>`).join(''):'<div class="ais-empty">No active goal</div>';
+  document.getElementById('ais-goals-list').innerHTML=S.goals.length?S.goals.slice(-5).reverse().map(g=>`<div class="ais-g-row" data-tip="${g.active?'Active':'Done'}"><span class="ais-g-ic ${g.active?'active':g.done?'done':''}">${g.active?'→':g.done?'✓':'·'}</span><span class="ais-g-txt ${g.active?'active':''}">${escH(g.text)}</span></div>`).join(''):'<div class="ais-clarify"><div class="ais-clarify-hd">AIS · sharpen the ask for a better result</div><ul class="ais-clarify-q"><li>What’s in scope — and out?</li><li>Which target — platform, format, file?</li><li>What does “done” look like?</li></ul></div>';
   const recent=S.taskLog.slice(-8).reverse();
   document.getElementById('ais-tasks-list').innerHTML=recent.length?recent.map(t=>`<div class="ais-t-row ${t.error?'err':''}" data-tip="${t.name} — ${t.error?'failed':'ok'} ${_relTime(t.ts)} ago"><span class="ais-t-ic">${t.error?'✕':'✓'}</span><span class="ais-t-name">${t.name}</span><span class="ais-t-time">${_relTime(t.ts)}</span></div>`).join(''):'<div class="ais-empty">No tasks yet</div>';
   document.getElementById('ais-task-ct').textContent=S.taskLog.filter(t=>!t.error).length||'';
@@ -2174,7 +2223,23 @@ function registerThreadArtifact(name,ext,code){
   const rec={name:base,ext:(ext||'').toLowerCase(),code,lines};
   if(ix>=0)S.threadArtifacts[ix]=rec;else S.threadArtifacts.push(rec);
   try{renderTray();updateArtBadge()}catch(_){}
+  if(S.autoSaveArtifacts!==false)_autoSaveArtifact(rec);
   return rec;
+}
+// EVERY output is captured as an artifact automatically — written to a namespaced
+// scroll-artifacts/ folder (never clobbers the user's files; the chip's Save still
+// writes to the intended path). Keeps a complete record of what the agent produced.
+const _AUTOSAVED=new Set();
+async function _autoSaveArtifact(rec){
+  const key=rec.name+' '+(rec.code||'').length;
+  if(_AUTOSAVED.has(key))return;_AUTOSAVED.add(key);
+  const path='scroll-artifacts/'+rec.name;
+  let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path,content:rec.code||''})}).then(x=>x.ok?x.json():null)}catch(_){r=null}
+  if(r&&r.ok){
+    bgGraphAdd('write_file',{path},false);bgGraphAdd('write_file',null,true);
+    S.threadArtifacts=(S.threadArtifacts||[]).filter(a=>String(a.name).split('/').pop()!==rec.name);  // now a real saved artifact
+    try{renderTray();updateArtBadge()}catch(_){}
+  }else{_AUTOSAVED.delete(key)}  // allow a retry on the next render if the write failed
 }
 // ─── NOTIFICATIONS — a stack with severity; errors persist until dismissed ─────
 const _NT_ICON={err:'✕',ok:'✓',warn:'!',run:'…',info:'·'};
@@ -3378,21 +3443,36 @@ async function openSettings(){document.getElementById('sdrawer').classList.add('
 // ─── PHONE RELAY — a button, not a terminal script ─────────────────────────────
 async function renderRelay(){
   const el=document.getElementById('set-relay');if(!el)return;
+  // PRIMARY — scan a QR to open Scroll on your phone over the local network
+  let q;try{q=await fetch('/v1/relay/qr').then(r=>r.ok?r.json():null)}catch(_){q=null}
+  const qrHTML=(q&&q.url)?`<div class="rl-qr">
+      <div class="rl-qr-box">${q.qr||'<div class="rl-qr-fallback">QR unavailable</div>'}</div>
+      <div class="rl-qr-side">
+        <div class="rl-qr-hd">Open Scroll on your phone</div>
+        <div class="rl-qr-sub">${q.on_lan?'Scan with your phone’s camera — it must be on the same Wi-Fi as this Mac.':'Join this Mac to Wi-Fi to get a scannable address.'}</div>
+        <div class="rl-qr-url" title="${escH(q.url)}">${escH(q.url)}</div>
+        <button class="pj-b" onclick="copyText('${q.url}','Address copied')">Copy address</button>
+      </div>
+    </div>`:'';
+  // ADVANCED — drive Scroll from the GitHub mobile app via a private relay repo
   let s;try{s=await fetch('/v1/relay/status').then(r=>r.ok?r.json():null)}catch(_){s=null}
-  if(!s){el.innerHTML='<div class="rl-note">Restart the server to enable the relay.</div>';return}
-  S.relay=s;
-  if(!s.exists){
-    el.innerHTML=`<div class="rl-note">Drive Scroll from your phone via a <b>private</b> GitHub repo. Paste its URL to set up — then drop prompts in <b>inbox/</b> from the GitHub app and watch for the answer commit.</div>
-      <div class="rl-row"><input id="rl-url" class="pj-in" style="margin:0;flex:1" placeholder="git URL of your relay repo"><button class="pj-b primary" onclick="relayClone()">Clone</button></div>`;
-    return;
+  let gitHTML;
+  if(!s){gitHTML='<div class="rl-note">Restart the server to enable the GitHub relay.</div>';}
+  else{S.relay=s;
+    if(!s.exists){
+      gitHTML=`<div class="rl-note">Off Wi-Fi? Drive Scroll via a <b>private</b> GitHub repo — paste its URL, then drop prompts in <b>inbox/</b> from the GitHub app and watch for the answer commit.</div>
+        <div class="rl-row"><input id="rl-url" class="pj-in" style="margin:0;flex:1" placeholder="git URL of your relay repo"><button class="pj-b primary" onclick="relayClone()">Clone</button></div>`;
+    }else{
+      gitHTML=`<div class="rl-stat"><span class="rl-dot ${s.running?'on':''}"></span><span class="rl-state">${s.running?'Running':'Stopped'}</span><span class="rl-meta">${s.answered} answered${s.running?` · every ${s.interval}s`:''}</span></div>
+        <div class="rl-path" title="${escH(s.repo)}">${escH(s.repo)}</div>
+        <div class="rl-row">
+          ${s.running?'<button class="pj-b stop" onclick="relayStop()">Stop relay</button>':'<button class="pj-b primary" onclick="relayStart()">Start relay</button>'}
+          <input id="rl-int" class="pj-in" style="margin:0;width:84px" value="${s.interval}" inputmode="numeric" title="poll seconds" ${s.running?'disabled':''}>
+        </div>
+        ${s.logs&&s.logs.length?`<pre class="rl-log">${escH(s.logs.slice(-6).join('\n'))}</pre>`:''}`;
+    }
   }
-  el.innerHTML=`<div class="rl-stat"><span class="rl-dot ${s.running?'on':''}"></span><span class="rl-state">${s.running?'Running':'Stopped'}</span><span class="rl-meta">${s.answered} answered${s.running?` · every ${s.interval}s`:''}</span></div>
-    <div class="rl-path" title="${escH(s.repo)}">${escH(s.repo)}</div>
-    <div class="rl-row">
-      ${s.running?'<button class="pj-b stop" onclick="relayStop()">Stop relay</button>':'<button class="pj-b primary" onclick="relayStart()">Start relay</button>'}
-      <input id="rl-int" class="pj-in" style="margin:0;width:84px" value="${s.interval}" inputmode="numeric" title="poll seconds" ${s.running?'disabled':''}>
-    </div>
-    ${s.logs&&s.logs.length?`<pre class="rl-log">${escH(s.logs.slice(-6).join('\n'))}</pre>`:''}`;
+  el.innerHTML=qrHTML+(qrHTML?'<div class="rl-divider">Advanced · GitHub relay</div>':'')+gitHTML;
 }
 async function relayClone(){
   const u=(document.getElementById('rl-url')||{}).value?.trim();if(!u){artToast('Paste the relay repo URL','err');return}
@@ -3466,11 +3546,29 @@ function renderProjects(){
           ? `<button class="pj-b stop" onclick="stopProject('${p.id}')">${ICON.check?'':''}Stop</button>${p.url?`<button class="pj-b" onclick="openProjectUrl('${p.url}')">Open ↗</button>`:''}`
           : `<button class="pj-b primary" onclick="launchProject('${p.id}')" ${p.start?'':'disabled'}>Launch</button>`}
         <button class="pj-b" onclick="activateProject('${p.id}')">${active?'Active here':'Use here'}</button>
-        <button class="pj-b rm" title="Remove from list (keeps files)" onclick="removeProject('${p.id}','${escH(p.name)}')">✕</button>
+        <button class="pj-b" title="Edit name, path, start command, port" onclick="editProject('${p.id}')">Edit</button>
+        <button class="pj-b rm" title="Delete from list (keeps files on disk)" onclick="removeProject('${p.id}','${escH(p.name)}')">Delete</button>
       </div>
+      ${S._editPj===p.id?`<div class="pj-edit">
+        <input class="pj-in" id="pje-name-${p.id}" value="${escH(p.name||'')}" placeholder="Name">
+        <input class="pj-in" id="pje-path-${p.id}" value="${escH(p.path||'')}" placeholder="Local path">
+        <input class="pj-in" id="pje-start-${p.id}" value="${escH(p.start||'')}" placeholder="Start command (e.g. npm run dev)">
+        <input class="pj-in" id="pje-port-${p.id}" value="${p.port||''}" placeholder="Port" inputmode="numeric">
+        <div class="pj-edit-acts"><button class="pj-b primary" onclick="saveProjectEdit('${p.id}')">Save</button><button class="pj-b" onclick="cancelProjectEdit()">Cancel</button></div>
+      </div>`:''}
       ${p.running&&p.logs_open?`<pre class="pj-log" id="pjlog-${p.id}">…</pre>`:''}
     </div>`;
   }).join('');
+}
+function editProject(id){S._editPj=(S._editPj===id?null:id);renderProjects()}
+function cancelProjectEdit(){S._editPj=null;renderProjects()}
+async function saveProjectEdit(id){
+  const g=k=>{const el=document.getElementById('pje-'+k+'-'+id);return el?el.value.trim():''};
+  const name=g('name');if(!name){artToast('Name can’t be empty','err');return}
+  const body={id,name,path:g('path'),start:g('start'),port:parseInt(g('port'),10)||0};
+  let r;try{r=await fetch('/v1/projects/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok){S._editPj=null;artToast('Updated '+name,'ok');loadProjects()}
+  else artToast('Update failed · '+((r&&r.error)||'unknown'),'err');
 }
 async function addProject(){
   const body={name:document.getElementById('pj-name').value.trim(),path:document.getElementById('pj-path').value.trim(),repo:document.getElementById('pj-repo').value.trim(),start:document.getElementById('pj-start').value.trim(),port:parseInt(document.getElementById('pj-port').value)||0};
@@ -3554,7 +3652,7 @@ const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke
 const STARTERS=['Make a landing page for my café','Build a Pomodoro timer I can run','Explain this folder of code to me','Make a tip-splitting calculator'];
 function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
 function useStarter(t){const m=document.getElementById('msg-in');if(!m)return;m.value=t;m.dispatchEvent(new Event('input'));m.focus()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;S.threadArtifacts=[];ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';updateArtBadge();renderTray();patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;S.threadArtifacts=[];try{_AUTOSAVED.clear()}catch(_){}ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';updateArtBadge();renderTray();patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
 function toggleDual(){S.dual=!S.dual;const b=document.getElementById('dual-btn');if(b)b.classList.toggle('on',S.dual);renderActiveOps()}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
@@ -3712,6 +3810,29 @@ function toggleModels(){const p=document.getElementById('models-pop');if(!p)retu
   if(p.hasAttribute('hidden')){renderModelsPop();p.removeAttribute('hidden');setTimeout(()=>{document.addEventListener('mousedown',_modelsOutside,true);document.addEventListener('keydown',_modelsEsc)},0)}
   else closeModels();
 }
+// ─── EFFORT — per-message "how hard to work" (token budget + tool-loop budget) ──
+function _effortOutside(e){const p=document.getElementById('effort-pop'),b=document.getElementById('effort-btn');if(p&&!p.contains(e.target)&&b&&!b.contains(e.target))closeEffort()}
+function _effortEsc(e){if(e.key==='Escape')closeEffort()}
+function closeEffort(){const p=document.getElementById('effort-pop');if(p)p.setAttribute('hidden','');document.removeEventListener('mousedown',_effortOutside,true);document.removeEventListener('keydown',_effortEsc)}
+function toggleEffort(){const p=document.getElementById('effort-pop');if(!p)return;
+  if(p.hasAttribute('hidden')){renderEffortPop();p.removeAttribute('hidden');setTimeout(()=>{document.addEventListener('mousedown',_effortOutside,true);document.addEventListener('keydown',_effortEsc)},0)}
+  else closeEffort();}
+function _tokLabel(n){return (n/1024).toFixed(n%1024?1:0)+'k'}
+function renderEffortPop(){
+  const p=document.getElementById('effort-pop');if(!p)return;
+  const rows=Object.keys(EFFORT).map(k=>{const e=EFFORT[k];
+    return `<div class="ef-row ${k===S.effort?'on':''}" onclick="setEffort('${k}')"><span class="ef-dot"></span><span class="ef-meta"><span class="ef-name">${e.label}<span class="ef-cost">${_tokLabel(e.tokens)} · ${e.iters} loops</span></span><span class="ef-blurb">${escH(e.blurb)}</span></span></div>`;
+  }).join('');
+  p.innerHTML='<div class="mp-hd">How hard to work<span class="mp-sub">per message</span><button class="mp-x" onclick="closeEffort()" title="Close">✕</button></div>'+rows
+    +`<div class="ef-slider"><div class="ef-slider-lab"><span>Token budget / reply</span><b id="ef-tok">${_tokLabel(S.maxTokens)}</b></div><input type="range" min="1024" max="8192" step="1024" value="${S.maxTokens}" oninput="setEffortTokens(this.value)" aria-label="Token budget per reply"></div>`
+    +`<div class="ef-note">Higher effort = longer, more complete output and more tool steps. If it nears the budget it will say what's left so you can continue.</div>`;
+}
+function applyEffortBtn(){const b=document.getElementById('effort-btn'),l=document.getElementById('effort-lvl');if(l)l.textContent=EFFORT[S.effort].label;if(b){b.className='';if(S.effort==='deep')b.classList.add('deep');else if(S.effort==='max')b.classList.add('max')}}
+function setEffort(k){if(!EFFORT[k])return;S.effort=k;S.maxTokens=EFFORT[k].tokens;S.maxIters=EFFORT[k].iters;_saveEffort();applyEffortBtn();renderEffortPop();try{updateAEM()}catch(_){}}
+function setEffortTokens(v){S.maxTokens=Math.max(1024,Math.min(8192,parseInt(v,10)||4096));const t=document.getElementById('ef-tok');if(t)t.textContent=_tokLabel(S.maxTokens);_saveEffort()}
+function _saveEffort(){try{localStorage.setItem('mlx-effort',JSON.stringify({effort:S.effort,maxTokens:S.maxTokens,maxIters:S.maxIters}))}catch(_){}}
+function loadEffort(){try{const e=JSON.parse(localStorage.getItem('mlx-effort')||'{}');if(e.effort&&EFFORT[e.effort]){S.effort=e.effort;S.maxIters=e.maxIters||EFFORT[e.effort].iters;S.maxTokens=e.maxTokens||EFFORT[e.effort].tokens}}catch(_){}applyEffortBtn()}
+function effortDirective(){const d=EFFORT[S.effort]&&EFFORT[S.effort].directive;return d?{role:'system',content:'Effort level: '+EFFORT[S.effort].label+'. '+d}:null}
 function renderModelsPop(){
   const p=document.getElementById('models-pop');if(!p)return;
   const sel=new Set(S.fanout&&S.fanout.length?S.fanout:['mlx']);
@@ -3738,8 +3859,9 @@ async function _streamModel(th,model,text){
   const ep=model.id==='mlx'?'/v1/agent':'/v1/escalate';
   const cak=model.id!=='mlx'?ensureCloudAgent(model.id):null;   // track this cloud operative's tokens
   if(cak){const a=S.agents[cak];a.status='working';a.calls++;a.startMs=Date.now();a.turnTokens=0;renderCards()}
-  const msgs=[...(S.context.length?[{role:'system',content:'Standing user context (always honor):\n- '+S.context.join('\n- ')}]:[]),...S.msgs.map(m=>({role:m.role,content:m.content||''}))];
-  const body=model.id==='mlx'?{messages:msgs,cwd:S.cwd,stream:true,max_tokens:4096,temperature:.15}:{messages:msgs,cwd:S.cwd,provider:model.id,max_tokens:4096};
+  const _edm=effortDirective();
+  const msgs=[...(S.context.length?[{role:'system',content:'Standing user context (always honor):\n- '+S.context.join('\n- ')}]:[]),...(_edm?[_edm]:[]),...S.msgs.map(m=>({role:m.role,content:m.content||''}))];
+  const body=model.id==='mlx'?{messages:msgs,cwd:S.cwd,stream:true,max_tokens:S.maxTokens||8192,temperature:.15,max_iterations:S.maxIters||24}:{messages:msgs,cwd:S.cwd,provider:model.id,max_tokens:S.maxTokens||4096};
   try{const resp=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
     const reader=resp.body.getReader(),dec=new TextDecoder();let buf='';
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
@@ -3774,7 +3896,8 @@ async function streamRun(text,th){
   const ep=S.dual?'/v1/dual':'/v1/agent';
   // /v1/agent injects the standing-context file server-side; only send it for the dual path here (avoids duplication)
   const ctxMsg=(S.dual&&S.context.length)?[{role:'system',content:'Standing user context (always honor):\n- '+S.context.join('\n- ')}]:[];
-  const body={messages:[...ctxMsg,...S.msgs.map(m=>({role:m.role,content:m.content||''}))],cwd:S.cwd,stream:true,max_tokens:8192,temperature:.15};
+  const _ed=effortDirective(),sysMsgs=_ed?[...ctxMsg,_ed]:ctxMsg;
+  const body={messages:[...sysMsgs,...S.msgs.map(m=>({role:m.role,content:m.content||''}))],cwd:S.cwd,stream:true,max_tokens:S.maxTokens||8192,temperature:.15,max_iterations:S.maxIters||24};
   if(S.dual){body.critic_model='mlx-community/Qwen2.5-Coder-7B-Instruct-4bit';body.revision=true}
   S.ctrl=new AbortController();
   let txt='';const startTok=S.totalTok;
@@ -4001,19 +4124,20 @@ function drawFullAIS(){
   // ── clean center well: the completion circle is never crossed by lines ──
   const coreR=Math.max(46,R*0.19);
   const vigR=coreR+6; // still — no bouncing (ch'an)
-  const cg=fsCx.createRadialGradient(cx,cy,0,cx,cy,vigR+18);cg.addColorStop(0,`rgba(47,156,139,${0.1*M.vigilance})`);cg.addColorStop(1,'rgba(47,156,139,0)');
+  const cg=fsCx.createRadialGradient(cx,cy,0,cx,cy,vigR+18);cg.addColorStop(0,`rgba(80,74,66,${0.07*M.vigilance})`);cg.addColorStop(1,'rgba(80,74,66,0)');  // neutral halo — teal reserved for 100%
   fsCx.beginPath();fsCx.arc(cx,cy,vigR+18,0,Math.PI*2);fsCx.fillStyle=cg;fsCx.fill();
   fsCx.beginPath();fsCx.arc(cx,cy,coreR,0,Math.PI*2);fsCx.fillStyle='#f0ece4';fsCx.fill();
   fsCx.strokeStyle=M.completion>=1?'rgba(47,156,139,.55)':'rgba(207,122,46,.4)';fsCx.lineWidth=1.5;fsCx.stroke();
-  // center readout — clean, non-overlapping stack inside the well; auto-fit %
-  const _fpct=Math.round(M.completion*100)+'%';
+  // center readout — only the big % + a short label, sized to fit the well (no overlap, no spill)
+  const _fpct=Math.round(M.completion*100)+'%',_done=M.completion>=1;
   fsCx.textAlign='center';fsCx.textBaseline='middle';
-  fsCx.font='200 '+_fitPx(fsCx,_fpct,coreR*1.45,Math.round(coreR*0.72),'200')+'px -apple-system,system-ui,sans-serif';
-  fsCx.fillStyle=M.completion>=1?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
-  fsCx.fillText(_fpct,cx,cy-coreR*0.14);
+  fsCx.font='200 '+_fitPx(fsCx,_fpct,coreR*1.3,Math.round(coreR*0.66),'200')+'px -apple-system,system-ui,sans-serif';
+  fsCx.fillStyle=_done?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
+  fsCx.fillText(_fpct,cx,cy-coreR*0.16);
   fsCx.textBaseline='alphabetic';
-  fsCx.fillStyle='rgba(26,28,34,.4)';fsCx.font='500 9px -apple-system,system-ui,sans-serif';fsCx.fillText('GOAL COMPLETION',cx,cy+coreR*0.34);
-  if(fReqs.length){fsCx.fillStyle='rgba(207,122,46,.95)';fsCx.font='600 9px -apple-system,system-ui,sans-serif';fsCx.fillText(fReqs.length+' IN FLIGHT',cx,cy+coreR*0.62)}
+  fsCx.fillStyle=_done?'rgba(47,156,139,.85)':'rgba(26,28,34,.42)';fsCx.font='600 '+Math.round(coreR*0.16)+'px -apple-system,system-ui,sans-serif';
+  fsCx.fillText('COMPLETE',cx,cy+coreR*0.30);
+  if(fReqs.length){fsCx.fillStyle='rgba(207,122,46,.95)';fsCx.font='600 '+Math.round(coreR*0.15)+'px -apple-system,system-ui,sans-serif';fsCx.fillText(fReqs.length+' in flight',cx,cy+coreR*0.56)}
   // vigilance / burn / why → corner readout, never crowding the core
   fsCx.textAlign='left';fsCx.font='400 10px -apple-system,system-ui,sans-serif';
   const maxRate2=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
@@ -4026,7 +4150,7 @@ window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
-loadPref(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
+loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
 loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live

@@ -236,7 +236,8 @@ def run_agent(
     """Synchronous generator — yields AgentEvent objects, runs inference on calling thread."""
     model, tokenizer = _get_slot(slot)
     _tune_memory()
-    max_tokens = max(256, min(int(max_tokens), 4096))  # bound generation KV so Metal can't OOM-abort
+    max_tokens = max(256, min(int(max_tokens), 8192))  # bound generation KV so Metal can't OOM-abort (raised so Deep/Max effort can finish long files)
+    max_iterations = max(1, min(int(max_iterations), 60))  # honor the composer's Effort control, with a hard safety cap
 
     sys_prompt = system_prompt or SYSTEM_PROMPT
     history = [{"role": "system", "content": sys_prompt}] + messages
