@@ -283,7 +283,36 @@ select.hb{padding:5px 9px}
 /* right */
 #rpanel{width:var(--rw);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
 #ais-canvas{display:block;width:100%;height:200px;flex-shrink:0}
-#ais-info{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+#ais-info{flex:1 1 auto;min-height:110px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
+/* docked artifact tray — primary output surface, lower-right */
+#art-tray{flex:0 0 auto;max-height:46%;min-height:150px;display:flex;flex-direction:column;border-top:1px solid var(--border-mid);background:var(--bg2)}
+.tray-hd{display:flex;align-items:center;gap:7px;padding:9px 11px 6px;flex-shrink:0}
+.tray-ttl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text);font-weight:600}
+.tray-ct{font-family:var(--mono);font-size:9px;color:var(--text-dim)}
+.tray-exp{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-size:8px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font);padding:3px 8px;border-radius:5px;cursor:pointer;transition:color .15s,border-color .15s}
+.tray-exp:hover{color:var(--accent);border-color:var(--accent)}
+.tray-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:2px 9px 6px;display:flex;flex-direction:column;gap:6px}
+.tray-card{display:flex;align-items:center;gap:10px;padding:8px 9px;border:1px solid var(--border);border-radius:10px;background:var(--bg);cursor:pointer;transition:border-color .15s,background .15s}
+.tray-card:hover{border-color:var(--border-mid);background:rgba(26,28,34,.025)}
+.tray-card.rend .tray-ic{color:var(--red);border-color:rgba(210,85,46,.4)}
+.tray-ic{flex-shrink:0;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);background:var(--bg2);border:1px solid var(--border-mid)}
+.tray-ic svg{width:18px;height:18px}
+.tray-meta{flex:1;min-width:0}
+.tray-name{font-size:11.5px;color:var(--text);font-weight:600;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tray-sub{font-size:9px;color:var(--text-ghost);letter-spacing:.02em;margin-top:2px;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
+.tray-badge{font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;font-family:var(--font)}
+.tray-badge.ok{background:rgba(60,100,60,.1);color:rgba(50,90,50,.95)}
+.tray-badge.warn{background:rgba(210,85,46,.1);color:var(--red)}
+.tray-badge.unsaved{background:rgba(176,122,16,.12);color:#8a6a10}
+.tray-acts{display:flex;gap:4px;flex-shrink:0;opacity:.6;transition:opacity .15s}
+.tray-card:hover .tray-acts,.tray-card:focus-within .tray-acts{opacity:1}
+.tray-act{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:27px;height:27px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
+.tray-act:hover{color:var(--accent);border-color:var(--accent)}
+.tray-act.save:hover{color:var(--red);border-color:var(--red)}
+.tray-act svg{width:13px;height:13px}
+.tray-empty{font-size:9.5px;color:var(--text-ghost);font-style:italic;padding:14px 8px;text-align:center;line-height:1.6}
+.tray-foot{flex-shrink:0;padding:6px 11px 9px;font-size:8.5px;color:var(--text-ghost);font-family:var(--mono);letter-spacing:.02em;border-top:1px solid var(--border);display:none}
+.tray-foot.show{display:block}
 .ais-sec{border-top:1px solid var(--border);flex-shrink:0}
 .ais-sec-hd{font-size:8px;letter-spacing:.16em;color:var(--text-ghost);text-transform:uppercase;font-weight:400;padding:6px 11px 4px;display:flex;align-items:center;gap:6px}
 .ais-sec-hd .ais-ct{font-family:var(--mono);color:var(--text-dim);font-weight:400;letter-spacing:0}
@@ -454,6 +483,25 @@ select.hb{padding:5px 9px}
 .cc-collapse .ic{width:11px;height:11px;transform:rotate(180deg)}
 .cc-code,.te-code,.prose{cursor:text}
 .cc-code::selection,.te-code::selection,.prose::selection{background:rgba(207,122,46,.22)}
+/* discrete artifact chip in the thread — code lives in the tray, not the conversation */
+.thread-art{display:flex;align-items:center;gap:11px;margin:9px 0;padding:10px 13px;border:1px solid var(--border-mid);border-radius:var(--r2);background:var(--bg2)}
+.thread-art.rend{border-color:rgba(210,85,46,.35)}
+.thread-art.saved{border-color:rgba(60,100,60,.35)}
+.ta-ic{flex-shrink:0;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);background:var(--bg);border:1px solid var(--border-mid)}
+.thread-art.rend .ta-ic{color:var(--red);border-color:rgba(210,85,46,.4)}
+.ta-ic svg{width:21px;height:21px}
+.ta-meta{flex:1;min-width:0}
+.ta-name{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ta-sub{font-size:9.5px;color:var(--text-ghost);letter-spacing:.02em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ta-acts{display:flex;gap:6px;flex-shrink:0}
+.ta-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:10px;font-weight:500;padding:6px 12px;border-radius:7px;cursor:pointer;min-height:30px;transition:color .15s,border-color .15s}
+.ta-btn:hover{color:var(--text);border-color:var(--text-soft)}
+.ta-btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.ta-btn.primary:hover{opacity:.88;color:#fff}
+.ta-btn:disabled{opacity:.6;cursor:default;border-color:rgba(60,100,60,.4);color:rgba(60,100,60,.95)}
+.ta-btn.icon{padding:6px 9px}
+.ta-btn.icon svg{width:13px;height:13px}
+.ta-btn svg{width:13px;height:13px}
 /* floating two-squares copy affordance — snaps to a code line on hover, or to a selection */
 #copybub{position:fixed;z-index:400;display:none;align-items:center;justify-content:center;gap:5px;height:28px;padding:0 9px;background:var(--bg);border:1px solid var(--border-mid);border-radius:7px;color:var(--text-soft);font-family:var(--font);font-size:10px;letter-spacing:.04em;cursor:pointer;box-shadow:0 5px 18px rgba(26,28,34,.2);transition:color .12s,border-color .12s,transform .08s}
 #copybub.show{display:inline-flex}
@@ -1078,7 +1126,6 @@ select.hb{padding:5px 9px}
     <div class="sg" id="sg-fan"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">FAN</span><span class="sg-v na">—</span></div></div>
   </div>
   <div id="hdr-right">
-    <button class="hb" id="dual-btn" onclick="toggleDual()" data-tip="PRIMARY → CRITIC → REVISION pipeline">Dual</button>
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — files the agent built">Artifacts<span id="art-hdr-ct" class="hb-ct" style="display:none"></span></button>
     <button class="hb" onclick="openSkillsFull()" data-tip="Skills &amp; plugins — full screen">Skills</button>
     <button class="hb" onclick="openSettings()" data-tip="Models, API keys, git">Settings</button>
@@ -1189,6 +1236,14 @@ select.hb{padding:5px 9px}
         <div class="ais-sec-hd" data-tip="Tool call history">History <span class="ais-ct" id="ais-task-ct"></span></div>
         <div id="ais-tasks-list"><div class="ais-empty">—</div></div>
       </div>
+    </div>
+    <div id="art-tray" aria-label="Artifacts the agent produced">
+      <div class="tray-hd">
+        <span class="tray-ttl">Artifacts</span><span class="tray-ct" id="tray-ct"></span>
+        <button class="tray-exp" onclick="openArtifacts()" data-tip="Open the full artifacts panel">Expand ↗</button>
+      </div>
+      <div id="tray-body" class="tray-body"></div>
+      <div id="tray-foot" class="tray-foot"></div>
     </div>
   </div>
 </div>
@@ -1384,7 +1439,7 @@ select.hb{padding:5px 9px}
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx']};
+const S={msgs:[],streaming:false,dual:false,cwd:'.',totalTok:0,iterations:0,toolCallTotal:0,errors:0,activeTools:new Set(),toolCalls:{},toolHistory:[],taskLog:[],goals:[],ctrl:null,agents:{primary:{label:'PRIMARY',size:'32B',role:'Author',tech:'Qwen2.5-Coder-32B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:true,access:'full',agmo:'A2 Constrained Execution',humo:'H3 Active Engagement',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0},critic:{label:'CRITIC',size:'7B',role:'Reviewer',tech:'Qwen2.5-Coder-7B',host:'local MLX',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'full',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,trust:null,accepted:0,rejected:0},cloud:{label:'CLOUD',size:'cloud',role:'Escalation',tech:'',host:'cloud',status:'idle',task:'',burn:0,hm:50,loaded:false,access:'code',agmo:'A1 Advisory',humo:'H4 Collaborative Partnership',present:false,provider:'',tokens:0,calls:0,tools:0,iters:0,errs:0,ms:0,startMs:0,turnTokens:0}},gantt:{primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}},ganttStart:0,tokenBudget:16384,context:[],queue:[],added:[],learned:[],git:{active:false,op:'',reads:0,writes:0,last:0},fanout:['mlx'],threadArtifacts:[]};
 const AGENT_KEYS=['primary','critic'];
 
 // ─── BACKGROUND PARTICLE WAVE ─────────────────────────────────────────────────
@@ -1457,7 +1512,7 @@ function resizeBuild(){
 function bgGraphAdd(toolName,args,isResult){
   if(isResult){ // a result completes the most recent op — don't spawn a duplicate node
     if(BGR.lastId!=null){const n=BGR.nodes.find(x=>x.id===BGR.lastId);if(n)n.active=false}
-    drawBuildGraph();return;
+    drawBuildGraph();try{renderTray();updateArtBadge()}catch(_){}return;
   }
   let name=null,type='op',rawPath=null;
   if(args){rawPath=(args.path||args.file_path||null);name=(rawPath||args.command||null);if(name)name=name.split('/').pop().split('\\').pop().split(' ')[0]}
@@ -1582,6 +1637,8 @@ function syncCloudAgent(){
 }
 // ── Inline radial instrument (light "astrolabe" mesh) ──
 let meshHits=[];
+// shrink a canvas font until the text fits within maxW — never lets the center number overset
+function _fitPx(ctx,text,maxW,startPx,weight){weight=weight||'300';let px=Math.max(8,startPx|0);for(;px>8;px--){ctx.font=weight+' '+px+'px -apple-system,system-ui,sans-serif';if(ctx.measureText(text).width<=maxW)break}return px}
 function drawAIS(){
   const d=window.devicePixelRatio||1;
   AC.setTransform(d,0,0,d,0,0);
@@ -1691,10 +1748,14 @@ function drawAIS(){
   cg.addColorStop(0,`rgba(47,156,139,${0.09*M.vigilance})`);cg.addColorStop(1,'rgba(47,156,139,0)');
   AC.beginPath();AC.arc(cx,cy,vigR+8,0,Math.PI*2);AC.fillStyle=cg;AC.fill();
   AC.beginPath();AC.arc(cx,cy,coreR,0,Math.PI*2);AC.fillStyle='#e9e4db';AC.fill();
-  AC.strokeStyle='rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
-  // the core shows ONLY the completion % (fits cleanly); the label + in-flight detail is on hover
-  AC.fillStyle='rgba(26,28,34,.85)';AC.textAlign='center';AC.font='300 20px -apple-system,system-ui,sans-serif';
-  AC.fillText(Math.round(M.completion*100)+'%',cx,cy+coreR*0.28);
+  AC.strokeStyle=M.completion>=1?'rgba(47,156,139,.5)':'rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
+  // center readout — completion %, auto-fit & vertically centered so it never oversets the well
+  const _pct=Math.round(M.completion*100)+'%';
+  AC.textAlign='center';AC.textBaseline='middle';
+  AC.font='300 '+_fitPx(AC,_pct,coreR*1.55,Math.round(coreR*0.82),'300')+'px -apple-system,system-ui,sans-serif';
+  AC.fillStyle=M.completion>=1?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
+  AC.fillText(_pct,cx,cy);
+  AC.textBaseline='alphabetic';
   if(reqs.length){AC.beginPath();AC.arc(cx,cy-coreR+5,2.4,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.95)';AC.fill();}  // tiny in-flight pip, detail on hover
   meshHits.push({x:cx,y:cy,r:coreR,key:'__core__'});
   // corner readouts (sans, soft)
@@ -2057,6 +2118,63 @@ function renderArtifacts(){
     return `<div class="art-row"><div class="art-row-top"><span class="art-open">${ic}</span><span class="art-name">${escH(a.name)}</span><span class="art-ext">${a.kind.toUpperCase()}</span>${act}<button class="art-mini rm" onclick="removeAdded(${i})" title="Remove">✕</button></div></div>`;
   }).join(''):'<div class="ais-empty">Nothing added yet — paste or drop an image, or use Add files.</div>';
   updateArtBadge();
+  try{renderTray()}catch(_){}
+}
+// ─── DOCKED ARTIFACT TRAY — the primary output surface (lower-right) ────────────
+// Merges files written to disk (BGR write nodes) with code the model produced in
+// chat (S.threadArtifacts), so the conversation stays clean and code lives here.
+function _trayItems(){
+  const out=[],seen=new Set();
+  artifactNodes().slice().reverse().forEach(n=>{
+    const base=String(n.name).split('/').pop();if(seen.has(base))return;seen.add(base);
+    const ext=(base.indexOf('.')>=0?base.split('.').pop():'').toLowerCase();
+    out.push({name:base,path:n.path||n.name,ext,saved:true,rec:recoverState(n.path||n.name)});
+  });
+  (S.threadArtifacts||[]).slice().reverse().forEach(a=>{const base=String(a.name).split('/').pop();if(seen.has(base))return;seen.add(base);
+    out.push({name:base,ext:a.ext,code:a.code,lines:a.lines,saved:false})});
+  return out;
+}
+function renderTray(){
+  const body=document.getElementById('tray-body');if(!body)return;
+  const items=_trayItems(),ct=document.getElementById('tray-ct'),foot=document.getElementById('tray-foot');
+  if(ct)ct.textContent=items.length||'';
+  if(!items.length){body.innerHTML='<div class="tray-empty">Files the agent builds land here — preview, open or save them. The conversation stays clean.</div>';if(foot)foot.classList.remove('show');return}
+  body.innerHTML=items.map((it,i)=>{
+    const rend=_isRenderable(it.ext);
+    const badge=it.saved?(it.rec==='clean'?'<span class="tray-badge ok">in git</span>':(it.rec==='uncommitted'||it.rec==='dirty'||it.rec==='modified'||it.rec==='added'||it.rec==='untracked')?'<span class="tray-badge warn">uncommitted</span>':''):'<span class="tray-badge unsaved">unsaved</span>';
+    const meta=(it.ext?it.ext.toUpperCase():'FILE')+(it.lines?' · '+it.lines+' lines':'')+(it.saved?'':' · in chat');
+    let acts='<div class="tray-acts">';
+    acts+=`<button class="tray-act prev" data-i="${i}" title="Preview ${escH(it.name)}">${ICON.eye}</button>`;
+    if(!it.saved){acts+=`<button class="tray-act dl" data-i="${i}" title="Download">${ICON.download}</button>`;
+      acts+=`<button class="tray-act save" data-i="${i}" title="Save to the working folder">${ICON.check}</button>`}
+    acts+='</div>';
+    return `<div class="tray-card${rend?' rend':''}" data-i="${i}" data-tip="${escH(it.name)} — click to preview"><div class="tray-ic">${rend?_BROWSER_GLYPH:ICON.file}</div><div class="tray-meta"><div class="tray-name">${escH(it.name)}</div><div class="tray-sub">${escH(meta)} ${badge}</div></div>${acts}</div>`;
+  }).join('');
+  body.querySelectorAll('.tray-card').forEach(card=>{const it=items[+card.dataset.i];
+    card.addEventListener('click',e=>{if(e.target.closest('.tray-act'))return;_trayOpen(it)})});
+  body.querySelectorAll('.tray-act.prev').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_trayOpen(items[+b.dataset.i])}));
+  body.querySelectorAll('.tray-act.dl').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const it=items[+b.dataset.i];downloadFile(it.name,it.code||'',_mimeFor(it.ext))}));
+  body.querySelectorAll('.tray-act.save').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_traySave(items[+b.dataset.i])}));
+  if(foot){const ng=items.filter(x=>x.saved&&x.rec==='clean').length,nu=items.filter(x=>!x.saved).length;
+    foot.textContent=`${items.length} file${items.length!==1?'s':''}${ng?' · '+ng+' in git':''}${nu?' · '+nu+' unsaved':''}`;foot.classList.add('show')}
+}
+function _trayOpen(it){if(it.saved)previewArtifact(it.path,it.name);else openPreview(it.name,it.code||'',it.ext)}
+async function _traySave(it){
+  let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path:it.name,content:it.code||''})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r.ok){bgGraphAdd('write_file',{path:it.name},false);bgGraphAdd('write_file',null,true);
+    S.threadArtifacts=(S.threadArtifacts||[]).filter(a=>String(a.name).split('/').pop()!==it.name);
+    try{renderArtifacts()}catch(_){};renderTray();artToast('Wrote '+it.name,'ok')}
+  else artToast('Save failed: '+(r.error||'error'),'err');
+}
+// register a piece of code the model produced in chat as a discrete tray artifact
+function registerThreadArtifact(name,ext,code){
+  const base=String(name).split('/').pop();S.threadArtifacts=S.threadArtifacts||[];
+  const lines=code.split('\n').length;
+  const ix=S.threadArtifacts.findIndex(a=>String(a.name).split('/').pop()===base);
+  const rec={name:base,ext:(ext||'').toLowerCase(),code,lines};
+  if(ix>=0)S.threadArtifacts[ix]=rec;else S.threadArtifacts.push(rec);
+  try{renderTray();updateArtBadge()}catch(_){}
+  return rec;
 }
 // ─── NOTIFICATIONS — a stack with severity; errors persist until dismissed ─────
 const _NT_ICON={err:'✕',ok:'✓',warn:'!',run:'…',info:'·'};
@@ -2229,7 +2347,7 @@ function _renderProseAndCode(bodyEl,txt){
     any=true;const pre=txt.slice(last,m.index);
     if(pre.trim())bodyEl.appendChild(_proseEl(pre.trim()));
     const header=m[1].trim(),lang=(header.split(/\s+/)[0]||'').toLowerCase(),code=m[2].replace(/\s+$/,'');
-    bodyEl.appendChild(buildCodeCard(lang,header,code));last=re.lastIndex;
+    bodyEl.appendChild(buildArtifactChip(lang,header,code));last=re.lastIndex;
   }
   const tail=txt.slice(last);
   if(!any)bodyEl.appendChild(_proseEl(txt));
@@ -2437,6 +2555,32 @@ function buildCodeCard(lang,header,code){
   card.querySelector('.dl').addEventListener('click',e=>{e.stopPropagation();downloadFile(fname,_cur(),_mimeFor(ext))});
   card.querySelector('.apply').addEventListener('click',e=>{e.stopPropagation();applyCode(path,_cur(),card,code)});
   return card;
+}
+// DISCRETE artifact chip — code the model produced is NOT dumped into the thread;
+// it becomes a compact card that routes to the tray / preview. Keeps the chat clean.
+function buildArtifactChip(lang,header,code){
+  const lines=code.split('\n').length,path=_inferPath(header,code);
+  const fname=path?path.split('/').pop():_suggestName(lang,code);
+  const ext=(fname.split('.').pop()||_langExt(lang)).toLowerCase(),rend=_isRenderable(ext);
+  registerThreadArtifact(fname,ext,code);
+  const el=document.createElement('div');el.className='thread-art'+(rend?' rend':'');
+  el.innerHTML=`<span class="ta-ic">${rend?_BROWSER_GLYPH:ICON.file}</span>`
+    +`<div class="ta-meta"><div class="ta-name">${escH(fname)}</div><div class="ta-sub">${escH(ext.toUpperCase()||'FILE')} · ${lines} ${lines===1?'line':'lines'} · in Artifacts ↘</div></div>`
+    +`<div class="ta-acts"><button class="ta-btn primary prev">${ICON.eye}${rend?'Preview':'View'}</button>`
+    +`<button class="ta-btn save">${ICON.check}${path?'Apply':'Save'}</button>`
+    +`<button class="ta-btn icon copy" title="Copy code">${ICON.copy}</button></div>`;
+  el.querySelector('.prev').addEventListener('click',e=>{e.stopPropagation();openPreview(fname,code,ext)});
+  el.querySelector('.copy').addEventListener('click',async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(code);artToast('Copied '+fname,'ok')}catch(_){artToast('Copy failed','err')}});
+  el.querySelector('.save').addEventListener('click',async e=>{e.stopPropagation();const b=e.currentTarget;
+    let p=path;if(!p){p=prompt('Save this code to (path relative to working dir):',fname);if(!p)return}
+    let r;try{r=await fetch('/v1/artifacts/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,path:p,content:code})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+    if(r.ok){if(typeof recordFriction==='function')try{recordFriction('save','saved '+p)}catch(_){}
+      bgGraphAdd('write_file',{path:p},false);bgGraphAdd('write_file',null,true);
+      S.threadArtifacts=(S.threadArtifacts||[]).filter(a=>String(a.name).split('/').pop()!==fname);
+      try{renderArtifacts()}catch(_){};renderTray();
+      b.innerHTML=ICON.check+'Saved';b.disabled=true;b.classList.remove('primary');el.classList.add('saved')}
+    else artToast('Save failed: '+(r.error||'error'),'err')});
+  return el;
 }
 async function applyCode(path,code,card,orig){
   let p=path;
@@ -2933,7 +3077,7 @@ function appendArtifactCard(path){
   appendEl(card);
   updateArtBadge();
 }
-function updateArtBadge(){const b=document.getElementById('art-hdr-ct');if(b){const n=artifactNodes().length;b.textContent=n||'';b.style.display=n?'inline-flex':'none'}}
+function updateArtBadge(){const b=document.getElementById('art-hdr-ct');if(b){let n;try{n=_trayItems().length}catch(_){n=artifactNodes().length}b.textContent=n||'';b.style.display=n?'inline-flex':'none'}}
 
 // ─── ONBOARDING WIZARD — reads the system, recommends agents, remembers state ──
 const OB={step:0,data:null,total:4,models:null,dl:{},_dlT:null};
@@ -3410,8 +3554,8 @@ const _EMPTY_LOGO='<svg class="logo-mark" viewBox="0 0 48 48" fill="none" stroke
 const STARTERS=['Make a landing page for my café','Build a Pomodoro timer I can run','Explain this folder of code to me','Make a tip-splitting calculator'];
 function emptyHTML(){return '<div id="empty">'+_EMPTY_LOGO+'<span class="big">Scroll<span class="mlx">MLX</span></span><span class="sub">Describe what you want to make — or start with one of these</span><div class="starters">'+STARTERS.map(s=>`<button class="starter" onclick="useStarter(this.dataset.s)" data-s="${escH(s)}">${escH(s)}</button>`).join('')+'</div></div>'}
 function useStarter(t){const m=document.getElementById('msg-in');if(!m)return;m.value=t;m.dispatchEvent(new Event('input'));m.focus()}
-function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';updateArtBadge();patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
-function toggleDual(){S.dual=!S.dual;document.getElementById('dual-btn').classList.toggle('on',S.dual);renderActiveOps()}
+function clearChat(){S.msgs=[];S.totalTok=0;S.iterations=0;S.toolCallTotal=0;S.errors=0;S.toolCalls={};S.activeTools.clear();S.toolHistory=[];S.taskLog=[];S.goals=[];resetAgentMetrics();S.agents.critic.trust=null;S.agents.critic.accepted=0;S.agents.critic.rejected=0;BGR.nodes=[];BGR.edges=[];BGR.lastId=null;S.threadArtifacts=[];ART.lastHandled=0;ART.backedUp.clear();S.queue=[];renderCtx();S.gantt={primary:{start:0,end:0},critic:{start:0,end:0},revision:{start:0,end:0}};S.ganttStart=0;timeline.innerHTML=emptyHTML();showGantt(false);updateAEM();renderToolMini();setStatus(false);renderAISInfo();drawBuildGraph();document.getElementById('bg-node-ct').textContent='';updateArtBadge();renderTray();patchAgent('primary',{status:'idle',task:'',burn:0,hm:50});patchAgent('critic',{status:'idle',task:'',burn:0,hm:50})}
+function toggleDual(){S.dual=!S.dual;const b=document.getElementById('dual-btn');if(b)b.classList.toggle('on',S.dual);renderActiveOps()}
 function promptCwd(){const v=prompt('Working directory:',S.cwd);if(v!==null){S.cwd=v||'.';document.getElementById('cwd-lbl').textContent=S.cwd}}
 function stopStream(){if(S.ctrl)S.ctrl.abort();(S._multiCtrls||[]).forEach(c=>{try{c.abort()}catch(_){}})}
 // in-flight requests — each concurrent stream (single, fan-out model, escalate) is one;
@@ -3860,14 +4004,21 @@ function drawFullAIS(){
   const cg=fsCx.createRadialGradient(cx,cy,0,cx,cy,vigR+18);cg.addColorStop(0,`rgba(47,156,139,${0.1*M.vigilance})`);cg.addColorStop(1,'rgba(47,156,139,0)');
   fsCx.beginPath();fsCx.arc(cx,cy,vigR+18,0,Math.PI*2);fsCx.fillStyle=cg;fsCx.fill();
   fsCx.beginPath();fsCx.arc(cx,cy,coreR,0,Math.PI*2);fsCx.fillStyle='#f0ece4';fsCx.fill();
-  fsCx.strokeStyle='rgba(207,122,46,.4)';fsCx.lineWidth=1.5;fsCx.stroke();
-  fsCx.textAlign='center';fsCx.fillStyle='rgba(26,28,34,.85)';fsCx.font='200 40px -apple-system,system-ui,sans-serif';fsCx.fillText(Math.round(M.completion*100)+'%',cx,cy-2);
-  fsCx.fillStyle='rgba(26,28,34,.35)';fsCx.font='500 9px -apple-system,system-ui,sans-serif';fsCx.fillText('GOAL COMPLETION',cx,cy+18);
-  if(fReqs.length){fsCx.fillStyle='rgba(207,122,46,.95)';fsCx.font='600 9px -apple-system,system-ui,sans-serif';fsCx.fillText(fReqs.length+' IN FLIGHT',cx,cy+32)}
-  fsCx.font='400 10px -apple-system,system-ui,sans-serif';
+  fsCx.strokeStyle=M.completion>=1?'rgba(47,156,139,.55)':'rgba(207,122,46,.4)';fsCx.lineWidth=1.5;fsCx.stroke();
+  // center readout — clean, non-overlapping stack inside the well; auto-fit %
+  const _fpct=Math.round(M.completion*100)+'%';
+  fsCx.textAlign='center';fsCx.textBaseline='middle';
+  fsCx.font='200 '+_fitPx(fsCx,_fpct,coreR*1.45,Math.round(coreR*0.72),'200')+'px -apple-system,system-ui,sans-serif';
+  fsCx.fillStyle=M.completion>=1?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
+  fsCx.fillText(_fpct,cx,cy-coreR*0.14);
+  fsCx.textBaseline='alphabetic';
+  fsCx.fillStyle='rgba(26,28,34,.4)';fsCx.font='500 9px -apple-system,system-ui,sans-serif';fsCx.fillText('GOAL COMPLETION',cx,cy+coreR*0.34);
+  if(fReqs.length){fsCx.fillStyle='rgba(207,122,46,.95)';fsCx.font='600 9px -apple-system,system-ui,sans-serif';fsCx.fillText(fReqs.length+' IN FLIGHT',cx,cy+coreR*0.62)}
+  // vigilance / burn / why → corner readout, never crowding the core
+  fsCx.textAlign='left';fsCx.font='400 10px -apple-system,system-ui,sans-serif';
   const maxRate2=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
-  fsCx.fillStyle='rgba(60,90,70,.85)';fsCx.fillText('vigilance '+Math.round(M.vigilance*100)+(maxRate2?'   ·   burn '+maxRate2+' t/s':''),cx,cy+34);
-  if(M.vigWhy){fsCx.font='400 9px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(176,122,16,.85)';fsCx.fillText('↓ '+M.vigWhy+' — the model is learning from these',cx,cy+48)}
+  fsCx.fillStyle='rgba(60,90,70,.85)';fsCx.fillText('vigilance '+Math.round(M.vigilance*100)+(maxRate2?'   ·   burn '+maxRate2+' t/s':''),18,H-22);
+  if(M.vigWhy){fsCx.font='400 9px -apple-system,system-ui,sans-serif';fsCx.fillStyle='rgba(176,122,16,.85)';fsCx.fillText('↓ '+M.vigWhy+' — the model is learning from these',18,H-8)}
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -3875,28 +4026,52 @@ window.addEventListener('resize',()=>resizeAIS());
 initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
-loadPref(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo();
+loadPref(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
 loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
 const SYS={cpu:[],mem:[],temp:[],fan:[]};
 function _sgPush(k,v){SYS[k].push(v==null?null:v);if(SYS[k].length>30)SYS[k].shift()}
-function drawSG(id,vals,text,level){
+// intensity ramp — quiet grey → cool blue/teal → orange → red at peak load
+const _SG_STOPS=[[0,[128,132,140]],[0.22,[96,124,150]],[0.46,[58,150,156]],[0.72,[207,122,46]],[1,[200,75,49]]];
+function _intensityRGB(f){
+  f=Math.max(0,Math.min(1,f||0));let a=_SG_STOPS[0],b=_SG_STOPS[_SG_STOPS.length-1];
+  for(let i=0;i<_SG_STOPS.length-1;i++){if(f>=_SG_STOPS[i][0]&&f<=_SG_STOPS[i+1][0]){a=_SG_STOPS[i];b=_SG_STOPS[i+1];break}}
+  const tt=(f-a[0])/((b[0]-a[0])||1),k=j=>Math.round(a[1][j]+(b[1][j]-a[1][j])*tt);
+  return[k(0),k(1),k(2)];
+}
+function drawSG(id,vals,text,level,denom){
+  denom=denom||100;
   const cell=document.getElementById(id);if(!cell)return;
   const cv=cell.querySelector('.sg-spark'),vEl=cell.querySelector('.sg-v');
   vEl.textContent=text;vEl.className='sg-v'+(text==='—'?' na':level>=.9?' alert':level>=.7?' warn':'');
   const dpr=window.devicePixelRatio||1,W=cv.clientWidth||56,H=cv.clientHeight||15;
   cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
   const clean=vals.filter(v=>v!=null);
-  if(clean.length<2){c.strokeStyle='rgba(26,28,34,.16)';c.beginPath();c.moveTo(1,H-2);c.lineTo(W-1,H-2);c.stroke();return}
+  if(clean.length<2){c.strokeStyle='rgba(128,132,140,.45)';c.lineWidth=1.4;c.beginPath();c.moveTo(1,H-2);c.lineTo(W-1,H-2);c.stroke();return}
   const mx=Math.max(...clean,1),n=vals.length;
   const x=i=>1+i*(W-2)/Math.max(n-1,1),y=v=>H-1.5-(v/mx)*(H-3);
-  const col=level>=.9?'rgba(200,75,49,.9)':level>=.7?'rgba(176,121,26,.9)':'rgba(207,122,46,.9)';
-  c.beginPath();let started=false,lastX=0,lastY=0;
-  vals.forEach((v,i)=>{if(v==null)return;const xx=x(i),yy=y(v);if(!started){c.moveTo(xx,yy);started=true}else c.lineTo(xx,yy);lastX=xx;lastY=yy});
-  c.strokeStyle=col;c.lineWidth=1.4;c.lineJoin='round';c.stroke();
-  if(started){c.beginPath();c.arc(lastX,lastY,1.7,0,Math.PI*2);c.fillStyle=col;c.fill()}
+  // vertical gradient keyed to TRUE intensity — hot peaks (top), cool troughs (bottom)
+  const top=_intensityRGB(Math.max(...clean)/denom),bot=_intensityRGB(Math.min(...clean)/denom);
+  const grad=c.createLinearGradient(0,1.5,0,H-1.5);
+  grad.addColorStop(0,`rgba(${top[0]},${top[1]},${top[2]},.95)`);
+  grad.addColorStop(1,`rgba(${bot[0]},${bot[1]},${bot[2]},.8)`);
+  // soft area fill for a cool/warm body
+  let started=false,lastX=0,lastY=0,firstX=0;
+  c.beginPath();
+  vals.forEach((v,i)=>{if(v==null)return;const xx=x(i),yy=y(v);if(!started){firstX=xx;c.moveTo(xx,yy);started=true}else c.lineTo(xx,yy);lastX=xx;lastY=yy});
+  c.save();c.lineTo(lastX,H);c.lineTo(firstX,H);c.closePath();
+  const fill=c.createLinearGradient(0,1.5,0,H-1.5);
+  fill.addColorStop(0,`rgba(${top[0]},${top[1]},${top[2]},.16)`);fill.addColorStop(1,`rgba(${bot[0]},${bot[1]},${bot[2]},0)`);
+  c.fillStyle=fill;c.fill();c.restore();
+  // the line itself
+  c.beginPath();started=false;
+  vals.forEach((v,i)=>{if(v==null)return;const xx=x(i),yy=y(v);if(!started){c.moveTo(xx,yy);started=true}else c.lineTo(xx,yy)});
+  c.strokeStyle=grad;c.lineWidth=1.5;c.lineJoin='round';c.stroke();
+  // head dot — current absolute intensity
+  const cur=_intensityRGB(level);
+  if(started){c.beginPath();c.arc(lastX,lastY,1.9,0,Math.PI*2);c.fillStyle=`rgba(${cur[0]},${cur[1]},${cur[2]},.95)`;c.fill()}
 }
 async function pollSys(){
   let j;try{j=await fetch('/v1/sys').then(r=>r.ok?r.json():null)}catch(_){j=null}
@@ -3904,10 +4079,10 @@ async function pollSys(){
   _sgPush('cpu',j.cpu);_sgPush('mem',j.mem_pct);
   const tnum=j.temp_c!=null?j.temp_c:(j.thermal?({nominal:30,fair:55,serious:80,critical:95}[String(j.thermal).toLowerCase()]||null):null);
   _sgPush('temp',tnum);_sgPush('fan',j.fan_rpm);
-  drawSG('sg-cpu',SYS.cpu,j.cpu!=null?Math.round(j.cpu)+'%':'—',(j.cpu||0)/100);
-  drawSG('sg-mem',SYS.mem,j.mem_pct!=null?Math.round(j.mem_pct)+'%':'—',(j.mem_pct||0)/100);
-  drawSG('sg-temp',SYS.temp,j.temp_c!=null?Math.round(j.temp_c)+'°':(j.thermal?String(j.thermal):'—'),(tnum||0)/100);
-  drawSG('sg-fan',SYS.fan,j.fan_rpm!=null?Math.round(j.fan_rpm):'—',(j.fan_rpm||0)/6000);
+  drawSG('sg-cpu',SYS.cpu,j.cpu!=null?Math.round(j.cpu)+'%':'—',(j.cpu||0)/100,100);
+  drawSG('sg-mem',SYS.mem,j.mem_pct!=null?Math.round(j.mem_pct)+'%':'—',(j.mem_pct||0)/100,100);
+  drawSG('sg-temp',SYS.temp,j.temp_c!=null?Math.round(j.temp_c)+'°':(j.thermal?String(j.thermal):'—'),(tnum||0)/100,100);
+  drawSG('sg-fan',SYS.fan,j.fan_rpm!=null?Math.round(j.fan_rpm):'—',(j.fan_rpm||0)/6000,6000);
 }
 pollSys();setInterval(pollSys,2500);
 // First-run onboarding — and always open straight to model-install if there's no usable model yet
