@@ -1934,12 +1934,21 @@ function _renderMesh(AC,W,H,big,state){
     AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.4)':'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();
     if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
     const rN=k==='primary'?10:8;
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=busy?'rgba(207,122,46,.12)':'rgba(120,124,132,.08)';AC.fill();
-    AC.strokeStyle=err?'rgba(200,75,49,.8)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=big?0.9:1.4;AC.stroke();
-    // burn ring — % of the designated token budget, intensity-coloured
+    // node body — "breathes" while working (alpha pulse) so active vs idle reads instantly
+    const brez=busy?(0.12+0.06*Math.sin(t*3.2)):0.08;
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=busy?`rgba(207,122,46,${brez})`:'rgba(120,124,132,.08)';AC.fill();
+    AC.strokeStyle=err?'rgba(200,75,49,.85)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=big?0.9:1.4;AC.stroke();
+    // burn ring — % of the designated token budget already spent, intensity-coloured
     const bp=Math.max(0,Math.min((ag.burn||0)/100,1));
     if(bp>0.01){const bc=_intensityRGB(bp);AC.beginPath();AC.arc(x,y,rN+3.5,-Math.PI/2,-Math.PI/2+Math.PI*2*bp);AC.strokeStyle=`rgba(${bc[0]},${bc[1]},${bc[2]},.95)`;AC.lineWidth=big?1.3:2.2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
-    // status core — working=orange (gentle pulse), error=red, idle=neutral steel (NEVER green)
+    // WORKING → a rotating "scanner" arc — unmistakably processing; spin speed tracks token rate
+    // (fast sweep = generating hard, slow = thinking/waiting). What's going on, at a glance.
+    if(busy){const spd=0.9+Math.min((ag.rate||0)/35,3.2),a0=t*spd,sr=rN+(big?5:6);
+      AC.beginPath();AC.arc(x,y,sr,a0,a0+Math.PI*0.5);AC.strokeStyle='rgba(207,122,46,.9)';AC.lineWidth=big?1.1:1.8;AC.lineCap='round';AC.stroke();
+      AC.beginPath();AC.arc(x,y,sr,a0+Math.PI,a0+Math.PI+Math.PI*0.28);AC.strokeStyle='rgba(207,122,46,.45)';AC.stroke();AC.lineCap='butt';}
+    // ERROR → an expanding red ripple — clearly alarming, repeats until cleared
+    if(err){const rp=(t%1.1)/1.1;AC.beginPath();AC.arc(x,y,rN+1+rp*10,0,Math.PI*2);AC.strokeStyle=`rgba(200,75,49,${.55*(1-rp)})`;AC.lineWidth=big?1:1.6;AC.stroke();}
+    // status core — working=orange (breathing), error=red, idle=neutral steel (NEVER green)
     const sc=err?[200,75,49]:busy?[207,122,46]:[120,124,132],pr=busy?2.7+0.7*Math.sin(t*4):2.3;
     AC.beginPath();AC.arc(x,y,pr,0,Math.PI*2);AC.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${busy?1:0.7})`;AC.fill();
     AC.font='600 8px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?'#cf7a2e':'rgba(80,84,92,.85)';
@@ -1994,6 +2003,8 @@ function _renderMesh(AC,W,H,big,state){
   AC.beginPath();AC.arc(cx,cy,vigR+8,0,Math.PI*2);AC.fillStyle=cg;AC.fill();
   AC.beginPath();AC.arc(cx,cy,coreR,0,Math.PI*2);AC.fillStyle='#e9e4db';AC.fill();
   AC.strokeStyle=M.completion>=1?'rgba(47,156,139,.5)':'rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
+  // core activity accent — a slow rotating arc on the hub whenever the system is working
+  if(anyBusy){const a0=t*0.8;AC.beginPath();AC.arc(cx,cy,coreR,a0,a0+Math.PI*0.42);AC.strokeStyle='rgba(207,122,46,.75)';AC.lineWidth=1.6;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
   // center readout — completion %, auto-fit & vertically centered so it never oversets the well
   const _pct=Math.round(M.completion*100)+'%';
   AC.textAlign='center';AC.textBaseline='middle';
