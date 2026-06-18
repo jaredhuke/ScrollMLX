@@ -1119,6 +1119,11 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 /* ── shared full-screen overlays (Ledger, Operatives) ── */
 .fs-overlay{position:fixed;top:var(--hh);left:0;right:0;bottom:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}  /* below the header so the menu bar stays visible */
 .fs-overlay.open{display:flex}
+/* Skills is a centered half-screen modal (not a full-screen takeover) */
+#skills-full.fs-overlay{top:0;background:rgba(26,28,34,.42);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+#skills-full.fs-overlay.open{display:flex}
+#skills-full .sf-modal{display:flex;flex-direction:column;width:min(760px,94vw);height:min(74vh,680px);background:var(--bg);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 24px 70px rgba(26,28,34,.42);overflow:hidden;animation:kdIn .18s ease}
+#skills-full .sf-body{max-width:none;margin:0;padding:18px 20px;gap:20px}
 .fs-hdr{display:flex;align-items:center;gap:14px;padding:15px 22px;border-bottom:1px solid var(--border-mid);flex-shrink:0;background:var(--bg2)}
 .fs-title{font-size:12px;letter-spacing:.22em;color:var(--text);text-transform:uppercase;font-weight:600}
 .fs-sub{font-size:9px;color:var(--text-ghost);letter-spacing:.06em;margin-top:2px}
@@ -1591,7 +1596,8 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
 </div>
 
-<div id="skills-full" class="fs-overlay">
+<div id="skills-full" class="fs-overlay" onclick="if(event.target===this)closeSkillsFull()">
+  <div class="sf-modal">
   <div class="fs-hdr">
     <div><div class="fs-title">Skills &amp; Plugins</div><div class="fs-sub">.md skills the agent follows · tools · MCP connectors</div></div>
     <button class="fs-close" onclick="closeSkillsFull()" aria-label="Close">✕</button>
@@ -1631,6 +1637,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
       <div class="sf-h" style="margin-top:14px">Tool extension <span class="af-note">Python</span></div>
       <div class="sf-row2"><input class="pj-in" id="sf-ext" placeholder="~/path/to/tool.py"/><button class="pj-b" onclick="addExtFull()">Add</button></div>
     </div>
+  </div>
   </div>
 </div>
 <div id="fs-node-tip"></div>

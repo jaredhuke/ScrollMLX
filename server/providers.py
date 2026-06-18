@@ -298,7 +298,9 @@ class redactedProvider(Provider):
         total = 0
         try:
             with tempfile.TemporaryDirectory() as td:
-                proc = subprocess.Popen([binp, "-p", prompt], cwd=td,
+                # `redacted-cli` wraps Claude Code; `-p` leaks the wrapper's banner/greeting into
+                # stdout. `--silent --task <prompt>` runs a clean one-shot and prints only the answer.
+                proc = subprocess.Popen([binp, "--silent", "--task", prompt], cwd=td,
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                         env=env_mod.login_env())
                 fd = proc.stdout.fileno()
