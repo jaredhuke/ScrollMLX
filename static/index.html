@@ -1052,6 +1052,32 @@ select.hb{padding:5px 9px}
 .fs-stats{margin-left:auto;display:flex;gap:22px}
 .fs-close{margin-left:auto;background:none;border:none;color:var(--text-ghost);font-size:17px;line-height:1;cursor:pointer;border-radius:7px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;transition:color .15s,background .15s}
 .fs-close:hover{color:var(--red);background:rgba(210,85,46,.08)}
+/* repo manager */
+.rf-body{flex:1;overflow-y:auto;padding:20px 24px;max-width:1000px;width:100%;margin:0 auto;box-sizing:border-box}
+.rf-list{display:flex;flex-direction:column;gap:14px}
+.rf-repo{border:1px solid var(--border);border-radius:var(--r2);background:var(--bg2);padding:14px 16px}
+.rf-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rf-name{font-size:14px;font-weight:700;color:var(--text)}
+.rf-branch{font-size:11px;color:var(--text-soft);font-family:var(--mono);background:rgba(26,28,34,.05);border:1px solid var(--border);border-radius:5px;padding:2px 8px}
+.rf-branch::before{content:'⎇ '}
+.rf-dirtybadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--red-ink);background:rgba(210,85,46,.12);border-radius:5px;padding:2px 8px}
+.rf-clean{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green-ink);background:rgba(60,140,80,.12);border-radius:5px;padding:2px 8px}
+.rf-commit{font-size:10.5px;color:var(--text-ghost);font-family:var(--mono);margin:8px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rf-remotes{display:flex;flex-direction:column;gap:6px;margin-top:8px;border-top:1px solid var(--border);padding-top:10px}
+.rf-remote{display:flex;align-items:center;gap:10px;font-size:11.5px;flex-wrap:wrap}
+.rf-noremote{color:var(--text-ghost);font-style:italic}
+.rf-host{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-mid);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:5px;padding:2px 8px;min-width:96px;text-align:center}
+.rf-host[data-host="git.epam.com"]{color:#7a5a2a;background:rgba(140,110,70,.12);border-color:rgba(140,110,70,.3)}
+.rf-host[data-host="github.com"]{color:var(--text);background:rgba(26,28,34,.08)}
+.rf-rname{color:var(--text-soft);font-family:var(--mono);font-size:10.5px}
+.rf-sync{display:inline-flex;gap:8px;font-family:var(--mono);font-weight:600}
+.rf-ahead{color:var(--accent-ink)}.rf-behind{color:var(--red-ink)}
+.rf-insync{color:var(--green-ink);font-size:10px}
+.rf-untracked{color:var(--text-ghost);font-size:10px;font-style:italic}
+.rf-racts{margin-left:auto;display:flex;gap:6px}
+.rf-b{background:transparent;border:1px solid var(--border-mid);color:var(--text-soft);font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.04em;padding:5px 12px;border-radius:6px;cursor:pointer;min-height:30px;transition:color .15s,border-color .15s}
+.rf-b:hover{color:var(--accent-ink);border-color:var(--accent)}
+.rf-b.ghost{font-weight:500}
 /* Ledger full-screen */
 .lf-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;padding:20px 22px;overflow:hidden}
 .lf-left{display:flex;flex-direction:column;gap:16px;min-height:0;overflow-y:auto}
@@ -1195,6 +1221,7 @@ select.hb{padding:5px 9px}
   <div id="lpanel">
     <div class="plabel pj-plabel" data-tip="Projects — repos &amp; their runnable servers">
       <span>Projects</span>
+      <button class="pj-mini-add" onclick="openReposFull()" aria-label="Repositories — status &amp; sync across gits" data-tip="Repositories — local + every git remote, status &amp; sync" style="margin-left:auto">⎇</button>
       <button class="pj-mini-add" onclick="openProjects()" aria-label="Add or manage projects" data-tip="Add or manage projects">+</button>
     </div>
     <div id="pj-mini"></div>
@@ -1439,6 +1466,19 @@ select.hb{padding:5px 9px}
     </div>
     <div class="lf-right"><div class="lf-card-h">Prompts <span id="lf-count" class="lf-ct"></span></div><div id="lf-rows"></div></div>
   </div>
+</div>
+
+<div id="repos-full" class="fs-overlay">
+  <div class="fs-hdr">
+    <div><div class="fs-title">Repositories</div><div class="fs-sub">Local + every git remote · status &amp; sync direction</div></div>
+    <div class="fs-stats">
+      <div class="fs-stat"><span class="fs-stat-k">Repos</span><span class="fs-stat-v" id="rf-count">—</span></div>
+      <div class="fs-stat"><span class="fs-stat-k">Dirty</span><span class="fs-stat-v" id="rf-dirty">—</span></div>
+      <div class="fs-stat"><button class="rf-b ghost" onclick="renderReposFull()">Rescan ↻</button></div>
+    </div>
+    <button class="fs-close" onclick="closeReposFull()" aria-label="Close">✕</button>
+  </div>
+  <div class="rf-body"><div id="rf-list" class="rf-list"><div class="ais-empty">Scanning…</div></div></div>
 </div>
 
 <div id="agents-full" class="fs-overlay">
@@ -3419,6 +3459,40 @@ async function analyzeEff(){
 function openLedgerFull(){document.getElementById('ledger-full').classList.add('open');document.addEventListener('keydown',_ledgerEsc);renderLedgerFull()}
 function closeLedgerFull(){document.getElementById('ledger-full').classList.remove('open');document.removeEventListener('keydown',_ledgerEsc)}
 function _ledgerEsc(e){if(e.key==='Escape')closeLedgerFull()}
+// ─── REPO MANAGER — local + multi-git status, sync direction, fetch/pull/push ─────
+function openReposFull(){document.getElementById('repos-full').classList.add('open');document.addEventListener('keydown',_reposEsc);renderReposFull()}
+function closeReposFull(){document.getElementById('repos-full').classList.remove('open');document.removeEventListener('keydown',_reposEsc)}
+function _reposEsc(e){if(e.key==='Escape')closeReposFull()}
+function _syncHTML(rm){
+  if(!rm.tracked)return '<span class="rf-untracked">not fetched yet</span>';
+  if(!rm.ahead&&!rm.behind)return '<span class="rf-insync">✓ in sync</span>';
+  return '<span class="rf-sync">'+(rm.ahead?`<span class="rf-ahead" title="local commits to push">↑${rm.ahead}</span>`:'')+(rm.behind?`<span class="rf-behind" title="remote commits to pull">↓${rm.behind}</span>`:'')+'</span>';
+}
+async function renderReposFull(){
+  const el=document.getElementById('rf-list');if(!el)return;
+  el.innerHTML='<div class="ais-empty">Scanning repositories…</div>';
+  let j;try{j=await fetch('/v1/repos').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  if(!j){el.innerHTML='<div class="ais-empty">Couldn’t scan — restart the server.</div>';return}
+  const repos=(j.repos||[]).filter(r=>r.is_repo);
+  const cc=document.getElementById('rf-count'),dd=document.getElementById('rf-dirty');
+  if(cc)cc.textContent=repos.length;if(dd)dd.textContent=repos.filter(r=>r.dirty>0).length;
+  if(!repos.length){el.innerHTML='<div class="ais-empty">No git repositories among your projects yet.</div>';return}
+  el.innerHTML=repos.map(r=>{
+    const lc=r.last_commit||{},rp=escH(r.path),nm=escH(r.name);
+    const remotes=(r.remotes||[]).length?(r.remotes).map(rm=>{
+      const pull=rm.behind?`<button class="rf-b" onclick="repoAction('${rp}','pull','${escH(rm.name)}')">Pull ↓</button>`:'';
+      const push=(rm.ahead||!rm.tracked)?`<button class="rf-b" onclick="repoAction('${rp}','push','${escH(rm.name)}')">Push ↑</button>`:'';
+      return `<div class="rf-remote"><span class="rf-host" data-host="${escH(rm.host)}">${escH(rm.host)}</span><span class="rf-rname">${escH(rm.name)}</span>${_syncHTML(rm)}<span class="rf-racts"><button class="rf-b" onclick="repoAction('${rp}','fetch','${escH(rm.name)}')">Fetch</button>${pull}${push}</span></div>`;
+    }).join(''):'<div class="rf-remote rf-noremote">no remotes — local only</div>';
+    return `<div class="rf-repo"><div class="rf-top"><span class="rf-name">${nm}</span><span class="rf-branch">${escH(r.branch||'')}</span>${r.dirty?`<span class="rf-dirtybadge">${r.dirty} uncommitted</span>`:'<span class="rf-clean">clean</span>'}<button class="rf-b ghost" style="margin-left:auto" onclick="revealArtifact('${rp}','${nm}')">Finder</button></div>${lc.hash?`<div class="rf-commit">${escH(lc.hash)} · ${escH(lc.subject)} · ${escH(lc.when)}</div>`:''}<div class="rf-remotes">${remotes}</div></div>`;
+  }).join('');
+}
+async function repoAction(path,act,remote){
+  artToast(act+' · '+remote+'…','run');
+  let r;try{r=await fetch('/v1/repos/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,action:act,remote})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok)artToast(act+' · '+remote+' ✓','ok');else artToast(act+' failed · '+((r&&(r.error||r.output))||'unknown').slice(0,80),'err');
+  renderReposFull();
+}
 async function renderLedgerFull(){
   let j;try{j=await fetch('/v1/ledger?project='+encodeURIComponent(S.cwd)).then(r=>r.ok?r.json():null)}catch(_){j=null}
   const s=(j&&j.summary)||{}, e=(j&&j.entries)||[];
