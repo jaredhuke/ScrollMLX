@@ -60,14 +60,20 @@ final class ServerManager: ObservableObject {
         setStep("update", .done)
 
         setStep("services", .running)
-        // If a healthy Scroll server is already on the port (a previous instance, a
-        // manual `uvicorn`, or the relay's server), reuse it instead of launching a
-        // second one and failing with "address already in use".
-        if probeHealthSync() {
-            log("A Scroll server is already running on :\(port) — reusing it.")
-            setStep("services", .done); setStep("model", .done)
-            DispatchQueue.main.async { self.state = .ready }
-            return
+        // Reuse a running server ONLY if it's the SAME code version as this app. A stale or
+        // orphaned old-code server (e.g. left behind by a prior session) is killed and replaced —
+        // otherwise shipped fixes stay invisible because the app latches onto old code.
+        let want = expectedVersion()
+        if let have = probeHealthVersion() {
+            if !want.isEmpty && have == want {
+                log("Reusing the running Scroll server on :\(port) (\(have)).")
+                setStep("services", .done); setStep("model", .done)
+                DispatchQueue.main.async { self.state = .ready }
+                return
+            }
+            log("Stale server on :\(port) (\(have.isEmpty ? "no version" : have)); expected \(want.isEmpty ? "current" : want) — replacing it.")
+            killPort()
+            Thread.sleep(forTimeInterval: 0.4)
         }
         do {
             try launchServer(uvPath: uvPath)
@@ -82,18 +88,36 @@ final class ServerManager: ObservableObject {
         pollHealth()               // model finishes loading in the server's lifespan
     }
 
-    /// Blocking health probe (runs on the boot thread) — true if a server already answers on the port.
-    private func probeHealthSync(timeout: TimeInterval = 1.5) -> Bool {
-        guard let url = URL(string: "http://127.0.0.1:\(port)/health") else { return false }
+    /// Blocking /health probe — returns the server's code version ("" if it reports none, i.e.
+    /// old code), or nil if nothing answers on the port.
+    private func probeHealthVersion(timeout: TimeInterval = 1.5) -> String? {
+        guard let url = URL(string: "http://127.0.0.1:\(port)/health") else { return nil }
         let sem = DispatchSemaphore(value: 0)
-        var ok = false
-        let task = URLSession.shared.dataTask(with: url) { _, resp, _ in
-            if let r = resp as? HTTPURLResponse, r.statusCode == 200 { ok = true }
+        var version: String? = nil
+        let task = URLSession.shared.dataTask(with: url) { data, resp, _ in
+            if let r = resp as? HTTPURLResponse, r.statusCode == 200, let d = data,
+               let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] {
+                version = (j["version"] as? String) ?? ""
+            }
             sem.signal()
         }
         task.resume()
         _ = sem.wait(timeout: .now() + timeout)
-        return ok
+        return version
+    }
+
+    /// The code version this app expects (git short HEAD of the project it launches).
+    private func expectedVersion() -> String {
+        run(["/usr/bin/git", "-C", projectRoot.path, "rev-parse", "--short", "HEAD"])
+            .out.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Kill anything listening on our port — a stale/orphaned server from a prior session.
+    private func killPort() {
+        let out = run(["/bin/sh", "-lc", "lsof -ti tcp:\(port) || true"]).out
+        for pid in out.split(whereSeparator: { $0 == "\n" }).map(String.init) where !pid.isEmpty {
+            _ = run(["/bin/kill", "-9", pid])
+        }
     }
 
     private func locateUV() -> String? {
@@ -193,6 +217,7 @@ final class ServerManager: ObservableObject {
     func stop() {
         process?.terminate()
         process = nil
+        killPort()   // also kill a reused/orphaned server we don't own, so no stale code survives
     }
 
     // MARK: - Helpers

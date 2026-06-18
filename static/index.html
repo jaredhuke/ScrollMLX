@@ -1854,12 +1854,12 @@ function drawAIS(){
 function _renderMesh(AC,W,H,big,state){
   // full-screen zooms out (bigger REF → smaller scale → thinner, more delicate lines) and
   // sits with generous margin (LW thins the structural frame so big reads refined, not heavy).
-  const REF=big?470:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2,LW=big?0.6:1;
+  const REF=big?560:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2,LW=big?0.5:1;
   state.xf={s,ox,oy};const meshHits=state.hits;meshHits.length=0;
   AC.fillStyle=big?'#f0ece4':'#e9e4db';AC.fillRect(0,0,W,H);
   AC.save();AC.translate(ox,oy);AC.scale(s,s);
   const w=REF,h=REF;
-  const cx=w/2,cy=h/2-3,R=Math.min(w,h)/2-(big?70:15),t=Date.now()*0.001;
+  const cx=w/2,cy=h/2-3,R=big?Math.min(w,h)*0.30:Math.min(w,h)/2-15,t=Date.now()*0.001;
   const M=meshMetrics(),anyBusy=AGENT_KEYS.some(k=>S.agents[k].status==='working');
   // abstract outer marks — finer + denser when zoomed out (more detail, slightly irregular)
   const TICKS=big?60:24,MAJ=big?12:6;
@@ -3055,8 +3055,6 @@ function codemieDialog(){
         :`<button class="kd-hero" id="cm-setup">${ICON.terminal}<span>Open Terminal &amp; run setup</span></button>
           <div class="kd-hint">Sign-in opens your browser (EPAM SSO), so setup runs in Terminal — Scroll’s in-app terminal can’t complete the interactive login. Prefer to do it yourself? Click a step to copy it:</div>
           <div class="cmd-list">${stepHTML}</div>`}
-      <div class="kd-epam">${ICON.check}<span>CodeMie is <b>EPAM-private</b> — it belongs on git.epam.com, not GitHub. Save it as a droppable plugin to share with your EPAM group:</span></div>
-      <button class="kd-cmd" id="cm-plugin" type="button">${ICON.copy}<span>Save as EPAM plugin (reveal in Finder)</span></button>
     </div>
     <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary">Re-check</button></div>
   </div>`;
@@ -3066,7 +3064,6 @@ function codemieDialog(){
   ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
   ov.querySelectorAll('.cmd-step').forEach(b=>b.addEventListener('click',()=>copyText(b.dataset.cmd,'Copied — paste into a terminal')));
   const setupBtn=ov.querySelector('#cm-setup');if(setupBtn)setupBtn.onclick=codemieSetup;
-  const plugBtn=ov.querySelector('#cm-plugin');if(plugBtn)plugBtn.onclick=saveCodemiePlugin;
   ov.querySelector('.kd-save').onclick=async()=>{await loadCodemie();const okk=!!(window.CODEMIE&&window.CODEMIE.available);artToast(okk?'CodeMie connected':'CodeMie still not detected',okk?'ok':'err');closeKeyDialog();if(okk)codemieDialog()};
 }
 // One button: write + open the setup script in Terminal.app so the user can finish EPAM SSO
