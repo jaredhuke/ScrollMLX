@@ -50,19 +50,23 @@
   <rect x="3" y="3" width="1018" height="1018" rx="254" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2.5"/>
   <rect x="6" y="6" width="1012" height="1012" rx="251" fill="none" stroke="#5a4a32" stroke-opacity="0.16" stroke-width="2"/>
 
-  <!-- the embossed S -->
-  <g transform="translate(104,129) scale(17)" stroke-linecap="round" stroke-linejoin="round">
+  <!-- circumscribing roundel — the S is enclosed in a circle -->
+  <g filter="url(#dotShadow)"><circle cx="512" cy="512" r="226" fill="#f3eee6" fill-opacity="0.5"/></g>
+  <circle cx="512" cy="512" r="226" fill="none" stroke="#1b1d23" stroke-width="10" stroke-opacity="0.92"/>
+  <circle cx="512" cy="512" r="220.5" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.45"/>
+
+  <!-- the embossed S, centred inside the ring -->
+  <g transform="translate(152,174.5) scale(15)" stroke-linecap="round" stroke-linejoin="round">
     <g filter="url(#sShadow)">
       <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#1b1d23" stroke-width="3.7"/>
     </g>
     <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#41444d" stroke-width="1" stroke-opacity="0.6" transform="translate(0,-0.55)"/>
   </g>
-  <!-- yin-yang eyes — one red dot in the open of each lobe, clear of the S stroke,
-       placed in rotational symmetry about the centre -->
+  <!-- yin-yang eyes — one red dot in the open of each lobe, clear of the S stroke -->
   <g filter="url(#dotShadow)">
-    <circle cx="462" cy="392" r="30" fill="url(#dot)"/>
-    <circle cx="562" cy="632" r="30" fill="url(#dot)"/>
+    <circle cx="468" cy="407" r="27" fill="url(#dot)"/>
+    <circle cx="556" cy="618" r="27" fill="url(#dot)"/>
   </g>
-  <circle cx="454" cy="384" r="9.5" fill="#ffffff" opacity="0.5"/>
-  <circle cx="554" cy="624" r="9.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="460" cy="399" r="8.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="548" cy="610" r="8.5" fill="#ffffff" opacity="0.5"/>
 </svg>
