@@ -32,8 +32,46 @@ def _save_meta(d: dict) -> None:
     _META.write_text(json.dumps(d))
 
 
+# Built-in skills seeded once on first run. The user can edit or delete them; we
+# track a seed flag in meta so a deleted built-in is not silently re-created.
+_BUILTINS = {
+    "plan-and-clarify": """# Plan & Clarify
+
+Set the intention before doing substantial work:
+
+1. Restate the goal in one sentence so we're aligned.
+2. If the request is genuinely ambiguous, or a choice is expensive to reverse, ask
+   1-3 specific clarifying questions and wait for the answer — don't guess.
+3. If it's clear, give a short numbered plan (2-5 steps), then carry it out fully.
+
+Keep it lightweight: for small, unambiguous tasks a single-line plan is enough — don't
+over-ask. Always surface the assumptions you made so they can be corrected.
+""",
+}
+
+
+def _ensure_builtins() -> None:
+    _DIR.mkdir(parents=True, exist_ok=True)
+    m = _meta()
+    seeded = m.get("__seeded__", [])
+    changed = False
+    for slug, body in _BUILTINS.items():
+        if slug in seeded:
+            continue
+        path = _DIR / f"{slug}.md"
+        if not path.exists():
+            path.write_text(body, encoding="utf-8")
+        m.setdefault(slug, {"enabled": True})
+        seeded.append(slug)
+        changed = True
+    if changed:
+        m["__seeded__"] = seeded
+        _save_meta(m)
+
+
 def list_skills() -> list[dict]:
     _DIR.mkdir(parents=True, exist_ok=True)
+    _ensure_builtins()
     m = _meta()
     out = []
     for p in sorted(_DIR.glob("*.md")):

@@ -115,6 +115,7 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
                 cwd=req.cwd,
                 max_tokens=req.max_tokens,
                 temperature=req.temperature,
+                max_iterations=req.max_iterations,
             ):
                 asyncio.run_coroutine_threadsafe(queue.put(event), loop)
         except Exception as exc:
@@ -161,6 +162,7 @@ async def agent_endpoint(req: ChatRequest):
             cwd=req.cwd,
             max_tokens=req.max_tokens,
             temperature=req.temperature,
+            max_iterations=req.max_iterations,
         ):
             if event.type == "token":
                 text_parts.append(event.content)
@@ -639,6 +641,44 @@ async def projects_logs(id: str = "", n: int = 80):
 
 
 # ── Phone relay — start/stop from a UI button (no terminal) ─────────────────────
+
+def _lan_ip() -> str:
+    """Best-effort LAN IP of this Mac (so a phone on the same Wi-Fi can reach it)."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))           # no packets sent; just picks the right interface
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
+@app.get("/v1/relay/qr")
+async def relay_qr():
+    """A QR code (and URL) the user scans with their phone to open Scroll over the LAN."""
+    ip = _lan_ip()
+    url = f"http://{ip}:{PORT}/"
+    on_lan = not ip.startswith("127.")
+    qr_svg = None
+    try:
+        import re as _re, segno
+        raw = segno.make(url, error="m").svg_inline(scale=6, border=2,
+                                                    dark="#1a1c22", light=None)
+        # add a viewBox + drop fixed width/height so the SVG scales to its box in CSS
+        m = _re.match(r'<svg[^>]*\bwidth="([0-9.]+)"[^>]*\bheight="([0-9.]+)"', raw)
+        if m:
+            w, h = m.group(1), m.group(2)
+            raw = _re.sub(r'(<svg\b)', rf'\1 viewBox="0 0 {w} {h}"', raw, count=1)
+            raw = _re.sub(r'\swidth="[0-9.]+"', "", raw, count=1)
+            raw = _re.sub(r'\sheight="[0-9.]+"', "", raw, count=1)
+        qr_svg = raw
+    except Exception:
+        qr_svg = None
+    return {"ok": True, "url": url, "lan_ip": ip, "port": PORT,
+            "on_lan": on_lan, "qr": qr_svg}
+
 
 @app.get("/v1/relay/status")
 async def relay_status():
