@@ -636,6 +636,27 @@ async def projects_list():
     return {"projects": projects.list_projects()}
 
 
+@app.get("/v1/repos")
+async def repos_list():
+    """Git status for every project + the app repo, across all remotes (multiple gits)."""
+    from server import projects, repos
+    paths = [p.get("path") for p in projects.list_projects() if p.get("path")]
+    paths.append(str(projects.app_dir()))
+    loop = asyncio.get_event_loop()
+    data = await loop.run_in_executor(None, repos.scan, paths)
+    return {"repos": data}
+
+
+@app.post("/v1/repos/action")
+async def repos_action(payload: dict):
+    """fetch / pull / push one repo+remote — explicit UI action only."""
+    from server import repos
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, repos.action, payload.get("path", ""), payload.get("action", ""),
+        payload.get("remote", ""), payload.get("branch", ""))
+
+
 @app.post("/v1/projects/add")
 async def projects_add(payload: dict):
     from server import projects
