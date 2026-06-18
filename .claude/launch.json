@@ -6,6 +6,12 @@
       "runtimeExecutable": "uv",
       "runtimeArgs": ["run", "uvicorn", "server.main:app", "--port", "8080"],
       "port": 8080
+    },
+    {
+      "name": "scroll-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8231", "--directory", "static"],
+      "port": 8231
     }
   ]
 }

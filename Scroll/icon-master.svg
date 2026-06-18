@@ -1,9 +1,67 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- ScrollMLX app icon — an S (Scroll) in ink with a dot in each bowl, the dots the one mark of colour -->
-  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#efece4"/>
-  <g transform="translate(56,56) scale(19)" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#1a1c22" stroke-width="3.8"/>
-    <circle cx="22.5" cy="13.5" r="2.6" fill="#d2552e" stroke="none"/>
-    <circle cx="25.5" cy="31.5" r="2.6" fill="#d2552e" stroke="none"/>
+  <!-- ScrollMLX app icon — macOS-style layered glass: rounded squircle, a raised
+       glass medallion, and the embossed S (Scroll) with a glossy red dot in each bowl -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5f1e9"/>
+      <stop offset="0.55" stop-color="#ece6db"/>
+      <stop offset="1" stop-color="#ddd5c6"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.5" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="0.5" stop-color="#fbf8f2" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#e7e0d3" stop-opacity="0.32"/>
+    </linearGradient>
+    <radialGradient id="dot" cx="0.36" cy="0.32" r="0.8">
+      <stop offset="0" stop-color="#ec8a5c"/>
+      <stop offset="0.45" stop-color="#d2552e"/>
+      <stop offset="1" stop-color="#b5421f"/>
+    </radialGradient>
+    <filter id="plateShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#3a3024" flood-opacity="0.22"/>
+    </filter>
+    <filter id="sShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#2a2218" flood-opacity="0.30"/>
+    </filter>
+    <filter id="dotShadow" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#5a1e0c" flood-opacity="0.35"/>
+    </filter>
+    <clipPath id="round"><rect x="0" y="0" width="1024" height="1024" rx="230"/></clipPath>
+  </defs>
+
+  <!-- background squircle -->
+  <g clip-path="url(#round)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sheen)"/>
+    <!-- bottom grounding shade -->
+    <rect x="0" y="760" width="1024" height="264" fill="#cfc6b5" opacity="0.18"/>
   </g>
+  <!-- subtle inner edge for the glass body -->
+  <rect x="3" y="3" width="1018" height="1018" rx="228" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="2.5"/>
+
+  <!-- raised glass medallion (the separate part) -->
+  <g filter="url(#plateShadow)">
+    <rect x="214" y="206" width="596" height="596" rx="156" fill="url(#plate)" stroke="#ffffff" stroke-opacity="0.65" stroke-width="2"/>
+  </g>
+  <rect x="232" y="222" width="560" height="300" rx="140" fill="#ffffff" opacity="0.12"/>
+
+  <!-- the embossed S with a glossy red dot in each bowl -->
+  <g transform="translate(104,129) scale(17)" stroke-linecap="round" stroke-linejoin="round">
+    <g filter="url(#sShadow)">
+      <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#1b1d23" stroke-width="3.7"/>
+    </g>
+    <!-- top highlight stroke for emboss -->
+    <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#3a3c44" stroke-width="1.1" stroke-opacity="0.55" transform="translate(0,-0.5)"/>
+  </g>
+  <g filter="url(#dotShadow)">
+    <circle cx="486" cy="358" r="44" fill="url(#dot)"/>
+    <circle cx="537" cy="664" r="44" fill="url(#dot)"/>
+  </g>
+  <circle cx="474" cy="345" r="13" fill="#ffffff" opacity="0.5"/>
+  <circle cx="525" cy="651" r="13" fill="#ffffff" opacity="0.5"/>
 </svg>
