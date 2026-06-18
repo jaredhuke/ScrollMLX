@@ -529,6 +529,8 @@ async def provider_plugins_install(payload: dict):
 @app.post("/v1/provider-plugins/import")
 async def provider_plugins_import(payload: dict):
     from server import provider_plugins
+    if payload.get("content"):                       # a .md dragged into the chat → content, not a path
+        return provider_plugins.import_text(payload["content"])
     return provider_plugins.import_path(payload.get("path", ""))
 
 

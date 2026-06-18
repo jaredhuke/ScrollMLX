@@ -211,6 +211,19 @@ def install(plugin_id: str) -> dict:
     return {"ok": False, "error": f"unknown library id {plugin_id!r}"}
 
 
+def import_text(raw: str) -> dict:
+    """Install a provider plugin from raw .md CONTENT (e.g. a file dragged into the chat —
+    the browser hands us bytes, not a path)."""
+    spec = _parse(raw or "")
+    if not spec:
+        return {"ok": False, "error": "not a valid provider plugin (need frontmatter: type: provider, id, kind)"}
+    _DIR.mkdir(parents=True, exist_ok=True)
+    dest = _DIR / (_slug(spec["id"]) + ".md")
+    dest.write_text(raw, encoding="utf-8")
+    register_all()
+    return {"ok": True, "id": spec["id"], "name": spec.get("name", spec["id"]), "needs_secret": bool(spec.get("secret_env"))}
+
+
 def import_path(raw: str) -> dict:
     p = Path(raw or "").expanduser()
     if not p.exists() or p.suffix.lower() not in (".md", ".markdown"):
