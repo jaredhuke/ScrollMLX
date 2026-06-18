@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import uuid
 from typing import Generator, Any
 
@@ -18,6 +19,11 @@ try:
 except Exception:  # pragma: no cover
     mx = None
 from server.config import SYSTEM_PROMPT
+
+# Serialize ALL local MLX generation. mlx_lm/Metal is NOT safe for concurrent generate calls on
+# the same device — two overlapping runs (a queued message, the background narration/clarify call,
+# the local provider, dual primary+critic) hard-crash the process. One generation at a time.
+_GEN_LOCK = threading.Lock()
 
 
 def free_mem() -> None:
@@ -223,7 +229,22 @@ def _trim_history(history: list[dict]) -> list[dict]:
     return head + rest
 
 
-def run_agent(
+def run_agent(*args, **kwargs) -> Generator[AgentEvent, None, None]:
+    """Public entry — serializes local generation so two runs never hit Metal at once.
+
+    A short blocking wait covers the common case (a quick background gen finishing); a busy
+    long run (e.g. Max effort) rejects the new request cleanly instead of crashing the process.
+    The lock is released even if the consumer abandons the generator (GeneratorExit → finally)."""
+    if not _GEN_LOCK.acquire(timeout=1.0):
+        yield ErrorEvent(message="The local model is busy with another request — it runs one at a time. Try again in a moment.")
+        return
+    try:
+        yield from _run_agent(*args, **kwargs)
+    finally:
+        _GEN_LOCK.release()
+
+
+def _run_agent(
     messages: list[dict],
     cwd: str,
     max_tokens: int,
