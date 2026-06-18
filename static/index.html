@@ -721,6 +721,11 @@ select.hb{padding:5px 9px}
 #kd-input::placeholder{color:var(--text-ghost);letter-spacing:normal}
 .kd-eye{position:absolute;right:6px;background:none;border:none;color:var(--text-ghost);cursor:pointer;padding:6px;display:flex}.kd-eye:hover{color:var(--accent)}.kd-eye .ic{width:15px;height:15px}
 .kd-note{display:flex;align-items:flex-start;gap:7px;margin-top:12px;font-size:11px;line-height:1.55;color:var(--text-soft)}
+.cmd-list{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.cmd-step{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-soft)}
+.cmd-step>span{flex-shrink:0;width:16px;height:16px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cmd-step code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:5px;padding:2px 7px}
+.cmd-step i{color:var(--text-ghost);font-style:normal;font-size:10px}
 .kd-note .ic{width:13px;height:13px;color:rgba(60,100,60,.9);flex-shrink:0;margin-top:2px}
 .kd-getkey{display:inline-flex;align-items:center;gap:6px;margin-top:13px;font-size:11.5px;color:var(--accent);text-decoration:none}
 .kd-getkey .ic{width:13px;height:13px}.kd-getkey:hover span{border-bottom:1px solid var(--accent)}
@@ -1669,8 +1674,8 @@ function meshMetrics(){
   return{completion,errorRate,drift,vigilance,friction,vigEdits:(typeof VIG!=='undefined'?VIG.edits:0),vigChallenges:(typeof VIG!=='undefined'?VIG.challenges:0),vigWhy:(typeof vigWhyText==='function')?vigWhyText():'',interactions:tc,sources:Object.keys(_srcMap()).length+1};
 }
 // Cloud operative — present when an escalation provider has a key. Code-only access.
-const _CLOUD_META={anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
-const _CLOUD_ORDER=['anthropic','openai','gemini','groq','cerebras','openrouter'];
+const _CLOUD_META={codemie:['CODEMIE','Claude Opus · CodeMie'],anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
+const _CLOUD_ORDER=['codemie','anthropic','openai','gemini','groq','cerebras','openrouter'];
 function cloudAgentKey(id){return 'cloud:'+id}
 // Each keyed cloud provider is its own operative object in S.agents['cloud:<id>'].
 function ensureCloudAgent(id){
@@ -2737,16 +2742,50 @@ async function checkHealth(){
 }
 window.CLOUD={};
 async function refreshKeys(){try{const j=await fetch('/v1/keys').then(r=>r.json());window.CLOUD=j.providers||{}}catch(_){window.CLOUD={}}
-  // If the chosen cloud model has no key but another does, prefer a keyed one (free first).
-  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}
+  if(window.CODEMIE&&window.CODEMIE.available)window.CLOUD.codemie=true;   // CodeMie is CLI/SSO, not key-based — keep it surfaced
+  // If the chosen cloud model has no key but another does, prefer a keyed one (CodeMie first).
+  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['codemie','groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}
   // surface keyed providers as operatives immediately (left cards + right connectors)
   try{syncCloudAgent();renderCards();renderAISInfo()}catch(_){}}
+// CodeMie — Claude via EPAM's CLI/SSO (no API key). Detect the CLI and surface it as a provider.
+async function loadCodemie(){
+  let s;try{s=await fetch('/v1/codemie/status').then(r=>r.ok?r.json():null)}catch(_){s=null}
+  window.CODEMIE=s||{available:false};
+  window.CLOUD=window.CLOUD||{};
+  if(window.CODEMIE.available)window.CLOUD.codemie=true;else delete window.CLOUD.codemie;
+  try{syncCloudAgent();renderCards();renderAISInfo();updateModelsCount()}catch(_){}
+}
+function codemieDialog(){
+  closeKeyDialog();
+  const ok=window.CODEMIE&&window.CODEMIE.available,ver=(window.CODEMIE&&window.CODEMIE.version)||'';
+  const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
+  ov.innerHTML=`<div class="kd" role="dialog" aria-modal="true" aria-label="CodeMie setup">
+    <div class="kd-head"><span class="kd-title">Connect CodeMie · Claude Opus</span><button class="kd-x" title="Close" aria-label="Close">✕</button></div>
+    <div class="kd-body">
+      <div class="kd-note">${ICON.check}<span>${ok?('Detected '+escH(ver?('· codemie '+ver):'')+' — routes Claude through EPAM CodeMie (SSO + corporate budget). No API key needed; nothing leaves EPAM infra.'):'Not detected. CodeMie runs Claude through EPAM’s CLI — set it up once in a terminal:'}</span></div>
+      ${ok?'<div class="kd-note" style="margin-top:8px">If a request fails with an auth error, your SSO expired (24h) — run <b>codemie profile login</b> in a terminal.</div>'
+        :`<div class="cmd-list">
+          <div class="cmd-step"><span>1</span><code>npm install -g @codemieai/code</code></div>
+          <div class="cmd-step"><span>2</span><code>codemie setup</code><i>(EPAM SSO + pick Claude Opus)</i></div>
+          <div class="cmd-step"><span>3</span><code>codemie install claude</code></div>
+          <div class="cmd-step"><span>4</span><code>codemie profile login</code><i>(re-auth every 24h)</i></div>
+        </div>`}
+    </div>
+    <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary">Re-check</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('.kd-x').onclick=closeKeyDialog;
+  ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
+  ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
+  ov.querySelector('.kd-save').onclick=async()=>{await loadCodemie();const okk=!!(window.CODEMIE&&window.CODEMIE.available);artToast(okk?'CodeMie connected':'CodeMie still not detected',okk?'ok':'err');closeKeyDialog();if(okk)codemieDialog()};
+}
 
 // ─── SECURE KEY DIALOG — paste a key once; it goes straight to the OS keychain ──
-const PROV_LABEL={groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
+const PROV_LABEL={codemie:'CodeMie',groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
 function keyDialog(provider){
   if(typeof closeModels==='function')closeModels();   // don't leave the model popover lingering behind the dialog
   provider=(provider||'anthropic').toLowerCase();
+  if(provider==='codemie'){return codemieDialog();}   // CodeMie is CLI/SSO, not an API key
   const name=PROV_LABEL[provider]||provider, link=KEYLINKS[provider];
   const free=['groq','openrouter','cerebras','gemini'].includes(provider);
   const mac=/Mac/i.test(navigator.platform||navigator.userAgent||'');
@@ -2862,10 +2901,10 @@ async function escalate(){
   if(!S.msgs.some(m=>m.role==='assistant')){notify('Send a message first — escalate hands that reply to a cloud model','err');return}
   // use the selected cloud model if it's keyed, else the first keyed one; else prompt for a key
   let prov=(typeof SET!=='undefined'&&SET.cloud&&window.CLOUD&&window.CLOUD[SET.cloud])?SET.cloud:null;
-  if(!prov)prov=['anthropic','openai','gemini','groq','cerebras','openrouter'].find(p=>window.CLOUD&&window.CLOUD[p])||null;
-  if(!prov){notify('No cloud model connected — add a key to escalate','err');keyDialog('anthropic');return}
+  if(!prov)prov=['codemie','anthropic','openai','gemini','groq','cerebras','openrouter'].find(p=>window.CLOUD&&window.CLOUD[p])||null;
+  if(!prov){notify('No cloud model connected — set up CodeMie or add a key to escalate','err');codemieDialog();return}
   if(typeof SET!=='undefined')SET.cloud=prov;
-  const provName={anthropic:'Claude',openai:'GPT-4o',gemini:'Gemini',groq:'Groq · Llama 3.3',openrouter:'OpenRouter · Llama 3.3',cerebras:'Cerebras · Llama 3.3'}[prov]||prov;
+  const provName={codemie:'CodeMie · Claude Opus',anthropic:'Claude',openai:'GPT-4o',gemini:'Gemini',groq:'Groq · Llama 3.3',openrouter:'OpenRouter · Llama 3.3',cerebras:'Cerebras · Llama 3.3'}[prov]||prov;
   const _rq=reqStart('escalate · '+provName);
   const dest=lastThreadBody();
   dest.appendChild(buildMsgEl({type:'phase',phase:'escalation',model:provName}));
@@ -3700,7 +3739,9 @@ function renderSettings(){
     return`<div class="sm-row"><span class="sm-dot ${m.key?'cloud':'local'}"></span><div class="sm-meta"><div class="sm-label">${escH(m.label)}${m.free?'<span class="sm-free">free</span>':''}</div><div class="sm-host">${escH(m.host)} · ${escH(m.role)}</div></div>${needsKey?`<button class="icon-btn primary sm-addkey" onclick="keyDialog('${m.key}')">${ICON.plus}Add key</button>`:`<button class="icon-btn ${isActive?'':'primary'} sm-use" data-prov="${m.provider}" ${isActive?'disabled':''}>${isActive?'Active':'Use'}</button>`}</div>`;
   }).join('');
   document.querySelectorAll('.sm-use').forEach(b=>b.addEventListener('click',()=>useModel(b.dataset.prov)));
-  document.getElementById('set-keys').innerHTML=['groq','openrouter','cerebras','gemini','anthropic','openai'].map(p=>{
+  const cmOk=!!(window.CODEMIE&&window.CODEMIE.available);
+  const cmRow=`<div class="sk-row"><span class="sm-dot ${cmOk?'ready':''}"></span><span class="sk-name" style="text-transform:none">CodeMie · Claude Opus <span class="ds-sub">EPAM SSO · no key</span></span><span class="sk-actions">${cmOk?'<span class="sk-set">✓ detected</span>':''}<button class="icon-btn ${cmOk?'':'primary'} sk-add" onclick="codemieDialog()">${cmOk?'Manage':ICON.plus+'Set up'}</button></span></div>`;
+  document.getElementById('set-keys').innerHTML=cmRow+['groq','openrouter','cerebras','gemini','anthropic','openai'].map(p=>{
     const has=keys[p],link=KEYLINKS[p];
     const freeKey=['groq','openrouter','cerebras','gemini'].includes(p);
     const right=has?`<span class="sk-set">✓ set</span><button class="sk-remove" title="Remove key" onclick="removeKey('${p}')">✕</button>`:`<span class="sk-actions">${link?`<a class="sk-link" href="${link}" target="_blank" rel="noopener">${freeKey?'get free key ↗':'get key ↗'}</a>`:''}<button class="icon-btn primary sk-add" onclick="keyDialog('${p}')">${ICON.plus}Add key</button></span>`;
@@ -3739,7 +3780,7 @@ msgIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){const p=do
 msgIn.addEventListener('input',()=>{msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px';updateAtPop()});
 msgIn.addEventListener('blur',()=>setTimeout(()=>document.getElementById('at-pop')?.setAttribute('hidden',''),140));
 // @-mention autocomplete — discoverable model targeting
-const _AT_OPTS=[['all','Everyone'],['local','Local · 32B'],['claude','Claude'],['gpt','GPT-4o'],['gemini','Gemini'],['groq','Groq'],['cerebras','Cerebras'],['openrouter','OpenRouter']];
+const _AT_OPTS=[['all','Everyone'],['local','Local · 32B'],['codemie','CodeMie'],['claude','Claude'],['gpt','GPT-4o'],['gemini','Gemini'],['groq','Groq'],['cerebras','Cerebras'],['openrouter','OpenRouter']];
 function _atToken(){const v=msgIn.value,c=msgIn.selectionStart||0;const m=/(^|\s)@([a-z0-9_.-]*)$/i.exec(v.slice(0,c));return m?{word:m[2],start:c-m[2].length-1,end:c}:null}
 function updateAtPop(){const p=document.getElementById('at-pop');if(!p)return;const t=_atToken();
   if(!t){p.setAttribute('hidden','');return}
@@ -3854,14 +3895,14 @@ async function send(){const raw=msgIn.value.trim();if(!raw)return;
   await streamRun(text,th);
 }
 // ─── MULTI-MODEL — tag several models, get a response from each, side by side ───
-const _MODEL_LABEL={mlx:'Local · 32B',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
+const _MODEL_LABEL={mlx:'Local · 32B',codemie:'CodeMie',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
 function fanoutModels(){
   const sel=S.fanout&&S.fanout.length?S.fanout:['mlx'];
   return sel.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id])).map(id=>({id,label:_MODEL_LABEL[id]||id}));
 }
 // @-targeting — "@claude fix this" routes only to Claude; "@all" to every available model.
-const _MODEL_ALIAS={claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
-function _availIds(){return ['mlx'].concat(['anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id]))}
+const _MODEL_ALIAS={codemie:'codemie',cdme:'codemie',epam:'codemie',opus:'codemie',claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
+function _availIds(){return ['mlx'].concat(['codemie','anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id]))}
 function parseTargets(text){
   const re=/(^|\s)@([a-z0-9_.-]+)/gi;let m,all=false;const ids=new Set(),strip=[];
   while((m=re.exec(text))){const key=m[2].toLowerCase().replace(/[._-]/g,'');
@@ -3873,7 +3914,7 @@ function parseTargets(text){
 }
 function _modelCatalog(){
   const out=[{id:'mlx',label:'Local · Qwen 32B',sub:'on-device · full context',avail:true}];
-  [['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','paid'],['openai','GPT-4o','paid']]
+  [['codemie','CodeMie','Claude Opus · EPAM SSO'],['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','direct key · paid'],['openai','GPT-4o','paid']]
     .forEach(([id,label,sub])=>out.push({id,label,sub,avail:!!(window.CLOUD&&window.CLOUD[id])}));
   return out;
 }
@@ -4225,7 +4266,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray();
-loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
+loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadCodemie(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────

@@ -257,9 +257,65 @@ class OpenAICompatProvider(Provider):
         yield DoneEvent(total_tokens=total)
 
 
+# ── CodeMie (EPAM) — Claude via the corporate CLI/SSO, no API key ──────────────
+
+class CodeMieProvider(Provider):
+    """Routes Claude (Opus) through EPAM CodeMie's `codemie-claude` CLI in print mode.
+    Auth is the CLI's own SSO session (no API key); spending goes to the corporate budget.
+    Runs in a throwaway working dir so an escalation answer can't touch the user's files —
+    the code it needs is already in the prompt."""
+    id = "codemie"
+    display_name = "CodeMie · Claude"
+
+    def __init__(self, model: str = "claude-opus (CodeMie)") -> None:
+        self.model = model
+
+    @staticmethod
+    def _bin() -> str | None:
+        import shutil
+        return shutil.which("codemie-claude")
+
+    def available(self) -> bool:
+        return self._bin() is not None
+
+    def stream(self, messages, max_tokens, temperature, tools=None):
+        import subprocess, tempfile
+        binp = self._bin()
+        if not binp:
+            yield ErrorEvent(message="CodeMie CLI not found — install it (npm i -g @codemieai/code; codemie install claude) then sign in (codemie profile login)")
+            return
+        parts = []
+        for m in messages:
+            role, c = m.get("role", "user"), (m.get("content") or "").strip()
+            if not c:
+                continue
+            parts.append(c if role in ("system", "user") else f"Assistant (earlier): {c}")
+        prompt = "\n\n".join(parts) or "Respond."
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                r = subprocess.run([binp, "-p", prompt], cwd=td, capture_output=True,
+                                   text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            yield ErrorEvent(message="CodeMie timed out after 600s")
+            return
+        except Exception as exc:
+            yield ErrorEvent(message=f"CodeMie error: {exc}")
+            return
+        out = (r.stdout or "").strip()
+        if r.returncode != 0 and not out:
+            err = (r.stderr or "").strip()[:400]
+            yield ErrorEvent(message="CodeMie failed: " + (err or "non-zero exit") +
+                             " — your SSO may have expired (run: codemie profile login)")
+            return
+        for i in range(0, len(out), 400):   # chunk so the UI fills progressively
+            yield TokenEvent(content=out[i:i + 400])
+        yield DoneEvent(total_tokens=max(1, len(out) // 4))
+
+
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 _REGISTRY: dict[str, Provider] = {
+    "codemie":    CodeMieProvider(),
     "mlx":        MLXProvider(),
     "openai":     OpenAIProvider(),
     "anthropic":  AnthropicProvider(),
