@@ -287,9 +287,30 @@ async def get_model():
     }
 
 
+def _code_version() -> str:
+    """A stable stamp of the code THIS process is running (captured once at import).
+
+    The app uses it to detect a stale/orphaned server on the port and relaunch instead of
+    reusing old code — the bug that made shipped fixes invisible until a manual kill."""
+    try:
+        import subprocess
+        root = str(_STATIC.parent)
+        r = subprocess.run(["git", "-C", root, "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=4)
+        v = (r.stdout or "").strip()
+        if v:
+            return v
+    except Exception:
+        pass
+    return "dev"
+
+
+_CODE_VERSION = _code_version()
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "loaded_slots": list(agent_mod._registry.keys())}
+    return {"status": "ok", "version": _CODE_VERSION, "loaded_slots": list(agent_mod._registry.keys())}
 
 
 # ── Provider endpoints ────────────────────────────────────────────────────────
