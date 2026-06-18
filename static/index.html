@@ -72,9 +72,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #spill-dot.err{background:#8a2818}
 #spill-lbl{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;font-weight:500}
 #hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-#sysbar{margin-left:auto;display:flex;align-items:center;gap:15px;flex-shrink:1;min-width:0;overflow:hidden}
-.sg{display:flex;flex-direction:column;gap:2px;width:56px}
-.sg-spark{width:56px;height:15px;display:block}
+#sysbar{margin-left:auto;display:flex;align-items:center;gap:20px;flex-shrink:0}
+.sg{display:flex;flex-direction:column;gap:3px;width:58px;flex-shrink:0}
+.sg-spark{width:58px;height:15px;display:block}
 .sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
 .sg-k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
 .sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
@@ -1699,6 +1699,8 @@ function syncCloudAgent(){
 let meshHits=[];
 // shrink a canvas font until the text fits within maxW — never lets the center number overset
 function _fitPx(ctx,text,maxW,startPx,weight){weight=weight||'300';let px=Math.max(8,startPx|0);for(;px>8;px--){ctx.font=weight+' '+px+'px -apple-system,system-ui,sans-serif';if(ctx.measureText(text).width<=maxW)break}return px}
+// rounded-rect path (artifacts on the mesh draw as rounded rectangles)
+function _rrectPath(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 function drawAIS(){
   const d=window.devicePixelRatio||1;
   AC.setTransform(d,0,0,d,0,0);
@@ -1748,49 +1750,60 @@ function drawAIS(){
     AC.beginPath();AC.moveTo(mx,my);AC.lineTo(ox,oy);AC.strokeStyle=dr>0.5?'rgba(200,75,49,.5)':'rgba(80,74,66,.45)';AC.lineWidth=1.5;AC.stroke();
     AC.beginPath();AC.arc(ox,oy,1.6,0,Math.PI*2);AC.fillStyle=dr>0.5?'rgba(200,75,49,.7)':'rgba(80,74,66,.55)';AC.fill();});
   const coreR=Math.min(26,R*0.28);
-  // ── skills feeding the workflow — small teal nodes wired to the core (lower-left arc) ──
-  const _sk=(S.skills||[]).slice(0,6);
-  _sk.forEach((sk,i)=>{const a=Math.PI*0.60+(_sk.length>1?(i/(_sk.length-1)):0)*Math.PI*0.78;
-    const rr=coreR+Math.max(22,R*0.18),x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
-    AC.beginPath();AC.moveTo(cx+Math.cos(a)*(coreR+3),cy+Math.sin(a)*(coreR+3));AC.lineTo(x,y);AC.strokeStyle='rgba(47,156,139,.28)';AC.lineWidth=1;AC.stroke();
-    AC.beginPath();AC.arc(x,y,2.3,0,Math.PI*2);AC.fillStyle='rgba(47,156,139,.8)';AC.fill();
-    AC.font='500 6px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(26,28,34,.42)';
-    AC.fillText(sk.length>11?sk.slice(0,10)+'…':sk,x+(Math.cos(a)<0?-5:5),y+2);
-    meshHits.push({x,y,r:7,key:'__skills__'});});
-  // ── operatives: ACTIVE on the inner ring (warm), INACTIVE parked at the right edge (cool, click to enlist) ──
+  // ── operatives: ACTIVE on the inner ring, IDLE parked at the right edge (cool, never green) ──
+  // Each active operative shows a circular STATUS dot + a BURN ring (% of the token budget,
+  // intensity-coloured grey→blue→orange→red). No decorative glow — every mark means something.
   const _ops=cardKeys(),_act=_ops.filter(_opActive),_idle=_ops.filter(k=>!_opActive(k));
-  _act.forEach((k,idx)=>{const ag=S.agents[k],busy=ag.status==='working';
+  let _primaryPos=null;
+  _act.forEach((k,idx)=>{const ag=S.agents[k],busy=ag.status==='working',err=ag.status==='error';
     const a=-Math.PI/2+(_act.length>1?(idx/_act.length)*Math.PI*2:0),rr=R*0.56;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,sx=cx+Math.cos(a)*(coreR+3),sy=cy+Math.sin(a)*(coreR+3);
-    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.45)':'rgba(207,122,46,.2)';AC.lineWidth=busy?1.5:1;AC.stroke();
-    if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.5,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
-    const rN=k==='primary'?9:7;
-    if(busy){const br=.5+.5*Math.sin(t*3+idx);const g=AC.createRadialGradient(x,y,0,x,y,rN+12+br*5);g.addColorStop(0,`rgba(207,122,46,${.12+br*.08})`);g.addColorStop(1,'rgba(207,122,46,0)');AC.beginPath();AC.arc(x,y,rN+12+br*5,0,Math.PI*2);AC.fillStyle=g;AC.fill();}
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.12)';AC.fill();
-    AC.strokeStyle=ag.status==='error'?'rgba(138,40,24,.6)':'rgba(207,122,46,.8)';AC.lineWidth=1.5;AC.stroke();
-    AC.beginPath();AC.arc(x,y,busy?3.5:2.4,0,Math.PI*2);AC.fillStyle='#cf7a2e';AC.fill();
-    AC.font='600 8px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle='#cf7a2e';
-    AC.fillText(ag.label,x,a<0?y-rN-7:y+rN+12);
-    meshHits.push({x,y,r:rN+8,key:k});});
-  if(_idle.length){AC.save();AC.setLineDash([3,5]);AC.beginPath();AC.moveTo(w-32,18);AC.lineTo(w-32,h-18);AC.strokeStyle='rgba(96,116,140,.28)';AC.lineWidth=1;AC.stroke();AC.restore();}
+    // spoke to core — warm + a travelling pip while working, otherwise a quiet neutral link
+    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.4)':'rgba(120,124,132,.18)';AC.lineWidth=busy?1.5:1;AC.stroke();
+    if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
+    const rN=k==='primary'?10:8;
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=busy?'rgba(207,122,46,.12)':'rgba(120,124,132,.08)';AC.fill();
+    AC.strokeStyle=err?'rgba(200,75,49,.8)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=1.4;AC.stroke();
+    // burn ring — % of the designated token budget, intensity-coloured
+    const bp=Math.max(0,Math.min((ag.burn||0)/100,1));
+    if(bp>0.01){const bc=_intensityRGB(bp);AC.beginPath();AC.arc(x,y,rN+3.5,-Math.PI/2,-Math.PI/2+Math.PI*2*bp);AC.strokeStyle=`rgba(${bc[0]},${bc[1]},${bc[2]},.95)`;AC.lineWidth=2.2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
+    // status core — working=orange (gentle pulse), error=red, idle=neutral steel (NEVER green)
+    const sc=err?[200,75,49]:busy?[207,122,46]:[120,124,132],pr=busy?2.7+0.7*Math.sin(t*4):2.3;
+    AC.beginPath();AC.arc(x,y,pr,0,Math.PI*2);AC.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${busy?1:0.7})`;AC.fill();
+    AC.font='600 8px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?'#cf7a2e':'rgba(80,84,92,.85)';
+    AC.fillText(ag.label,x,a<0?y-rN-7:y+rN+13);
+    meshHits.push({x,y,r:rN+9,key:k});
+    if(k==='primary')_primaryPos={x,y,rN,a};
+  });
+  // ── skills wired to the AGENT that uses them (the author), lit warm while in use ──
+  const _sk=(S.skills||[]).slice(0,6),_anchor=_primaryPos||{x:cx,y:cy-coreR,rN:coreR,a:-Math.PI/2};
+  _sk.forEach((sk,i)=>{const spread=Math.PI*0.95,a=_anchor.a+(-spread/2+(_sk.length>1?(i/(_sk.length-1)):0.5)*spread);
+    const rr=_anchor.rN+15,x=_anchor.x+Math.cos(a)*rr,y=_anchor.y+Math.sin(a)*rr,live=anyBusy;
+    AC.beginPath();AC.moveTo(_anchor.x+Math.cos(a)*(_anchor.rN+2),_anchor.y+Math.sin(a)*(_anchor.rN+2));AC.lineTo(x,y);
+    AC.strokeStyle=live?'rgba(207,122,46,.32)':'rgba(120,124,132,.22)';AC.lineWidth=1;AC.stroke();
+    AC.beginPath();AC.arc(x,y,2.1,0,Math.PI*2);AC.fillStyle=live?'rgba(207,122,46,.85)':'rgba(120,124,132,.6)';AC.fill();
+    AC.font='500 6px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(80,84,92,.6)';
+    AC.fillText(sk.length>10?sk.slice(0,9)+'…':sk,x+(Math.cos(a)<0?-4:4),y+2);
+    meshHits.push({x,y,r:7,key:'__skills__'});});
+  if(_idle.length){AC.save();AC.setLineDash([3,5]);AC.beginPath();AC.moveTo(w-32,18);AC.lineTo(w-32,h-18);AC.strokeStyle='rgba(120,124,132,.26)';AC.lineWidth=1;AC.stroke();AC.restore();}
   _idle.forEach((k,idx)=>{const ag=S.agents[k];
     const a=-Math.PI*0.28+(_idle.length>1?(idx/(_idle.length-1)):0.5)*Math.PI*0.56,rr=R*0.86;
     const x=Math.min(cx+Math.cos(a)*rr,w-16),y=cy+Math.sin(a)*rr,rN=5;
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle='rgba(96,116,140,.06)';AC.fill();
-    AC.strokeStyle='rgba(96,116,140,.5)';AC.lineWidth=1;AC.stroke();
-    AC.beginPath();AC.arc(x,y,1.7,0,Math.PI*2);AC.fillStyle='rgba(96,116,140,.55)';AC.fill();
-    AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(96,116,140,.72)';
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.05)';AC.fill();
+    AC.strokeStyle='rgba(120,124,132,.45)';AC.lineWidth=1;AC.stroke();
+    AC.beginPath();AC.arc(x,y,1.6,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.5)';AC.fill();
+    AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(110,114,124,.7)';
     AC.fillText(ag.label,x-rN-3,y+3);
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
-  // ── OUTPUT artifacts — files the agent produced; drawn as page glyphs (not circles), in their own lower zone ──
+  // ── OUTPUT artifacts — files produced; drawn as small rounded rectangles ──
   const _arts=(typeof artifactNodes==='function'?artifactNodes():[]).slice(-6);
   _arts.forEach((nd,i)=>{const nn=_arts.length,a=Math.PI*0.66+(nn>1?(i/(nn-1)):0.5)*Math.PI*0.68,rr=R*0.72;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
     AC.beginPath();AC.moveTo(cx+Math.cos(a)*(coreR+3),cy+Math.sin(a)*(coreR+3));AC.lineTo(x,y);AC.strokeStyle='rgba(26,28,34,.07)';AC.lineWidth=1;AC.stroke();
-    const ww=8,hh=10;AC.save();AC.translate(x,y);
-    AC.beginPath();AC.moveTo(-ww/2,-hh/2);AC.lineTo(ww/2-3,-hh/2);AC.lineTo(ww/2,-hh/2+3);AC.lineTo(ww/2,hh/2);AC.lineTo(-ww/2,hh/2);AC.closePath();
+    const ww=13,hh=10;AC.save();AC.translate(x,y);
+    _rrectPath(AC,-ww/2,-hh/2,ww,hh,3);
     AC.fillStyle='#f0ece4';AC.fill();AC.strokeStyle='rgba(80,74,66,.7)';AC.lineWidth=1;AC.stroke();
-    AC.beginPath();AC.moveTo(-ww/2+2,0);AC.lineTo(ww/2-2,0);AC.moveTo(-ww/2+2,3);AC.lineTo(ww/2-2,3);AC.strokeStyle='rgba(80,74,66,.4)';AC.lineWidth=.7;AC.stroke();
+    AC.beginPath();AC.moveTo(-ww/2+2.5,-1);AC.lineTo(ww/2-2.5,-1);AC.moveTo(-ww/2+2.5,2);AC.lineTo(ww/2-2.5,2);AC.strokeStyle='rgba(80,74,66,.4)';AC.lineWidth=.7;AC.stroke();
     AC.restore();
     meshHits.push({x,y,r:9,key:'art:'+(nd.path||nd.name),art:nd});});
   // ── GitHub connector node — lights up on git read / push / PR ──
@@ -2487,6 +2500,9 @@ function _mdLite(t){
   }
   close();return html;
 }
+// live streaming prose — render markdown (headings, lists, bold) AS IT STREAMS so the
+// reader sees formatted headlines, never literal "###". Re-appends the cursor after each paint.
+function _setLiveProse(el,cur,prose){el.innerHTML=_mdLite(prose||'');if(cur)el.appendChild(cur)}
 // Long prose collapses to a skimmable preview; the rest is one click away (text = the gist, content discoverable).
 function _proseEl(text){
   const t=(text||'').trim();
@@ -3924,7 +3940,7 @@ async function _streamModel(th,model,text){
     const reader=resp.body.getReader(),dec=new TextDecoder();let buf='';
     while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
       for(const ln of lines){if(!ln.startsWith('data:'))continue;const raw=ln.slice(5).trim();if(raw==='[DONE]')continue;let evt;try{evt=JSON.parse(raw)}catch(_){continue}
-        if(evt.type==='token'){txt+=evt.content||'';proseEl.textContent=_liveProse(txt).prose;proseEl.appendChild(cur);if(cak){const a=S.agents[cak];a.tokens++;a.turnTokens=(a.turnTokens||0)+1;recomputeAgent(cak)}}
+        if(evt.type==='token'){txt+=evt.content||'';_setLiveProse(proseEl,cur,_liveProse(txt).prose);if(cak){const a=S.agents[cak];a.tokens++;a.turnTokens=(a.turnTokens||0)+1;recomputeAgent(cak)}}
         else if(evt.type==='error')txt+='\n⚠ '+(evt.message||'error');}}
   }catch(e){if(e.name!=='AbortError')txt+='\n⚠ request failed';}
   if(cak){const a=S.agents[cak];if(a.startMs){a.ms+=Date.now()-a.startMs;a.startMs=0}a.status='idle';recomputeAgent(cak);renderCards();renderAISInfo()}
@@ -3967,7 +3983,7 @@ async function streamRun(text,th){
   aEl.appendChild(stepsEl);aEl.appendChild(bodyEl);
   (th?th.body:timeline).appendChild(aEl);timeline.scrollTop=timeline.scrollHeight;
   RUN={stepsEl,steps:[],proseEl,bodyEl,cur,writeEl:null};
-  const onTok=chunk=>{txt+=chunk;const lp=_liveProse(txt);proseEl.textContent=lp.prose;proseEl.appendChild(cur);
+  const onTok=chunk=>{txt+=chunk;const lp=_liveProse(txt);_setLiveProse(proseEl,cur,lp.prose);
     if(lp.writing){if(!RUN.writeEl){RUN.writeEl=_writeCard();bodyEl.appendChild(RUN.writeEl)}RUN.writeEl.querySelector('.wc-label').textContent='Writing '+(lp.fname||'a file')+' — hidden until you ask';}
     else if(RUN.writeEl){RUN.writeEl.remove();RUN.writeEl=null}
     S.totalTok++;agentTick('token');if(S.totalTok%15===0){renderCards();updateAEM();renderToolMini();if(S.dual)updateGantt()}};
