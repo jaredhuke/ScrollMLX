@@ -960,9 +960,10 @@ async def reset_all(payload: dict = None):
 async def repos_list():
     """Git status for every project + the app repo, across all remotes (multiple gits)."""
     from server import projects, repos
-    paths = [p.get("path") for p in projects.list_projects() if p.get("path")]
-    paths.append(str(projects.app_dir()))
+    explicit = [p.get("path") for p in projects.list_projects() if p.get("path")]
+    explicit.append(str(projects.app_dir()))
     loop = asyncio.get_event_loop()
+    paths = await loop.run_in_executor(None, repos.discover, explicit)
     data = await loop.run_in_executor(None, repos.scan, paths)
     return {"repos": data}
 
