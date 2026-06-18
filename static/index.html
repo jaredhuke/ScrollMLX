@@ -1880,19 +1880,19 @@ function _renderMesh(AC,W,H,big,state){
     AC.beginPath();AC.arc(x,y,2,0,Math.PI*2);AC.fillStyle='rgba(60,90,70,.65)';AC.fill();});
   // ── completion gauge (RED, outermost track) ──
   const compR=R*0.88;
-  AC.beginPath();AC.arc(cx,cy,compR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=big?2:3;AC.stroke();
+  AC.beginPath();AC.arc(cx,cy,compR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.06)';AC.lineWidth=big?1.1:3;AC.stroke();
   if(M.completion>0){AC.beginPath();AC.arc(cx,cy,compR,-Math.PI/2,-Math.PI/2+Math.PI*2*M.completion);
-    AC.strokeStyle='rgba(47,156,139,.9)';AC.lineWidth=big?2:3;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
+    AC.strokeStyle='rgba(47,156,139,.9)';AC.lineWidth=big?1.1:3;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
   // ── requests in flight — one thin rotating arc each (concurrent threads/fan-out) ──
   const reqs=(S.requests||[]);
   reqs.forEach((rq,i)=>{const rr=compR-7-i*6;if(rr<R*0.46)return;
     const a0=-Math.PI/2+t*0.85+i*1.7;
     AC.beginPath();AC.arc(cx,cy,rr,a0,a0+Math.PI*0.5);
-    AC.strokeStyle='rgba(207,122,46,.78)';AC.lineWidth=1.6;AC.lineCap='round';AC.stroke();AC.lineCap='butt';});
+    AC.strokeStyle='rgba(207,122,46,.78)';AC.lineWidth=big?1:1.6;AC.lineCap='round';AC.stroke();AC.lineCap='butt';});
   // ── burn gauge (AMBER, its own track — visually separate from completion) ──
   const gb=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].burn)),burnR=R*0.79;
-  AC.beginPath();AC.arc(cx,cy,burnR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.05)';AC.lineWidth=2;AC.stroke();
-  if(gb>0){AC.beginPath();AC.arc(cx,cy,burnR,-Math.PI/2,-Math.PI/2+Math.PI*2*(gb/100));AC.strokeStyle=gb>85?'rgba(138,40,24,.75)':'rgba(176,122,16,.7)';AC.lineWidth=2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
+  AC.beginPath();AC.arc(cx,cy,burnR,0,Math.PI*2);AC.strokeStyle='rgba(26,28,34,.05)';AC.lineWidth=big?1:2;AC.stroke();
+  if(gb>0){AC.beginPath();AC.arc(cx,cy,burnR,-Math.PI/2,-Math.PI/2+Math.PI*2*(gb/100));AC.strokeStyle=gb>85?'rgba(138,40,24,.75)':'rgba(176,122,16,.7)';AC.lineWidth=big?1:2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
   // error dot-matrix band
   const ET=36,errCount=Math.round(M.errorRate*ET);
   for(let i=0;i<ET;i++){const a=-Math.PI/2+(i/ET)*Math.PI*2;
@@ -1901,7 +1901,7 @@ function _renderMesh(AC,W,H,big,state){
   // drift markers (per operative, radial deviation off the baseline ring)
   AGENT_KEYS.forEach((k,idx)=>{const ag=S.agents[k],a=idx===0?-Math.PI/2:Math.PI/2,dr=Math.abs(ag.hm-50)/50,rr=R*0.44;
     const mx=cx+Math.cos(a)*rr,my=cy+Math.sin(a)*rr,ox=cx+Math.cos(a)*(rr+dr*10),oy=cy+Math.sin(a)*(rr+dr*10);
-    AC.beginPath();AC.moveTo(mx,my);AC.lineTo(ox,oy);AC.strokeStyle=dr>0.5?'rgba(200,75,49,.5)':'rgba(80,74,66,.45)';AC.lineWidth=1.5;AC.stroke();
+    AC.beginPath();AC.moveTo(mx,my);AC.lineTo(ox,oy);AC.strokeStyle=dr>0.5?'rgba(200,75,49,.5)':'rgba(80,74,66,.45)';AC.lineWidth=big?0.9:1.5;AC.stroke();
     AC.beginPath();AC.arc(ox,oy,1.6,0,Math.PI*2);AC.fillStyle=dr>0.5?'rgba(200,75,49,.7)':'rgba(80,74,66,.55)';AC.fill();});
   const coreR=Math.min(26,R*0.28);
   // ── operatives: ACTIVE on the inner ring, IDLE parked at the right edge (cool, never green) ──
@@ -1913,14 +1913,14 @@ function _renderMesh(AC,W,H,big,state){
     const a=-Math.PI/2+(_act.length>1?(idx/_act.length)*Math.PI*2:0),rr=R*0.56;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,sx=cx+Math.cos(a)*(coreR+3),sy=cy+Math.sin(a)*(coreR+3);
     // spoke to core — warm + a travelling pip while working, otherwise a quiet neutral link
-    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.4)':'rgba(120,124,132,.18)';AC.lineWidth=busy?1.5:1;AC.stroke();
+    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.4)':'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();
     if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
     const rN=k==='primary'?10:8;
     AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=busy?'rgba(207,122,46,.12)':'rgba(120,124,132,.08)';AC.fill();
-    AC.strokeStyle=err?'rgba(200,75,49,.8)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=1.4;AC.stroke();
+    AC.strokeStyle=err?'rgba(200,75,49,.8)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=big?0.9:1.4;AC.stroke();
     // burn ring — % of the designated token budget, intensity-coloured
     const bp=Math.max(0,Math.min((ag.burn||0)/100,1));
-    if(bp>0.01){const bc=_intensityRGB(bp);AC.beginPath();AC.arc(x,y,rN+3.5,-Math.PI/2,-Math.PI/2+Math.PI*2*bp);AC.strokeStyle=`rgba(${bc[0]},${bc[1]},${bc[2]},.95)`;AC.lineWidth=2.2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
+    if(bp>0.01){const bc=_intensityRGB(bp);AC.beginPath();AC.arc(x,y,rN+3.5,-Math.PI/2,-Math.PI/2+Math.PI*2*bp);AC.strokeStyle=`rgba(${bc[0]},${bc[1]},${bc[2]},.95)`;AC.lineWidth=big?1.3:2.2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
     // status core — working=orange (gentle pulse), error=red, idle=neutral steel (NEVER green)
     const sc=err?[200,75,49]:busy?[207,122,46]:[120,124,132],pr=busy?2.7+0.7*Math.sin(t*4):2.3;
     AC.beginPath();AC.arc(x,y,pr,0,Math.PI*2);AC.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${busy?1:0.7})`;AC.fill();
