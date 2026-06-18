@@ -1063,9 +1063,11 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 #pj-mini{display:flex;flex-direction:column;gap:4px;padding:2px 8px 7px;max-height:230px;overflow-y:auto;overflow-x:hidden}
 .pjm-empty{font-size:9px;color:var(--text-ghost);font-style:italic;padding:2px 6px 6px}
 /* "working on …" banner — unmistakable, clean type + colour */
-.pjm-current{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-ghost);padding:3px 12px 8px;line-height:1.2}
-.pjm-current b{display:inline-block;font-size:13px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--accent-ink);margin-left:7px;vertical-align:middle}
+.pjm-current{display:flex;align-items:center;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-ghost);padding:3px 12px 8px;line-height:1.2}
+.pjm-current b{font-size:13px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--accent-ink);margin-left:7px}
 .pjm-current.adhoc b{color:#8a5a10}
+.pjm-plan{margin-left:auto;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent-soft);border:none;border-radius:5px;padding:3px 9px;cursor:pointer;transition:background .15s,color .15s}
+.pjm-plan:hover{background:var(--accent);color:#fff}
 .pjm-row{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;cursor:pointer;transition:background .12s}
 .pjm-row:hover{background:rgba(26,28,34,.045)}
 /* active = clearly selected: soft accent fill + accent bar + bold coloured name */
@@ -1897,7 +1899,8 @@ function drawAIS(){
 function _renderMesh(AC,W,H,big,state){
   // full-screen zooms out (bigger REF → smaller scale → thinner, more delicate lines) and
   // sits with generous margin (LW thins the structural frame so big reads refined, not heavy).
-  const REF=big?520:248,s=Math.min(W,H)/REF||1,ox=(W-REF*s)/2,oy=(H-REF*s)/2,LW=big?0.55:1;
+  const REF=big?520:248,_s0=Math.min(W,H)/REF||1,s=big?_s0*0.5:_s0,ox=(W-REF*s)/2,oy=(H-REF*s)/2,LW=big?0.55:1;
+  const _MINPT=7,_mf=p=>Math.max(p,_MINPT/s);   // 50% smaller overall, but type never falls below ~7px on screen
   state.xf={s,ox,oy};const meshHits=state.hits;meshHits.length=0;
   AC.fillStyle=big?'#f0ece4':'#e9e4db';AC.fillRect(0,0,W,H);
   AC.save();AC.translate(ox,oy);AC.scale(s,s);
@@ -1974,7 +1977,7 @@ function _renderMesh(AC,W,H,big,state){
     // status core — working=orange (breathing), error=red, idle=neutral steel (NEVER green)
     const sc=err?[200,75,49]:busy?[207,122,46]:[120,124,132],pr=busy?2.7+0.7*Math.sin(t*4):2.3;
     AC.beginPath();AC.arc(x,y,pr,0,Math.PI*2);AC.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${busy?1:0.7})`;AC.fill();
-    AC.font='600 8px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?'#cf7a2e':'rgba(80,84,92,.85)';
+    AC.font='600 '+_mf(8)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?'#cf7a2e':'rgba(80,84,92,.85)';
     AC.fillText(ag.label,x,a<0?y-rN-7:y+rN+13);
     meshHits.push({x,y,r:rN+9,key:k});
     if(k==='primary')_primaryPos={x,y,rN,a};
@@ -1986,7 +1989,7 @@ function _renderMesh(AC,W,H,big,state){
     AC.beginPath();AC.moveTo(_anchor.x+Math.cos(a)*(_anchor.rN+2),_anchor.y+Math.sin(a)*(_anchor.rN+2));AC.lineTo(x,y);
     AC.strokeStyle=live?'rgba(207,122,46,.32)':'rgba(120,124,132,.22)';AC.lineWidth=1;AC.stroke();
     AC.beginPath();AC.arc(x,y,2.1,0,Math.PI*2);AC.fillStyle=live?'rgba(207,122,46,.85)':'rgba(120,124,132,.6)';AC.fill();
-    AC.font='500 6px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(80,84,92,.6)';
+    AC.font='500 '+_mf(6)+'px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(80,84,92,.6)';
     AC.fillText(sk.length>10?sk.slice(0,9)+'…':sk,x+(Math.cos(a)<0?-4:4),y+2);
     meshHits.push({x,y,r:7,key:'__skills__'});});
   if(_idle.length){AC.save();AC.setLineDash([3,5]);AC.beginPath();AC.moveTo(w-32,18);AC.lineTo(w-32,h-18);AC.strokeStyle='rgba(120,124,132,.26)';AC.lineWidth=1;AC.stroke();AC.restore();}
@@ -1996,7 +1999,7 @@ function _renderMesh(AC,W,H,big,state){
     AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.05)';AC.fill();
     AC.strokeStyle='rgba(120,124,132,.45)';AC.lineWidth=1;AC.stroke();
     AC.beginPath();AC.arc(x,y,1.6,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.5)';AC.fill();
-    AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(110,114,124,.7)';
+    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(110,114,124,.7)';
     AC.fillText(ag.label,x-rN-3,y+3);
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
   // ── OUTPUT artifacts — files produced; drawn as small rounded rectangles ──
@@ -2015,7 +2018,7 @@ function _renderMesh(AC,W,H,big,state){
    if(gAct){const br=.5+.5*Math.sin(t*4);AC.beginPath();AC.arc(gx,gy,5+br*5,0,Math.PI*2);AC.strokeStyle=`rgba(207,122,46,${.34*(1-br)})`;AC.lineWidth=1;AC.stroke();}
    AC.beginPath();AC.arc(gx,gy,5,0,Math.PI*2);AC.fillStyle=gAct?'rgba(207,122,46,.18)':'rgba(26,28,34,.05)';AC.fill();
    AC.strokeStyle=gAct?'rgba(207,122,46,.85)':'rgba(26,28,34,.26)';AC.lineWidth=1.3;AC.stroke();
-   AC.font='500 7px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=gAct?'#cf7a2e':'rgba(26,28,34,.4)';
+   AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=gAct?'#cf7a2e':'rgba(26,28,34,.4)';
    AC.fillText(gAct?(gg.op||'git'):'git',gx,gy+13);
    meshHits.push({x:gx,y:gy,r:10,key:'__git__'});}
   // (cloud operatives are drawn in the unified operative layout above — active inner, idle at the right edge)
@@ -2038,9 +2041,9 @@ function _renderMesh(AC,W,H,big,state){
   if(reqs.length){AC.beginPath();AC.arc(cx,cy-coreR+5,2.4,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.95)';AC.fill();}  // tiny in-flight pip, detail on hover
   meshHits.push({x:cx,y:cy,r:coreR,key:'__core__'});
   // corner readouts (sans, soft)
-  AC.font='400 9px -apple-system,system-ui,sans-serif';
+  AC.font='400 '+_mf(9)+'px -apple-system,system-ui,sans-serif';
   AC.textAlign='left';AC.fillStyle='rgba(26,28,34,.6)';AC.fillText(`vigilance ${Math.round(M.vigilance*100)}`,9,13);
-  if(M.vigWhy){AC.font='400 8px -apple-system,system-ui,sans-serif';AC.fillStyle='rgba(176,122,16,.85)';AC.fillText('↓ '+M.vigWhy,9,23);AC.font='400 9px -apple-system,system-ui,sans-serif'}
+  if(M.vigWhy){AC.font='400 '+_mf(8)+'px -apple-system,system-ui,sans-serif';AC.fillStyle='rgba(176,122,16,.85)';AC.fillText('↓ '+M.vigWhy,9,23);AC.font='400 '+_mf(9)+'px -apple-system,system-ui,sans-serif'}
   const maxRate=Math.max(0,...AGENT_KEYS.map(k=>S.agents[k].rate||0),S.agents.cloud.rate||0);
   AC.fillStyle=gb>60?'rgba(176,122,16,.85)':'rgba(26,28,34,.5)';AC.fillText(`burn ${maxRate} t/s`,9,h-7);
   AC.textAlign='right';AC.fillStyle=M.errorRate>0?'rgba(200,75,49,.75)':'rgba(26,28,34,.5)';AC.fillText(`${Math.round(M.errorRate*100)}% err`,w-9,h-7);
@@ -4132,7 +4135,7 @@ function renderProjectsMini(){
   const el=document.getElementById('pj-mini');if(!el)return;
   const ps=S.projects||[];
   const _cur=isAdhoc()?'Ad hoc':(S.activeProject||'Ad hoc');
-  const head=`<div class="pjm-current ${isAdhoc()?'adhoc':''}">Working on<b>${escH(_cur)}</b></div>`;
+  const head=`<div class="pjm-current ${isAdhoc()?'adhoc':''}">Working on<b>${escH(_cur)}</b><button class="pjm-plan" onclick="planModal()" title="The living plan for this project — requirements + status">Plan</button></div>`;
   const adhoc=`<div class="pjm-row adhoc ${isAdhoc()?'active':''}" onclick="activateAdhoc()" data-tip="Ad hoc — non-project chats land here; move a thread to a project from its header"><span class="pjm-dot"></span><span class="pjm-name">Ad hoc</span><span class="pjm-tag">default</span></div>`;
   el.innerHTML=head+adhoc+ps.map(p=>{
     const active=S.cwd&&S.cwd===p.path&&!isAdhoc();
@@ -4155,6 +4158,32 @@ function renderProjectsMini(){
   }).join('');
 }
 function togglePjDetail(id){S.pjOpen=(S.pjOpen===id?null:id);renderProjectsMini()}
+// the living plan (PRD.md) for the active project — read, edit, or hand to the operative
+async function planModal(){
+  const cwd=S.cwd,name=isAdhoc()?'Ad hoc':(S.activeProject||'this project');
+  let j;try{j=await fetch('/v1/prd?cwd='+encodeURIComponent(cwd)+'&name='+encodeURIComponent(name)).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  if(!j){artToast('Couldn’t open the plan','err');return}
+  closeKeyDialog();
+  const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
+  const stat=j.exists?(j.total?(j.done+' of '+j.total+' done'):'living plan'):'starter plan — not saved yet';
+  ov.innerHTML=`<div class="kd kd-wide" role="dialog" aria-modal="true" aria-label="Project plan">
+    <div class="kd-head"><span class="kd-title">Plan — ${escH(name)} <span class="ds-sub">${escH(stat)}</span></span><button class="kd-x" aria-label="Close">✕</button></div>
+    <div class="kd-body"><div id="plan-view" class="prose"></div><textarea id="plan-edit" class="din" spellcheck="false" style="display:none;width:100%;box-sizing:border-box;min-height:46vh;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5"></textarea></div>
+    <div class="kd-foot"><button class="kd-cmd" id="plan-ask"><span>Ask the operative to update it</span></button><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary" id="plan-edit-btn">Edit</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const view=ov.querySelector('#plan-view'),edit=ov.querySelector('#plan-edit'),btn=ov.querySelector('#plan-edit-btn');
+  view.innerHTML=_mdLite(j.content||'');edit.value=j.content||'';
+  ov.querySelector('.kd-x').onclick=closeKeyDialog;ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
+  ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
+  let editing=false;
+  btn.onclick=async()=>{
+    if(!editing){editing=true;view.style.display='none';edit.style.display='block';btn.textContent='Save';edit.focus();return}
+    let r;try{r=await fetch('/v1/prd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd,content:edit.value})}).then(x=>x.ok?x.json():{ok:false})}catch(_){r={ok:false}}
+    if(r&&r.ok){artToast('Plan saved'+(r.total?(' · '+r.done+'/'+r.total+' done'):''),'ok');closeKeyDialog()}else artToast('Couldn’t save the plan','err');
+  };
+  ov.querySelector('#plan-ask').onclick=()=>{closeKeyDialog();const mi=document.getElementById('msg-in');if(mi){mi.value='Update PRD.md — review what we’ve built so far, refresh the requirements, and mark each item’s status. Keep it concise and in plain language.';mi.focus();try{mi.dispatchEvent(new Event('input'))}catch(_){}}artToast('Added to the message box — press send','ok')};
+}
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
 function renderProjects(){
   const el=document.getElementById('pj-list');if(!el)return;
