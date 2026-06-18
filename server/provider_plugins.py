@@ -40,6 +40,9 @@ from pathlib import Path
 from server.schemas import AgentEvent, DoneEvent, ErrorEvent, TokenEvent
 
 _DIR = Path.home() / ".scroll" / "provider-plugins"
+# A curated, bundled library of agentic options shipped AS .md plugin files (GLM + open-source
+# models, etc.). One-click install copies them into _DIR — every operative is just a markdown file.
+_LIB = Path(__file__).resolve().parent.parent / "docs" / "provider-plugins" / "library"
 
 
 def _parse(text: str) -> dict | None:
@@ -172,6 +175,40 @@ def register_all() -> list[dict]:
         except Exception:
             pass
     return pub
+
+
+def _slug(pid: str) -> str:
+    return re.sub(r"[^a-z0-9._-]+", "-", (pid or "").lower())
+
+
+def library() -> list[dict]:
+    """The bundled model library (every option is a .md plugin), with an `installed` flag."""
+    installed = {p.stem for p in _DIR.glob("*.md")} if _DIR.exists() else set()
+    items = []
+    if _LIB.is_dir():
+        for p in sorted(_LIB.glob("*.md")):
+            spec = _parse(p.read_text(encoding="utf-8", errors="replace"))
+            if not spec:
+                continue
+            items.append({
+                "id": spec["id"], "name": spec.get("name", spec["id"]),
+                "kind": spec.get("kind", "command"), "model": spec.get("model", ""),
+                "needs_secret": bool(spec.get("secret_env")),
+                "doc": (spec.get("doc", "").strip()[:220]),
+                "installed": _slug(spec["id"]) in installed,
+            })
+    return items
+
+
+def install(plugin_id: str) -> dict:
+    """Install a bundled library model by id (copies its .md into _DIR + registers it)."""
+    if not _LIB.is_dir():
+        return {"ok": False, "error": "no library bundled"}
+    for p in _LIB.glob("*.md"):
+        spec = _parse(p.read_text(encoding="utf-8", errors="replace"))
+        if spec and spec["id"] == plugin_id:
+            return import_path(str(p))
+    return {"ok": False, "error": f"unknown library id {plugin_id!r}"}
 
 
 def import_path(raw: str) -> dict:
