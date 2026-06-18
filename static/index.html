@@ -72,7 +72,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #spill-dot.err{background:#8a2818}
 #spill-lbl{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;font-weight:500}
 #hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-#sysbar{margin-left:auto;display:flex;align-items:center;gap:20px;flex-shrink:0}
+#sysbar{margin-left:auto;display:flex;align-items:center;gap:40px;flex-shrink:0}
 .sg{display:flex;flex-direction:column;gap:3px;width:58px;flex-shrink:0}
 .sg-spark{width:58px;height:15px;display:block}
 .sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
@@ -1042,19 +1042,24 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .pj-plabel{display:flex;align-items:center;justify-content:space-between}
 .pj-mini-add{background:none;border:1px solid var(--border-mid);color:var(--text-dim);width:18px;height:18px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .pj-mini-add:hover{border-color:var(--accent);color:var(--accent)}
-#pj-mini{display:flex;flex-direction:column;gap:2px;padding:0 8px 4px;max-height:220px;overflow-y:auto;overflow-x:hidden}
+#pj-mini{display:flex;flex-direction:column;gap:4px;padding:2px 8px 7px;max-height:230px;overflow-y:auto;overflow-x:hidden}
 .pjm-empty{font-size:9px;color:var(--text-ghost);font-style:italic;padding:2px 6px 6px}
-.pjm-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s}
-.pjm-row:hover{background:rgba(26,28,34,.04)}
-/* active = a thin hairline + a circle halo on the dot — no block fill (pen-and-ink) */
-.pjm-row.active{box-shadow:inset 2px 0 0 var(--accent)}
-.pjm-row.active .pjm-name{color:var(--text);font-weight:600}
+/* "working on …" banner — unmistakable, clean type + colour */
+.pjm-current{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-ghost);padding:3px 12px 8px;line-height:1.2}
+.pjm-current b{display:inline-block;font-size:13px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--accent-ink);margin-left:7px;vertical-align:middle}
+.pjm-current.adhoc b{color:#8a5a10}
+.pjm-row{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;cursor:pointer;transition:background .12s}
+.pjm-row:hover{background:rgba(26,28,34,.045)}
+/* active = clearly selected: soft accent fill + accent bar + bold coloured name */
+.pjm-row.active{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.pjm-row.active .pjm-name{color:var(--accent-ink);font-weight:700;letter-spacing:.01em}
 .pjm-row.active .pjm-dot{box-shadow:0 0 0 3px var(--accent-soft)}
-.pjm-row.adhoc.active{box-shadow:inset 2px 0 0 var(--amber)}
+.pjm-row.adhoc.active{background:rgba(176,121,26,.10);box-shadow:inset 3px 0 0 var(--amber)}
+.pjm-row.adhoc.active .pjm-name{color:#8a5a10}
 .pjm-row.adhoc.active .pjm-dot{box-shadow:0 0 0 3px rgba(176,121,26,.15)}
 .pjm-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0;transition:box-shadow .15s}
 .pjm-dot.up{background:var(--accent);animation:dotPulse 1.8s infinite}.pjm-dot.starting{background:var(--amber)}
-.pjm-name{flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjm-name{flex:1;font-size:11.5px;color:var(--text);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pjm-go{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:4px;flex-shrink:0}
 .pjm-go:hover{color:var(--accent)}.pjm-go.stop:hover{color:var(--red)}
 .pjm-ic{width:12px;height:12px;fill:currentColor}
@@ -4075,8 +4080,10 @@ function activateAdhoc(){if(S.activeProject==='Ad hoc'){renderThreadScope();retu
 function renderProjectsMini(){
   const el=document.getElementById('pj-mini');if(!el)return;
   const ps=S.projects||[];
+  const _cur=isAdhoc()?'Ad hoc':(S.activeProject||'Ad hoc');
+  const head=`<div class="pjm-current ${isAdhoc()?'adhoc':''}">Working on<b>${escH(_cur)}</b></div>`;
   const adhoc=`<div class="pjm-row adhoc ${isAdhoc()?'active':''}" onclick="activateAdhoc()" data-tip="Ad hoc — non-project chats land here; move a thread to a project from its header"><span class="pjm-dot"></span><span class="pjm-name">Ad hoc</span><span class="pjm-tag">default</span></div>`;
-  el.innerHTML=adhoc+ps.map(p=>{
+  el.innerHTML=head+adhoc+ps.map(p=>{
     const active=S.cwd&&S.cwd===p.path&&!isAdhoc();
     const isOpen=S.pjOpen===p.id;
     const dot=p.running?(p.port_up?'up':'starting'):'';
