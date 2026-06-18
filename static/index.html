@@ -608,6 +608,10 @@ select.hb{padding:5px 9px}
 .prose strong{font-weight:650;color:var(--text)}
 .prose em{font-style:italic;color:var(--text-mid)}
 .prose code.md-ic{font-family:var(--mono);font-size:.92em;background:var(--bg3);color:var(--text);padding:1px 5px;border-radius:4px}
+code.md-ic.copyable{cursor:pointer;transition:background .12s,color .12s}
+code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
+.ic2term{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:3px;vertical-align:middle;border:none;border-radius:4px;background:var(--accent-soft);color:var(--accent-ink);font-size:10px;line-height:1;cursor:pointer;transition:background .12s,color .12s}
+.ic2term:hover{background:var(--accent);color:#fff}
 /* long URLs collapse to a compact copy-chip */
 .url-chip{display:inline-flex;align-items:center;gap:5px;vertical-align:baseline;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-ink);font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.02em;line-height:1.4;padding:1px 9px;border-radius:7px;cursor:pointer;transition:background .15s}
 .url-chip:hover{background:rgba(207,122,46,.18)}
@@ -2667,6 +2671,8 @@ function _urlChip(escUrl){
   const label=host==='git.epam.com'?'epam':host==='github.com'?'github':(host.split('.').slice(-2,-1)[0]||host);
   return `<button class="url-chip" data-url="${escH(real)}" title="${escUrl}" onclick="event.stopPropagation();copyText(this.dataset.url,'Copied '+'${escH(label)}'+' link')">${escH(label)}</button>`;
 }
+// inline code that begins with a known shell verb → also offer a one-click "paste to terminal"
+const _CMD_RE=/^(?:\$\s+)?(npm|npx|yarn|pnpm|bun|git|cd|ls|cat|python3?|uv|pip3?|brew|codemie|node|deno|curl|wget|mkdir|rmdir|rm|mv|cp|chmod|chown|export|source|ssh|scp|docker|kubectl|make|sudo|open|grep|sed|awk|tar|unzip|\.\/)\b/;
 function _mdInline(x){
   x=escH(x);
   // long URLs → a compact copy-chip (drop a leading "PUSHED:" label too)
@@ -2674,9 +2680,17 @@ function _mdInline(x){
   x=x.replace(/https?:\/\/[^\s<)\]]+/g,m=>_urlChip(m));
   x=x.replace(/\*\*(?!\s)([^*]+?)\*\*/g,'<strong>$1</strong>');
   x=x.replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
-  x=x.replace(/`([^`]+?)`/g,'<code class="md-ic">$1</code>');
+  // every inline code snippet is click-to-copy; commands also get a ▸ paste-to-terminal button
+  x=x.replace(/`([^`]+?)`/g,(m,code)=>'<code class="md-ic copyable" title="Click to copy">'+code+'</code>'+(_CMD_RE.test(code.replace(/&amp;/g,'&'))?'<button class="ic2term" title="Paste into the terminal">▸</button>':''));
   return x;
 }
+// universal: click inline code to copy; click ▸ to paste a command into the live terminal
+document.addEventListener('click',e=>{
+  const tb=e.target.closest&&e.target.closest('.ic2term');
+  if(tb){const c=tb.previousElementSibling;if(c&&typeof _termType==='function')_termType(c.textContent,false);e.preventDefault();return}
+  const cp=e.target.closest&&e.target.closest('code.md-ic.copyable');
+  if(cp){copyText(cp.textContent,'Copied');}
+});
 function _mdLite(t){
   const lines=String(t).split('\n');let html='',inList=false,tag='';
   const close=()=>{if(inList){html+='</'+tag+'>';inList=false}};
