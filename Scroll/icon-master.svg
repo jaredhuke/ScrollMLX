@@ -1,9 +1,9 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- Scroll app icon — an ensō (single calligraphic brush-circle) in ink; the seal is the one mark of colour -->
+  <!-- ScrollMLX app icon — an S (Scroll) in ink with a dot in each bowl, the dots the one mark of colour -->
   <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#efece4"/>
-  <g transform="translate(56,56) scale(19)" fill="none" stroke="#1a1c22" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" stroke-width="3.6"/>
-    <path d="M36.4 16.6 l3.4 -2" stroke-width="2" opacity="0.45"/>
+  <g transform="translate(56,56) scale(19)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="#1a1c22" stroke-width="3.8"/>
+    <circle cx="22.5" cy="13.5" r="2.6" fill="#d2552e" stroke="none"/>
+    <circle cx="25.5" cy="31.5" r="2.6" fill="#d2552e" stroke="none"/>
   </g>
-  <circle cx="767" cy="539" r="51" fill="#d2552e"/>
 </svg>

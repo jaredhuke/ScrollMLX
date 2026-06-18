@@ -1,7 +1,7 @@
-<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scroll">
-  <title>Scroll</title>
-  <!-- ensō — a single calligraphic sweep, open at the right; the seal is the one mark of colour -->
-  <path d="M34 35.6 A 15 15 0 1 1 36.4 16.6" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>
-  <path d="M36.4 16.6 l3.4 -2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
-  <circle cx="37.4" cy="25.4" r="2.7" fill="#d2552e"/>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ScrollMLX">
+  <title>ScrollMLX</title>
+  <!-- an S (Scroll) with a dot in each bowl -->
+  <path d="M31 13 C 31 8 17 8 17 15 C 17 21 31 22 31 30 C 31 37 17 37 17 32" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+  <circle cx="22.5" cy="13.5" r="2.4" fill="#d2552e"/>
+  <circle cx="25.5" cy="31.5" r="2.4" fill="#d2552e"/>
 </svg>
