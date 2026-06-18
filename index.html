@@ -1,63 +1,70 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Découvrez nos délicieux cafés, thé et collations au Café Élysée à Paris.">
-    <title>Café Élysée - France</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>My Dog's Website</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 20px 0;
+        }
+        h1, h2 {
+            color: #ff6347;
+        }
+        .photo {
+            width: 100%;
+            height: auto;
+            margin: 10px 0;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        input, textarea, button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ff4500;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Café Élysée</h1>
-        <nav>
-            <ul>
-                <li><a href="#home">Accueil</a></li>
-                <li><a href="#menu">Menu</a></li>
-                <li><a href="#about">À propos</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-    <section id="home">
-        <h2>Bienvenue au Café Élysée !</h2>
-        <p>Découvrez nos délicieux cafés, thé et collations !</p>
-    </section>
-    <section id="menu">
-        <h2>Notre Menu</h2>
-        <div class="drink">
-            <img src="images/cafe.jpg" alt="Café Expresso">
-            <h3>Café Expresso</h3>
-            <p>Un café intense et rafraîchissant.</p>
-        </div>
-        <div class="drink">
-            <img src="images/coffee.jpg" alt="Thé Vert">
-            <h3>Thé Vert</h3>
-            <p>Un thé vert délicieux avec des notes de menthe.</p>
-        </div>
-        <div class="drink">
-            <img src="images/pastries.jpg" alt="Collation Choco">
-            <h3>Collation Choco</h3>
-            <p>Une collation délicieuse avec du chocolat fondu.</p>
-        </div>
-    </section>
-    <section id="about">
-        <h2>À propos de Nous</h2>
-        <p>Nous sommes une équipe de passionnés de café qui aimerait partager notre amour pour cette boisson créative avec vous.</p>
-    </section>
-    <section id="contact">
-        <h2>Contactez-Nous</h2>
-        <p>Adresse : 456 Rue des Fleurs, Paris, France</p>
-        <p>Téléphone : +33 1 98 76 54 32</p>
-        <p>Email : contact@cafeelysee.fr</p>
-        <p>Suivez-nous sur les réseaux sociaux :
-            <a href="https://facebook.com/cafeelysee" target="_blank">Facebook</a> |
-            <a href="https://instagram.com/cafeelysee" target="_blank">Instagram</a> |
-            <a href="https://twitter.com/cafeelysee" target="_blank">Twitter</a>
-        </p>
-    </section>
-    <footer>
-        <p>&copy; 2023 Café Élysée - France</p>
-    </footer>
+    <div class="container">
+        <h1>Welcome to [Your Dog's Name]'s Website</h1>
+        <p>[Your Dog's Name] is a [Breed] and loves to [Hobby/Activity].</p>
+        <h2>Photos</h2>
+        <img src="dog-photo.jpg" alt="[Your Dog's Name]" class="photo">
+        <h2>Contact Me</h2>
+        <form action="#">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" rows="4" required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
 </body>
 </html>
