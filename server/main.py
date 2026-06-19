@@ -502,11 +502,22 @@ async def _stream_escalate(payload: dict) -> AsyncGenerator[str, None]:
 
     model_id = getattr(prov, "model", prov_name)
     yield f"data: {PhaseEvent(name='escalation', model=model_id).model_dump_json()}\n\n"
+    total_cloud = 0
     while True:
         evt = await queue.get()
         if evt is None:
             break
+        tt = getattr(evt, "total_tokens", None)
+        if tt:
+            total_cloud = tt
         yield f"data: {evt.model_dump_json()}\n\n"
+    if total_cloud > 0:   # log cloud ($$) burn so it shows in the ledger + burn chart (mode = provider)
+        try:
+            from server import ledger
+            prompt = next((m["content"] for m in reversed(msgs) if m.get("role") == "user"), "(escalation)")
+            ledger.record(payload.get("cwd") or ".", prompt, total_cloud, mode=prov_name)
+        except Exception:
+            pass
     yield "data: [DONE]\n\n"
 
 
@@ -1387,15 +1398,18 @@ async def sys_stats():
     """Live machine stats for the header gauges. CPU/MEM via psutil; temp/fan/thermal
     come from the native macOS app's context snapshot when it's running."""
     out = {"cpu": None, "cores": None, "mem_pct": None, "mem_used_gb": None,
-           "mem_total_gb": None, "temp_c": None, "fan_rpm": None, "thermal": None, "load": None}
+           "mem_total_gb": None, "temp_c": None, "fan_rpm": None, "fan_max": None,
+           "fan_count": None, "thermal": None, "load": None}
     if _psutil is not None:
         try:
             out["cpu"] = round(_psutil.cpu_percent(interval=None), 1)
             out["cores"] = _psutil.cpu_count()
             vm = _psutil.virtual_memory()
+            # Report in GiB (1024^3) so the total matches the RAM Apple advertises — a "48 GB" Mac
+            # reads 48, not the 51.5 you'd get dividing by 1e9 (Apple labels the GiB count as "GB").
             out["mem_pct"] = round(vm.percent, 1)
-            out["mem_used_gb"] = round(vm.used / 1e9, 1)
-            out["mem_total_gb"] = round(vm.total / 1e9, 1)
+            out["mem_used_gb"] = round(vm.used / 1024**3, 1)
+            out["mem_total_gb"] = round(vm.total / 1024**3, 1)
             out["load"] = round(_psutil.getloadavg()[0], 2)
         except Exception:
             pass
@@ -1403,6 +1417,21 @@ async def sys_stats():
     out["thermal"] = sysc.get("thermal")
     out["temp_c"] = sysc.get("temp_c")
     out["fan_rpm"] = sysc.get("fan_rpm")
+    # Real fan RPM + die temp straight from the Apple SMC (no sudo) — works whether or not the
+    # native macOS app is running. Prefer these over the app's context snapshot; both are best-effort.
+    try:
+        from server import smc
+        import asyncio as _asyncio
+        # IOKit syscalls are blocking — run them in a thread so a slow/wedged SMC read can't stall the loop
+        smc_out = await _asyncio.get_running_loop().run_in_executor(None, smc.stats)
+        if smc_out.get("fan_rpm") is not None:
+            out["fan_rpm"] = smc_out["fan_rpm"]
+            out["fan_max"] = smc_out.get("fan_max")
+            out["fan_count"] = smc_out.get("fan_count")
+        if smc_out.get("temp_c") is not None:
+            out["temp_c"] = smc_out["temp_c"]
+    except Exception:
+        pass
     if out["cpu"] is None and sysc.get("cpu_pct") is not None:
         out["cpu"] = sysc.get("cpu_pct")
     if out["mem_pct"] is None and sysc.get("mem_total_gb"):

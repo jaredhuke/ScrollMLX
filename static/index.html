@@ -24,7 +24,7 @@
   --red:#d2552e;        /* extremes: errors, over-budget, stop, critic flags, intent accent */
   --teal:#2f9c8b;       /* KEY MOMENTS ONLY — goal completion. Not for everyday accents. */
   --accent:#cf7a2e;--accent-soft:rgba(207,122,46,.12);--accent-line:rgba(207,122,46,.42);  /* warm accent — the everyday thin-element colour (with --red for extremes) */
-  --accent-ink:#9c540f;--red-ink:#ad3a1a;--green-ink:#2f6b3a;  /* text-grade variants — AA (>=4.5:1) on parchment for labels/badges/hover text */
+  --accent-ink:#9c540f;--red-ink:#ad3a1a;--green-ink:#2f6b3a;--amber-ink:#785310;  /* text-grade variants — AA (>=4.5:1) on parchment for labels/badges/hover text */
   --amber:#b0791a;      /* burn / caution */
   --ext:var(--red);     /* alias — "extremes" accent */
   --border:rgba(26,28,34,.07);--border-mid:rgba(26,28,34,.14);
@@ -74,13 +74,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 #sysbar{margin-left:auto;display:flex;align-items:center;gap:40px;flex-shrink:0}
 .sg{display:flex;flex-direction:column;gap:3px;width:58px;flex-shrink:0}
-.sg-spark{width:58px;height:15px;display:block}
+.sg.wide{width:90px}
+.sg-spark{width:100%;height:15px;display:block}
 .sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
 .sg-k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
 .sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
-.sg-v.warn{color:var(--amber)}.sg-v.alert{color:var(--red)}.sg-v.na{color:var(--text-ghost);font-weight:400}
-.sg{border-radius:6px;padding:3px 5px;margin:-3px -2px;transition:background .15s}
-.sg:hover{background:var(--bg3)}
+.sg-v.warn{color:var(--amber-ink)}.sg-v.alert{color:var(--red-ink);font-weight:700}.sg-v.na{color:var(--text-ghost);font-weight:400}
+.sg-mk{font-size:7px;margin-right:2px;vertical-align:1px}   /* non-colour pressure cue (shape) so warn/alert isn't colour-alone */
+.sg{border-radius:6px;padding:9px 5px;margin:-7px -2px;transition:background .15s;min-height:44px;box-sizing:border-box;justify-content:center}   /* >=44px hit target within the 50px header */
+.sg:hover,.sg:focus-visible{background:var(--bg3);outline:none}
+.sg:focus-visible{box-shadow:inset 0 0 0 1.5px var(--accent-line)}
 .sysdetail{position:fixed;z-index:520;background:var(--bg2);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 14px 44px rgba(26,28,34,.28);padding:11px 13px;width:286px;animation:kdIn .16s ease}
 .sd-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:7px}
 .sd-row{display:flex;flex-direction:column;gap:3px;padding:7px 0;border-top:1px solid var(--border)}
@@ -123,6 +126,15 @@ select.hb{padding:5px 9px}
 .ac-host{color:var(--text-ghost);font-size:8px;letter-spacing:.02em;flex-shrink:0}
 .ac-status{flex-shrink:0;font-size:9px;letter-spacing:.06em;color:var(--text-dim);font-weight:500}
 .ac-status.working{color:var(--accent)}.ac-status.error{color:#8a2818}
+/* AIS Governor — the governance layer, listed alongside the operatives it watches (not an LLM) */
+.ac.gov{border-left:3px solid var(--text-dim)}
+.ac.gov.watch{border-left-color:var(--amber)}
+.ac.gov.hold{border-left-color:var(--red)}
+.ac-dot.gov-ok{background:var(--text-dim)}
+.ac-dot.gov-watch{background:var(--amber);animation:dotPulse 2s infinite}
+.ac-dot.gov-hold{background:var(--red);animation:dotPulse 1.2s infinite}
+.ac-status.gov-ok{color:var(--text-dim)}.ac-status.gov-watch{color:var(--amber-ink)}.ac-status.gov-hold{color:var(--red-ink)}
+.govc-watches{font-size:8.5px;color:var(--text-ghost);margin-top:2px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ac-task{font-size:10px;color:var(--text-ghost);margin-bottom:8px;min-height:14px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .3s}
 .ac.active-glow .ac-task{color:var(--text-dim);font-weight:500}
 .br{display:flex;align-items:center;gap:7px;margin-bottom:4px}
@@ -351,6 +363,23 @@ select.hb{padding:5px 9px}
 .tray-act.save:hover{color:var(--red-ink);border-color:var(--red)}
 .tray-act svg{width:13px;height:13px}
 .tray-empty{font-size:9.5px;color:var(--text-ghost);font-style:italic;padding:14px 8px;text-align:center;line-height:1.6}
+/* primary file — the one a novice should open/run — gets prominence; supporting files sit in a quiet matrix below */
+.tray-card.primary{border-color:var(--accent-line);background:var(--accent-soft);padding:11px;gap:9px}
+.tray-card.primary:hover{border-color:var(--accent)}
+.tray-card.primary .tray-ic{color:#fff;background:var(--accent);border-color:var(--accent)}
+.tray-card.primary .tray-name{font-size:13px;color:var(--accent-ink)}
+.tray-tag{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--accent-ink);font-family:var(--font);display:flex;align-items:center;gap:5px}
+.tray-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.tray-subhead{font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--text-ghost);font-family:var(--font);margin:8px 1px 1px}
+.tray-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tray-card.mini{padding:7px 8px;gap:6px}
+.tray-card.mini .tray-row1{gap:7px}
+.tray-card.mini .tray-ic{width:26px;height:26px;border-radius:7px}
+.tray-card.mini .tray-ic svg{width:14px;height:14px}
+.tray-card.mini .tray-name{font-size:10.5px}
+.tray-card.mini .tray-sub{font-size:8px;gap:4px}
+.tray-card.mini .tray-act{width:26px;height:26px;border-radius:6px}
+.tray-card.mini .tray-act svg{width:12px;height:12px}
 .tray-foot{flex-shrink:0;padding:6px 11px 9px;font-size:8.5px;color:var(--text-ghost);font-family:var(--mono);letter-spacing:.02em;border-top:1px solid var(--border);display:none}
 .tray-foot.show{display:block}
 .ais-sec{border-top:1px solid var(--border);flex-shrink:0}
@@ -462,6 +491,14 @@ select.hb{padding:5px 9px}
 .art-lin b{color:var(--text-dim);font-weight:600}
 /* notification stack — bottom-center, newest on top; severity colour; errors persist */
 #notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column-reverse;gap:8px;max-width:min(440px,92vw);pointer-events:none}
+/* drag-a-file affordance — appears only while a file is dragged over the window */
+#dropveil{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(240,236,228,.8)}
+#dropveil.show{display:flex}
+.dropveil-card{border:2px dashed var(--accent-line);background:var(--bg2);border-radius:16px;padding:26px 30px;text-align:center;max-width:380px;box-shadow:0 16px 48px rgba(26,28,34,.22)}
+.dropveil-ic{color:var(--accent);margin-bottom:8px}
+.dropveil-h{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.dropveil-s{font-size:11.5px;color:var(--text-dim);line-height:1.7}
+.dropveil-s b{color:var(--text);font-weight:600}
 .nt{display:flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);font-family:var(--font);font-size:12px;font-weight:500;padding:10px 12px;border-radius:10px;box-shadow:0 8px 30px rgba(26,28,34,.28);pointer-events:auto;animation:ntIn .22s cubic-bezier(.2,.7,.3,1)}
 @keyframes ntIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .nt.out{opacity:0;transform:translateY(6px);transition:opacity .28s,transform .28s}
@@ -785,6 +822,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .ml-card{display:flex;align-items:flex-start;gap:12px;padding:11px 13px;border:1px solid var(--border-mid);border-radius:var(--r);background:var(--bg2)}
 .ml-info{flex:1;min-width:0}
 .ml-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.ml-priv{font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:4px;padding:1px 5px;vertical-align:1px;margin-left:4px}
 .ml-meta{font-size:10px;color:var(--accent-ink);margin-top:2px;font-variant-numeric:tabular-nums}
 .ml-doc{font-size:10.5px;color:var(--text-ghost);line-height:1.45;margin-top:4px}
 .ml-card .kd-save{flex-shrink:0;align-self:center;padding:6px 14px}
@@ -1191,6 +1229,12 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .lf-an{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:5px;cursor:pointer}
 .lf-an:hover{border-color:var(--accent);color:var(--accent)}
 #lf-spark{display:block;width:100%;height:120px}
+.lf-card-sub{font-size:8.5px;letter-spacing:.04em;text-transform:none;color:var(--text-ghost);font-weight:400;margin-left:auto}
+.lf-legend{display:flex;gap:16px;margin-top:9px;font-size:10px;color:var(--text-dim)}
+.lf-leg{display:flex;align-items:center;gap:5px}
+.lf-leg.off{opacity:.5}
+.lf-leg b{color:var(--text);font-variant-numeric:tabular-nums}
+.lf-sw{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .lf-mode{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .lf-mode-k{font-size:11px;color:var(--text-mid);width:96px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lf-mode-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
@@ -1307,9 +1351,9 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   <div id="status-pill" data-tip="Current agent execution state">
     <div id="spill-dot"></div><span id="spill-lbl">Idle</span>
   </div>
-  <div id="sysbar" data-tip="This Mac — live CPU · memory · thermal · fan">
+  <div id="sysbar" role="group" aria-label="This Mac — live system metrics">
     <div class="sg" id="sg-cpu"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">CPU</span><span class="sg-v na">—</span></div></div>
-    <div class="sg" id="sg-mem"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">MEM</span><span class="sg-v na">—</span></div></div>
+    <div class="sg wide" id="sg-mem"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">MEM</span><span class="sg-v na">—</span></div></div>
     <div class="sg" id="sg-temp"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">TEMP</span><span class="sg-v na">—</span></div></div>
     <div class="sg" id="sg-fan"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">FAN</span><span class="sg-v na">—</span></div></div>
   </div>
@@ -1519,6 +1563,11 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
 </div>
 <div id="notif" role="status" aria-live="polite"></div>
+<div id="dropveil" aria-hidden="true"><div class="dropveil-card">
+  <div class="dropveil-ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg></div>
+  <div class="dropveil-h">Drop to add</div>
+  <div class="dropveil-s"><b>Plugin</b> (.md) installs as an operative · <b>Image</b> opens with a vision model</div>
+</div></div>
 
 <div id="cli-panel">
   <div class="cli-head"><span class="cli-title">Terminal</span><span class="cli-cwd" id="cli-cwd">~/</span><span class="cli-dot" id="cli-dot" title="shell status"></span><button class="dc" aria-label="Close" onclick="toggleCli()">✕</button></div>
@@ -1530,7 +1579,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   <span class="cli-grip" aria-hidden="true"></span>
 </div>
 
-<div id="onboard">
+<div id="onboard" onclick="if(event.target===this)closeOnboard()">
   <div class="ob-card">
     <div class="ob-top"><div><div class="ob-title">Welcome to Scroll</div><div class="ob-sub" id="ob-sub">Let's tune it to your machine</div></div><div class="ob-dots" id="ob-dots"></div></div>
     <div class="ob-body" id="ob-body"></div>
@@ -1538,7 +1587,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
 </div>
 
-<div id="preview">
+<div id="preview" onclick="if(event.target===this)closePreview()">
   <div class="pv-card">
     <div class="pv-head"><span class="pv-name" id="pv-name"></span><span class="pv-tabs" id="pv-tabs"></span><span class="spacer"></span><button class="icon-btn primary" id="pv-dl">Download</button><button class="dc" aria-label="Close" onclick="closePreview()">✕</button></div>
     <div class="pv-body" id="pv-body"></div>
@@ -1546,7 +1595,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 </div>
 
 <!-- FULL-SCREEN AGENTIC MESH -->
-<div id="ais-full">
+<div id="ais-full" onclick="if(event.target===this)closeFullAIS()">
   <div id="ais-full-hdr">
     <div>
       <div id="ais-full-title">Agentic Mesh</div>
@@ -1569,7 +1618,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
 </div>
 
-<div id="ledger-full" class="fs-overlay">
+<div id="ledger-full" class="fs-overlay" onclick="if(event.target===this)closeLedgerFull()">
   <div class="fs-hdr">
     <div><div class="fs-title">Ledger</div><div class="fs-sub">Token &amp; burn — per project, per prompt</div></div>
     <div class="fs-stats">
@@ -1582,7 +1631,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
   <div class="lf-body">
     <div class="lf-left">
-      <div class="lf-card"><div class="lf-card-h">Burn over time</div><canvas id="lf-spark"></canvas></div>
+      <div class="lf-card"><div class="lf-card-h">Burn over time <span class="lf-card-sub">local vs cloud $$ · cumulative</span></div><canvas id="lf-spark"></canvas><div id="lf-burn-legend" class="lf-legend"></div></div>
       <div class="lf-card"><div class="lf-card-h">By mode</div><div id="lf-modes"></div></div>
       <div class="lf-card"><div class="lf-card-h">Efficiency <button class="lf-an" onclick="analyzeFull()">analyze ↻</button></div><div id="lf-tips"></div></div>
     </div>
@@ -1590,7 +1639,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   </div>
 </div>
 
-<div id="repos-full" class="fs-overlay">
+<div id="repos-full" class="fs-overlay" onclick="if(event.target===this)closeReposFull()">
   <div class="fs-hdr">
     <div><div class="fs-title">Repositories</div><div class="fs-sub">Local + every git remote · status &amp; sync direction</div></div>
     <div class="fs-stats">
@@ -1603,7 +1652,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
   <div class="rf-body"><div id="rf-list" class="rf-list"><div class="ais-empty">Scanning…</div></div></div>
 </div>
 
-<div id="agents-full" class="fs-overlay">
+<div id="agents-full" class="fs-overlay" onclick="if(event.target===this)closeAgentsFull()">
   <div class="fs-hdr">
     <div><div class="fs-title">Operatives</div><div class="fs-sub">Metrics · autonomy &amp; oversight · API keys · repos</div></div>
     <div class="fs-stats">
@@ -1896,6 +1945,19 @@ function drawAIS(){
   _renderMesh(AC,W,H,false,MESH_D);
   requestAnimationFrame(drawAIS);
 }
+// operative provenance + identity glyph — GREEN = local (free) · ORANGE = cloud ($$).
+const _GLOC=[72,150,80],_GCLD=[207,122,46];
+function _opLocal(k){return !(String(k).indexOf('cloud')===0)}   // primary/critic = local MLX; cloud:* = cloud
+// a compact icon per operative: a Claude-backed CLI operative → "C✦"; local Qwen → "Q"; critic → "✓".
+function _opGlyph(k){
+  if(k==='critic')return '✓';
+  if(k==='primary')return 'Q';
+  const ag=(S.agents&&S.agents[k])||{},id=(typeof _provId==='function')?_provId(k):k;
+  const base={anthropic:'✦',openai:'◎',gemini:'✶',groq:'⚡',cerebras:'⌬',openrouter:'⊃',glm:'G',deepseek:'D',mistral:'M',kimi:'K'}[id]
+    ||((ag.label||id||'?').replace(/[^A-Za-z0-9]/g,'').charAt(0).toUpperCase())||'?';
+  const txt=((ag.label||'')+' '+(ag.tech||'')).toLowerCase();
+  return base+((/claude/.test(txt)&&base!=='✦')?'✦':'');   // Claude-backed → add the ✦ mark
+}
 function _renderMesh(AC,W,H,big,state){
   // full-screen zooms out (bigger REF → smaller scale → thinner, more delicate lines) and
   // sits with generous margin (LW thins the structural frame so big reads refined, not heavy).
@@ -1958,29 +2020,31 @@ function _renderMesh(AC,W,H,big,state){
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,sx=cx+Math.cos(a)*(coreR+3),sy=cy+Math.sin(a)*(coreR+3);
     // spoke to core — the LINK only exists while engaged; a cloud op draws a dashed *escalation*
     // link (external), a local op a solid resident one. A pip travels in while working.
-    const _isCloud=k.indexOf('cloud')===0;
+    const _isCloud=!_opLocal(k);
+    const PV=err?[200,75,49]:(_isCloud?_GCLD:_GLOC);   // GREEN local · ORANGE cloud · RED error
+    const pvs=al=>`rgba(${PV[0]},${PV[1]},${PV[2]},${al})`;
     if(_isCloud&&busy)AC.setLineDash([3,3]);
-    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.45)':'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();AC.setLineDash([]);
-    if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
+    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?pvs(.5):'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();AC.setLineDash([]);
+    if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle=pvs(.9);AC.fill();}
     const rN=k==='primary'?10:8;
     // node body — "breathes" while working (alpha pulse) so active vs idle reads instantly
-    const brez=busy?(0.12+0.06*Math.sin(t*3.2)):0.08;
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=busy?`rgba(207,122,46,${brez})`:'rgba(120,124,132,.08)';AC.fill();
-    AC.strokeStyle=err?'rgba(200,75,49,.85)':busy?'rgba(207,122,46,.85)':'rgba(120,124,132,.5)';AC.lineWidth=big?0.9:1.4;AC.stroke();
+    const brez=busy?(0.16+0.07*Math.sin(t*3.2)):0.10;
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle=pvs(brez);AC.fill();
+    AC.strokeStyle=busy?pvs(.9):pvs(.55);AC.lineWidth=big?0.9:1.4;AC.stroke();
     // burn ring — % of the designated token budget already spent, intensity-coloured
     const bp=Math.max(0,Math.min((ag.burn||0)/100,1));
     if(bp>0.01){const bc=_intensityRGB(bp);AC.beginPath();AC.arc(x,y,rN+3.5,-Math.PI/2,-Math.PI/2+Math.PI*2*bp);AC.strokeStyle=`rgba(${bc[0]},${bc[1]},${bc[2]},.95)`;AC.lineWidth=big?1.3:2.2;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
-    // WORKING → a rotating "scanner" arc — unmistakably processing; spin speed tracks token rate
-    // (fast sweep = generating hard, slow = thinking/waiting). What's going on, at a glance.
+    // WORKING → a rotating "scanner" arc in the operative's colour; spin speed tracks token rate
     if(busy){const spd=0.9+Math.min((ag.rate||0)/35,3.2),a0=t*spd,sr=rN+(big?5:6);
-      AC.beginPath();AC.arc(x,y,sr,a0,a0+Math.PI*0.5);AC.strokeStyle='rgba(207,122,46,.9)';AC.lineWidth=big?1.1:1.8;AC.lineCap='round';AC.stroke();
-      AC.beginPath();AC.arc(x,y,sr,a0+Math.PI,a0+Math.PI+Math.PI*0.28);AC.strokeStyle='rgba(207,122,46,.45)';AC.stroke();AC.lineCap='butt';}
+      AC.beginPath();AC.arc(x,y,sr,a0,a0+Math.PI*0.5);AC.strokeStyle=pvs(.9);AC.lineWidth=big?1.1:1.8;AC.lineCap='round';AC.stroke();
+      AC.beginPath();AC.arc(x,y,sr,a0+Math.PI,a0+Math.PI+Math.PI*0.28);AC.strokeStyle=pvs(.45);AC.stroke();AC.lineCap='butt';}
     // ERROR → an expanding red ripple — clearly alarming, repeats until cleared
     if(err){const rp=(t%1.1)/1.1;AC.beginPath();AC.arc(x,y,rN+1+rp*10,0,Math.PI*2);AC.strokeStyle=`rgba(200,75,49,${.55*(1-rp)})`;AC.lineWidth=big?1:1.6;AC.stroke();}
-    // status core — working=orange (breathing), error=red, idle=neutral steel (NEVER green)
-    const sc=err?[200,75,49]:busy?[207,122,46]:[120,124,132],pr=busy?2.7+0.7*Math.sin(t*4):2.3;
-    AC.beginPath();AC.arc(x,y,pr,0,Math.PI*2);AC.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${busy?1:0.7})`;AC.fill();
-    AC.font='600 '+_mf(8)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?'#cf7a2e':'rgba(80,84,92,.85)';
+    // identity glyph — the operative's icon (a Claude-backed CLI = "C✦"), coloured by provenance
+    AC.font='700 '+_mf(k==='primary'?9:8)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.textBaseline='middle';
+    AC.fillStyle=pvs(busy?1:.92);AC.fillText(_opGlyph(k),x,y+0.3);AC.textBaseline='alphabetic';
+    // label below
+    AC.font='600 '+_mf(8)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=busy?pvs(1):'rgba(80,84,92,.85)';
     AC.fillText(ag.label,x,a<0?y-rN-7:y+rN+13);
     meshHits.push({x,y,r:rN+9,key:k});
     if(k==='primary')_primaryPos={x,y,rN,a};
@@ -2002,12 +2066,15 @@ function _renderMesh(AC,W,H,big,state){
   //    cool + dashed (no link to the core). They move in + link only when escalated. Click to enlist. ──
   _idle.forEach((k,idx)=>{const ag=S.agents[k];
     const a=-Math.PI*0.42+(_idle.length>1?(idx/(_idle.length-1)):0.5)*Math.PI*0.84,rr=R*1.05;
-    const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,rN=4.5,right=Math.cos(a)>=0;
+    const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,rN=6,right=Math.cos(a)>=0;
+    const PV=_opLocal(k)?_GLOC:_GCLD,pvs=al=>`rgba(${PV[0]},${PV[1]},${PV[2]},${al})`;   // green local · orange cloud (dimmed = parked)
     AC.save();AC.setLineDash([2,3]);
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.strokeStyle='rgba(120,124,132,.5)';AC.lineWidth=1;AC.stroke();
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.strokeStyle=pvs(.5);AC.lineWidth=1;AC.stroke();
     AC.restore();
-    AC.beginPath();AC.arc(x,y,1.5,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.5)';AC.fill();
-    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign=right?'left':'right';AC.fillStyle='rgba(110,114,124,.7)';
+    // identity glyph (dimmed — available; click to enlist)
+    AC.font='700 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.textBaseline='middle';
+    AC.fillStyle=pvs(.85);AC.fillText(_opGlyph(k),x,y+0.3);AC.textBaseline='alphabetic';
+    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign=right?'left':'right';AC.fillStyle='rgba(110,114,124,.75)';
     AC.fillText(ag.label,x+(right?(rN+3):-(rN+3)),y+3);
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
   // ── OUTPUT artifacts — files produced; drawn as small rounded rectangles ──
@@ -2043,8 +2110,12 @@ function _renderMesh(AC,W,H,big,state){
   const cg=AC.createRadialGradient(cx,cy,0,cx,cy,vigR+8);
   cg.addColorStop(0,`rgba(80,74,66,${0.06*M.vigilance})`);cg.addColorStop(1,'rgba(80,74,66,0)');  // neutral calm halo — teal is reserved for the 100% moment only
   AC.beginPath();AC.arc(cx,cy,vigR+8,0,Math.PI*2);AC.fillStyle=cg;AC.fill();
+  // ── AIS GOVERNOR — the hub IS the governor: every operative spokes to it, it watches them all.
+  //    Ring colour = governance state (neutral OK · amber WATCH · red HOLD); a ripple pulses on HOLD. ──
+  const _gov=S._gov||aisGovern(),_glvl=_gov.overall,_gcol=_glvl==='intervene'?[200,75,49]:_glvl==='watch'?[176,122,16]:null;
+  if(_glvl==='intervene'){const br=.5+.5*Math.sin(t*4);AC.beginPath();AC.arc(cx,cy,coreR+3+br*5,0,Math.PI*2);AC.strokeStyle=`rgba(200,75,49,${.4*(1-br)})`;AC.lineWidth=big?1:1.4;AC.stroke();}
   AC.beginPath();AC.arc(cx,cy,coreR,0,Math.PI*2);AC.fillStyle='#e9e4db';AC.fill();
-  AC.strokeStyle=M.completion>=1?'rgba(47,156,139,.5)':'rgba(26,28,34,.12)';AC.lineWidth=1;AC.stroke();
+  AC.strokeStyle=_gcol?`rgba(${_gcol[0]},${_gcol[1]},${_gcol[2]},.85)`:(M.completion>=1?'rgba(47,156,139,.5)':'rgba(26,28,34,.12)');AC.lineWidth=_gcol?(big?1.4:2):1;AC.stroke();
   // core activity accent — a slow rotating arc on the hub whenever the system is working
   if(anyBusy){const a0=t*0.8;AC.beginPath();AC.arc(cx,cy,coreR,a0,a0+Math.PI*0.42);AC.strokeStyle='rgba(207,122,46,.75)';AC.lineWidth=1.6;AC.lineCap='round';AC.stroke();AC.lineCap='butt';}
   // center readout — completion %, auto-fit & vertically centered so it never oversets the well
@@ -2054,6 +2125,10 @@ function _renderMesh(AC,W,H,big,state){
   AC.fillStyle=M.completion>=1?'rgba(47,156,139,.95)':'rgba(26,28,34,.85)';
   AC.fillText(_pct,cx,cy);
   AC.textBaseline='alphabetic';
+  // hub identity — names the governor, and flags a non-OK state right on the node
+  AC.font='600 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';
+  AC.fillStyle=_gcol?`rgba(${_gcol[0]},${_gcol[1]},${_gcol[2]},.95)`:'rgba(80,84,92,.85)';
+  AC.fillText(_glvl==='ok'?'AIS':'AIS · '+govLabel(_glvl),cx,cy+coreR+(big?9:11));
   if(reqs.length){AC.beginPath();AC.arc(cx,cy-coreR+5,2.4,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.95)';AC.fill();}  // tiny in-flight pip, detail on hover
   meshHits.push({x:cx,y:cy,r:coreR,key:'__core__'});
   // corner readouts (sans, soft)
@@ -2074,7 +2149,7 @@ function _meshTipText(hit){
   if(!hit)return null;
   if(hit.key==='__git__'){const g=S.git||{};return `GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;}
   if(hit.key==='__orbit__'){const o=S.orbit||{};return `ORBIT 3 — ${o.linked?'linked':(o.reachable===false?'graph offline':'not pushed yet')}\nClick to push this project to ORBIT's graph`;}
-  if(hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length;return `${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;}
+  if(hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length,g=S._gov||aisGovern();return `AIS Governor · ${govLabel(g.overall)} — oversight of every operative\n${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;}
   if(hit.key&&hit.key.indexOf('art:')===0)return (hit.art&&hit.art.name||'file')+'\noutput · click to preview';
   if(hit.key==='__skills__')return 'Active skills feeding the workflow\nClick to manage skills';
   if(S.agents[hit.key]){const ag=S.agents[hit.key],hmc=hmClass(ag.hm);
@@ -2348,8 +2423,27 @@ function _provLogo(k){
   if(p)return '<svg class="ac-logo" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
   return '<svg class="ac-logo" viewBox="0 0 16 16" aria-hidden="true"><text x="8" y="11.5" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">'+escH((id||'?').charAt(0).toUpperCase())+'</text></svg>';
 }
+// AIS Governor card — the governance layer, shown alongside the operatives it polices. Not an LLM:
+// it watches every operative's behaviour (token budget, errors, tool-fail rate, loop limit) vs policy.
+const _GOV_GLYPH='<svg class="ac-logo" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5-5 6.9-2.9-1.9-5-3.9-5-6.9V3.8z"/><path d="M5.7 8.1l1.6 1.6 3-3.3"/></svg>';
+function govCardHTML(){
+  const g=S._gov||aisGovern();S._gov=g;
+  const lvl=g.overall,cls=lvl==='intervene'?'hold':lvl,label=govLabel(lvl);   // ok|watch|hold ; OK|WATCH|HOLD
+  const offenders=AGENT_KEYS.filter(k=>g.per[k].level!=='ok').sort((a,b)=>_rank(g.per[b].level)-_rank(g.per[a].level));
+  const why=offenders.length?`${S.agents[offenders[0]].label}: ${g.per[offenders[0]].why[0]||g.per[offenders[0]].level}`:'all operatives within policy';
+  const n=AGENT_KEYS.length;
+  const tip=`AIS Governor — rules-based oversight (not a model)\nWatches every operative vs policy: token budget · errors · tool-fail rate · loop limit\nState: ${label}\n${why}\nClick for governance detail`;
+  return `<div class="ac gov ${cls}" role="button" tabindex="0" aria-label="AIS Governor — governance ${label}: ${escH(why)}" onclick="openGovernance()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openGovernance()}" data-tip="${tip.replace(/"/g,'&quot;')}">
+      <div class="ac-head">${_GOV_GLYPH}<div class="ac-dot gov-${cls}"></div>
+        <span class="ac-name">AIS Governor</span>
+        <span class="ac-status gov-${cls}">${label}</span></div>
+      <div class="ac-tech"><span class="ac-techname">Governance · policy watch</span><span class="ac-host">rules</span></div>
+      <div class="ac-task">${escH(why)}</div>
+      <div class="govc-watches">oversees ${n} operative${n!==1?'s':''} · budget · errors · loops</div>
+    </div>`;
+}
 function renderCards(){
-  document.getElementById('agent-cards').innerHTML=cardKeys().map(k=>{
+  document.getElementById('agent-cards').innerHTML=govCardHTML()+cardKeys().map(k=>{
     recomputeAgent(k);
     const ag=S.agents[k],bc=burnClass(ag.burn),hmc=hmClass(ag.hm);
     const tip=`${ag.label} — ${ag.role}\n${ag.tech} · ${ag.host}\nStatus: ${ag.status}\nBurn: ${ag.rate||0} tok/s (≈ ${rateHr(ag.rate)} tok/hr)\nDrift: ${driftPct(ag.hm)}% — ${hmLabel(hmc)} (deviation from baseline)${ag.task?'\nTask: '+ag.task.slice(0,40):''}`;
@@ -2513,27 +2607,60 @@ function _trayItems(){
     out.push({name:base,ext:a.ext,code:a.code,lines:a.lines,saved:false})});
   return out;
 }
+// Which file is the "main" one a novice should open/run? index.html wins, then other entry points,
+// then anything renderable, then docs, then source. Returns the index into items (-1 if none).
+function _primaryArtifact(items){
+  if(!items||!items.length)return -1;
+  const score=it=>{
+    const n=(it.name||'').toLowerCase(),e=(it.ext||'').toLowerCase();
+    if(n==='index.html'||n==='index.htm')return 100;
+    if(/^index\./.test(n))return 92;
+    if(n==='main.html'||n==='app.html')return 88;
+    if(e==='html'||e==='htm')return 80;
+    if(e==='svg')return 64;
+    if(_isRenderable(e))return 58;
+    if(n==='readme.md')return 50;
+    if(e==='md')return 42;
+    if(['py','js','ts','jsx','tsx','rb','go','rs','java','c','cpp','swift'].includes(e))return 30;
+    return 10;
+  };
+  let bi=0,bs=-1;
+  items.forEach((it,i)=>{const s=score(it);if(s>bs){bs=s;bi=i}});
+  return bi;
+}
 function renderTray(){
   const body=document.getElementById('tray-body');if(!body)return;
   const items=_trayItems(),ct=document.getElementById('tray-ct'),foot=document.getElementById('tray-foot');
   if(ct)ct.textContent=items.length||'';
   if(!items.length){body.innerHTML='<div class="tray-empty">Files the agent builds land here — preview, open or save them. The conversation stays clean.</div>';if(foot)foot.classList.remove('show');return}
-  body.innerHTML=items.map((it,i)=>{
+  // build one card. `mini` = compact supporting card (fewer actions); `primary` = the main file, given prominence.
+  const card=(it,i,mini,primary)=>{
     const rend=_isRenderable(it.ext);
     const badge=it.saved?(it.rec==='clean'?'<span class="tray-badge ok">in git</span>':(it.rec==='no-repo'||it.rec==='unknown')?'':'<span class="tray-badge warn">uncommitted</span>'):'<span class="tray-badge unsaved">unsaved</span>';
     const meta=(it.ext?it.ext.toUpperCase():'FILE')+(it.lines?' · '+it.lines+' lines':'')+(it.saved?'':' · in chat');
-    // one-click action bar — review, open, copy, terminal, finder, save — each a single click
+    // one-click action bar — review, open, copy, terminal, finder, save. Mini cards carry the essentials only.
     let acts='<div class="tray-acts">';
     acts+=`<button class="tray-act prev" data-i="${i}" title="Preview / review">${ICON.eye}</button>`;
     if(rend)acts+=`<button class="tray-act openb" data-i="${i}" title="Open in browser">${ICON.globe}</button>`;
-    acts+=`<button class="tray-act copy" data-i="${i}" title="Copy contents">${ICON.copy}</button>`;
-    acts+=`<button class="tray-act term" data-i="${i}" title="Push to terminal">${ICON.terminal}</button>`;
-    if(it.saved)acts+=`<button class="tray-act finder" data-i="${i}" title="Reveal in Finder">${ICON.finder}</button>`;
+    if(!mini)acts+=`<button class="tray-act copy" data-i="${i}" title="Copy contents">${ICON.copy}</button>`;
+    if(!mini)acts+=`<button class="tray-act term" data-i="${i}" title="Push to terminal">${ICON.terminal}</button>`;
+    if(!mini&&it.saved)acts+=`<button class="tray-act finder" data-i="${i}" title="Reveal in Finder">${ICON.finder}</button>`;
     acts+=`<button class="tray-act dl" data-i="${i}" title="Download">${ICON.download}</button>`;
     if(!it.saved)acts+=`<button class="tray-act save" data-i="${i}" title="Save to the working folder">${ICON.check}</button>`;
     acts+='</div>';
-    return `<div class="tray-card${rend?' rend':''}" data-i="${i}"><div class="tray-row1"><div class="tray-ic">${rend?_BROWSER_GLYPH:ICON.file}</div><div class="tray-meta"><div class="tray-name">${escH(it.name)}</div><div class="tray-sub">${escH(meta)} ${badge}</div></div></div>${acts}</div>`;
-  }).join('');
+    const cls='tray-card'+(rend?' rend':'')+(mini?' mini':'')+(primary?' primary':'');
+    const tag=primary?'<div class="tray-tag">Main file — open this</div>':'';
+    return `<div class="${cls}" data-i="${i}"><div class="tray-row1"><div class="tray-ic">${rend?_BROWSER_GLYPH:ICON.file}</div><div class="tray-meta"><div class="tray-name">${escH(it.name)}</div><div class="tray-sub">${escH(meta)} ${badge}</div></div></div>${tag}${acts}</div>`;
+  };
+  const pi=_primaryArtifact(items);
+  if(items.length>1&&pi>=0){
+    const rest=items.map((it,i)=>i===pi?'':card(it,i,true,false)).join('');
+    body.innerHTML=card(items[pi],pi,false,true)
+      +`<div class="tray-subhead">Supporting files · ${items.length-1}</div>`
+      +`<div class="tray-grid">${rest}</div>`;
+  }else{
+    body.innerHTML=items.map((it,i)=>card(it,i,false,false)).join('');
+  }
   const at=i=>items[+i];
   body.querySelectorAll('.tray-row1').forEach(r=>r.addEventListener('click',()=>_trayOpen(at(r.parentElement.dataset.i))));
   body.querySelectorAll('.tray-act.prev').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();_trayOpen(at(b.dataset.i))}));
@@ -3115,7 +3242,7 @@ async function modelLibrary(){
   const lib=(j&&j.library)||[];
   closeKeyDialog();
   const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
-  const cards=lib.length?lib.map(p=>`<div class="ml-card"><div class="ml-info"><div class="ml-name">${escH(p.name)}</div><div class="ml-meta">${escH(p.model||p.kind)}${p.needs_secret?' · needs API key':' · no key'}</div><div class="ml-doc">${escH(p.doc||'')}</div></div>${p.installed?'<span class="ml-on">✓ added</span>':`<button class="kd-save primary ml-add" data-id="${escH(p.id)}" data-name="${escH(p.name)}" data-key="${p.needs_secret?1:0}">Add</button>`}</div>`).join(''):'<div class="dr-empty">No library bundled — restart the server.</div>';
+  const cards=lib.length?lib.map(p=>`<div class="ml-card"><div class="ml-info"><div class="ml-name">${escH(p.name)}${p.private?' <span class="ml-priv">private</span>':''}</div><div class="ml-meta">${escH(p.model||p.kind)}${p.needs_secret?' · needs API key':' · no key'}${p.private?' · EPAM, not in the public repo':''}</div><div class="ml-doc">${escH(p.doc||'')}</div></div>${p.installed?'<span class="ml-on">✓ added</span>':`<button class="kd-save primary ml-add" data-id="${escH(p.id)}" data-name="${escH(p.name)}" data-key="${p.needs_secret?1:0}">Add</button>`}</div>`).join(''):'<div class="dr-empty">No library bundled — restart the server.</div>';
   ov.innerHTML=`<div class="kd kd-wide" role="dialog" aria-modal="true" aria-label="Model library">
     <div class="kd-head"><span class="kd-title">Model library <span class="ds-sub">every operative is a .md plugin</span></span><button class="kd-x" aria-label="Close">✕</button></div>
     <div class="kd-body"><div class="ml-grid">${cards}</div></div>
@@ -3537,6 +3664,19 @@ document.addEventListener('paste',e=>{
   for(const it of items){if(it.type&&it.type.indexOf('image/')===0){const f=it.getAsFile();if(f){e.preventDefault();_addImageFromFile(f)}}}
 });
 ['input-row','timeline'].forEach(id=>{const el=document.getElementById(id);if(el){el.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files'))e.preventDefault()});el.addEventListener('drop',_imgDrop)}});
+// drag-a-file affordance — a full-window veil appears while dragging a file in, so the gesture is
+// discoverable; dropping anywhere routes through _imgDrop (a provider .md installs as an operative).
+(function(){
+  const veil=document.getElementById('dropveil');if(!veil)return;
+  const isFile=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
+  let depth=0;const show=()=>veil.classList.add('show'),hide=()=>{depth=0;veil.classList.remove('show')};
+  document.addEventListener('dragenter',e=>{if(!isFile(e))return;depth++;show()});
+  document.addEventListener('dragover',e=>{if(isFile(e))e.preventDefault()});
+  document.addEventListener('dragleave',e=>{if(!isFile(e))return;depth=Math.max(0,depth-1);if(!depth)hide()});
+  document.addEventListener('drop',e=>{if(isFile(e)){e.preventDefault();hide()}});
+  veil.addEventListener('dragover',e=>e.preventDefault());
+  veil.addEventListener('drop',e=>{e.preventDefault();hide();_imgDrop(e)});
+})();
 async function cloneRepo(){
   const inp=document.getElementById('repo-url');const url=(inp.value||'').trim();if(!url)return;
   if(!/^(https?:\/\/|git@)/.test(url)){artToast('Enter a valid git URL (https:// or git@)','err');return}
@@ -3848,8 +3988,8 @@ async function renderLedgerFull(){
   document.getElementById('lf-modes').innerHTML=Object.keys(bm).length
     ? Object.entries(bm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="lf-mode"><span class="lf-mode-k">${escH(k)}</span><div class="lf-mode-bar"><div class="lf-mode-fill ${k!=='local'?'cloud':''}" style="width:${Math.round(v/tot*100)}%"></div></div><span class="lf-mode-v">${fmtPlain(v)}</span></div>`).join('')
     : '<div class="ais-empty">No usage yet</div>';
-  // sparkline (oldest → newest)
-  _drawSpark(e.slice().reverse().map(x=>x.tokens||0));
+  // stacked burn chart, oldest → newest (local cool + cloud warm)
+  _drawBurnChart(e.slice().reverse());
   // rows (newest first)
   document.getElementById('lf-rows').innerHTML=e.length
     ? e.map(x=>`<div class="lf-row" data-tip="${escH(x.prompt||'')}"><span class="lf-row-prompt">${escH(x.prompt||'(prompt)')}</span><span class="lf-row-meta">${escH(x.mode||'local')}${x.tools?' · '+x.tools+'t':''}${x.iterations?' · '+x.iterations+'⟳':''}</span><span class="lf-row-tok"><b>${fmtPlain(x.tokens||0)}</b> tok</span></div>`).join('')
@@ -3857,18 +3997,34 @@ async function renderLedgerFull(){
   // efficiency tips
   const tips=document.getElementById('lf-tips');tips.innerHTML='<div class="lf-tip" style="color:var(--text-ghost)">Tap “analyze” for prompt-efficiency tips.</div>';
 }
-function _drawSpark(vals){
-  const cv=document.getElementById('lf-spark');if(!cv)return;const dpr=window.devicePixelRatio||1;
-  const W=cv.clientWidth||400,H=cv.clientHeight||120;cv.width=W*dpr;cv.height=H*dpr;
-  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-  if(!vals.length){c.fillStyle='rgba(26,28,34,.25)';c.font='11px -apple-system,system-ui';c.fillText('no data yet',12,H/2);return}
-  const max=Math.max(...vals,1),pad=10,n=vals.length,x=i=>pad+(n<2?0:i*(W-2*pad)/(n-1)),y=v=>H-pad-(v/max)*(H-2*pad);
-  // area + line
-  c.beginPath();c.moveTo(x(0),y(vals[0]));vals.forEach((v,i)=>c.lineTo(x(i),y(v)));
-  c.lineTo(x(n-1),H-pad);c.lineTo(x(0),H-pad);c.closePath();c.fillStyle='rgba(207,122,46,.08)';c.fill();
-  c.beginPath();c.moveTo(x(0),y(vals[0]));vals.forEach((v,i)=>c.lineTo(x(i),y(v)));
-  c.strokeStyle='rgba(207,122,46,.85)';c.lineWidth=1.5;c.lineJoin='round';c.stroke();
-  vals.forEach((v,i)=>{c.beginPath();c.arc(x(i),y(v),1.8,0,Math.PI*2);c.fillStyle='rgba(207,122,46,.9)';c.fill()});
+// Stacked shaded burn chart — cumulative LOCAL tokens (cool teal) + CLOUD $$ tokens (warm orange),
+// over the session's prompts. Named uniquely: a second _drawSpark (the system gauges) used to shadow
+// the old ledger one, so this chart silently drew nothing.
+function _drawBurnChart(entries){
+  const cv=document.getElementById('lf-spark');if(!cv)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth||(cv.parentElement&&cv.parentElement.clientWidth)||400,H=cv.clientHeight||120;
+  cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const rows=(entries||[]).filter(x=>x&&(x.tokens||0)>0);
+  let cl=0,cc=0;const loc=[],top=[];   // loc[i]=cumulative local; top[i]=cumulative local+cloud
+  rows.forEach(x=>{const t=x.tokens||0;if((x.mode||'local')==='local')cl+=t;else cc+=t;loc.push(cl);top.push(cl+cc)});
+  _burnLegend(cl,cc);
+  if(!rows.length){c.fillStyle='rgba(26,28,34,.32)';c.font='11px -apple-system,system-ui';c.textAlign='left';c.fillText('No usage yet — local & cloud token burn will chart here.',12,H/2);return}
+  if(loc.length===1){loc.push(loc[0]);top.push(top[0])}   // a single prompt → a flat band
+  const n=loc.length,max=Math.max(top[n-1],1),pad=8,padB=6;
+  const X=i=>pad+i*(W-2*pad)/(n-1),Y=v=>H-padB-(v/max)*(H-pad-padB);
+  const area=(hi,lo,fill)=>{c.beginPath();c.moveTo(X(0),Y(hi[0]));for(let i=1;i<n;i++)c.lineTo(X(i),Y(hi[i]));for(let i=n-1;i>=0;i--)c.lineTo(X(i),Y(lo[i]));c.closePath();c.fillStyle=fill;c.fill()};
+  const line=(a,stroke)=>{c.beginPath();c.moveTo(X(0),Y(a[0]));for(let i=1;i<n;i++)c.lineTo(X(i),Y(a[i]));c.strokeStyle=stroke;c.lineWidth=1.5;c.lineJoin='round';c.stroke()};
+  const zero=loc.map(()=>0);
+  area(loc,zero,'rgba(72,150,80,.20)');                  // LOCAL band — GREEN, free
+  if(cc>0)area(top,loc,'rgba(207,122,46,.22)');          // CLOUD band — ORANGE ($$), stacked above
+  line(loc,'rgba(72,150,80,.95)');
+  if(cc>0)line(top,'rgba(207,122,46,.95)');
+}
+function _burnLegend(local,cloud){
+  const el=document.getElementById('lf-burn-legend');if(!el)return;
+  el.innerHTML=`<span class="lf-leg"><span class="lf-sw" style="background:rgba(47,156,139,.85)"></span>Local <b>${fmtPlain(local)}</b></span>`
+    +`<span class="lf-leg${cloud>0?'':' off'}"><span class="lf-sw" style="background:rgba(207,122,46,.9)"></span>Cloud <b>${fmtPlain(cloud)}</b>${cloud>0?' · $$':''}</span>`;
 }
 async function analyzeFull(){
   const tips=document.getElementById('lf-tips');tips.innerHTML='<div class="lf-tip" style="color:var(--text-ghost)">Analyzing your prompts…</div>';
@@ -4743,6 +4899,7 @@ refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
 const SYS={cpu:[],mem:[],temp:[],fan:[],burn:[]};
+const SYSLAST={};   // latest raw /v1/sys snapshot — for real-units readouts (GB, rpm, °C, fan count)
 function _sgPush(k,v){SYS[k].push(v==null?null:v);if(SYS[k].length>30)SYS[k].shift()}
 // intensity ramp — quiet grey → cool blue/teal → orange → red at peak load
 const _SG_STOPS=[[0,[128,132,140]],[0.22,[96,124,150]],[0.46,[58,150,156]],[0.72,[207,122,46]],[1,[200,75,49]]];
@@ -4755,7 +4912,10 @@ function _intensityRGB(f){
 function drawSG(id,vals,text,level,denom){
   const cell=document.getElementById(id);if(!cell)return;
   const vEl=cell.querySelector('.sg-v');
-  vEl.textContent=text;vEl.className='sg-v'+(text==='—'?' na':level>=.9?' alert':level>=.7?' warn':'');
+  const st=text==='—'?'na':level>=.9?'alert':level>=.7?'warn':'';
+  // shape marker doubles the colour as a pressure cue (colourblind-safe): ▲ alert, △ watch
+  const mk=st==='alert'?'<span class="sg-mk">▲</span>':st==='warn'?'<span class="sg-mk">△</span>':'';
+  vEl.innerHTML=mk+escH(text);vEl.className='sg-v'+(st?' '+st:'');
   _drawSpark(cell.querySelector('.sg-spark'),vals,level,denom);
 }
 function _drawSpark(cv,vals,level,denom){
@@ -4796,7 +4956,14 @@ function sysDetailPop(){
   const ov=document.createElement('div');ov.id='sysdetail';ov.className='sysdetail';
   ov.innerHTML='<div class="sd-h">System &amp; burn — last ~75s</div>'+_SYS_META.map(m=>{
     const clean=(SYS[m[0]]||[]).filter(v=>v!=null),cur=clean.length?clean[clean.length-1]:null,pk=clean.length?Math.max(...clean):null;
-    return `<div class="sd-row"><div class="sd-lab"><span class="sd-k">${m[1]}</span><span class="sd-v">${_sysFmt(cur,m[2])}</span><span class="sd-pk">peak ${_sysFmt(pk,m[2])}</span></div><canvas class="sd-spark" data-k="${m[0]}" data-d="${m[3]}"></canvas></div>`;
+    let lab=m[1],val=_sysFmt(cur,m[2]),peak='peak '+_sysFmt(pk,m[2]);
+    if(m[0]==='mem'&&SYSLAST.mem_used_gb!=null){              // real units: used / total GB, peak still as %
+      val=`${SYSLAST.mem_used_gb} / ${SYSLAST.mem_total_gb} GB`;peak='peak '+_sysFmt(pk,'%');
+    }else if(m[0]==='fan'){
+      if(cur==null){val='no reading';peak=''}
+      else if(SYSLAST.fan_count>1)lab=`Fan · ${SYSLAST.fan_count}`;
+    }
+    return `<div class="sd-row"><div class="sd-lab"><span class="sd-k">${lab}</span><span class="sd-v">${val}</span><span class="sd-pk">${peak}</span></div><canvas class="sd-spark" data-k="${m[0]}" data-d="${m[3]}"></canvas></div>`;
   }).join('');
   document.body.appendChild(ov);
   const bar=document.getElementById('sysbar'),r=bar.getBoundingClientRect();
@@ -4808,19 +4975,33 @@ function sysDetailPop(){
 }
 function closeSysDetail(){const ov=document.getElementById('sysdetail');if(ov){if(ov._off)document.removeEventListener('mousedown',ov._off,true);ov.remove()}document.removeEventListener('keydown',_sysEsc)}
 function _sysEsc(e){if(e.key==='Escape')closeSysDetail()}
-(function(){const bar=document.getElementById('sysbar');if(bar)bar.querySelectorAll('.sg').forEach(el=>{el.style.cursor='pointer';el.setAttribute('title','Click for detail graphs');el.addEventListener('click',sysDetailPop)})})();
+(function(){const bar=document.getElementById('sysbar');if(bar)bar.querySelectorAll('.sg').forEach(el=>{
+  el.style.cursor='pointer';el.setAttribute('role','button');el.setAttribute('tabindex','0');
+  el.setAttribute('aria-label','System metric — open detail graphs');
+  el.addEventListener('click',sysDetailPop);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();sysDetailPop()}});
+})})();
 async function pollSys(){
   try{_sgPush('burn',Math.max(0,...AGENT_KEYS.map(k=>(S.agents[k]&&S.agents[k].burn)||0)))}catch(_){}
   let j;try{j=await fetch('/v1/sys').then(r=>r.ok?r.json():null)}catch(_){j=null}
   if(!j)return;
+  Object.assign(SYSLAST,j);
   _sgPush('cpu',j.cpu);_sgPush('mem',j.mem_pct);
   const tnum=j.temp_c!=null?j.temp_c:(j.thermal?({nominal:30,fair:55,serious:80,critical:95}[String(j.thermal).toLowerCase()]||null):null);
   _sgPush('temp',tnum);_sgPush('fan',j.fan_rpm);
+  // MEM shows ACTUAL usage in GB (used / total) — the real number, not just a percent; colour still tracks pressure
+  const memTxt=j.mem_used_gb!=null&&j.mem_total_gb!=null?Math.round(j.mem_used_gb)+'/'+Math.round(j.mem_total_gb)+'G':(j.mem_pct!=null?Math.round(j.mem_pct)+'%':'—');
   drawSG('sg-cpu',SYS.cpu,j.cpu!=null?Math.round(j.cpu)+'%':'—',(j.cpu||0)/100,100);
-  drawSG('sg-mem',SYS.mem,j.mem_pct!=null?Math.round(j.mem_pct)+'%':'—',(j.mem_pct||0)/100,100);
+  drawSG('sg-mem',SYS.mem,memTxt,(j.mem_pct||0)/100,100);
   drawSG('sg-temp',SYS.temp,j.temp_c!=null?Math.round(j.temp_c)+'°':(j.thermal?String(j.thermal):'—'),(tnum||0)/100,100);
   drawSG('sg-fan',SYS.fan,j.fan_rpm!=null?Math.round(j.fan_rpm):'—',(j.fan_rpm||0)/6000,6000);
+  // precise actuals on hover — exact GB / rpm / °C without opening the detail card
+  _sgTip('sg-mem',j.mem_used_gb!=null?`Memory — ${j.mem_used_gb} / ${j.mem_total_gb} GB used (${Math.round(j.mem_pct)}%)`:'Memory');
+  _sgTip('sg-cpu',j.cpu!=null?`CPU — ${Math.round(j.cpu)}% busy${j.cores?' · '+j.cores+' cores':''}${j.load!=null?' · load '+j.load:''}`:'CPU');
+  _sgTip('sg-temp',j.temp_c!=null?`SoC temperature — ${Math.round(j.temp_c)}°C${j.thermal?' · '+j.thermal:''}`:(j.thermal?`Thermal state — ${j.thermal}`:'Temperature'));
+  _sgTip('sg-fan',j.fan_rpm!=null?`Fan — ${Math.round(j.fan_rpm)} rpm${j.fan_count>1?' (avg of '+j.fan_count+'; peak '+j.fan_max+')':''}`:'Fan — no reading');
 }
+function _sgTip(id,txt){const el=document.getElementById(id);if(!el)return;const full=txt+' — click for graphs';el.title=full;el.setAttribute('aria-label',full)}
 pollSys();setInterval(pollSys,2500);
 // First-run onboarding — and always open straight to model-install if there's no usable model yet
 setTimeout(async()=>{

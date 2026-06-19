@@ -43,6 +43,12 @@ _DIR = Path.home() / ".scroll" / "provider-plugins"
 # A curated, bundled library of agentic options shipped AS .md plugin files (GLM + open-source
 # models, etc.). One-click install copies them into _DIR — every operative is just a markdown file.
 _LIB = Path(__file__).resolve().parent.parent / "docs" / "provider-plugins" / "library"
+# A PRIVATE, non-repo library in the user's home — for private operatives that must never live in
+# the public repo. Anything dropped here also becomes a one-click install in the gallery.
+_PRIVLIB = Path.home() / ".scroll" / "plugin-library"
+# strips ANSI/terminal escape sequences from a command plugin's captured output (interactive CLIs
+# emit cursor-move/colour codes that would otherwise leak into the chat reply)
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 def _parse(text: str) -> dict | None:
@@ -115,14 +121,27 @@ class _CommandPlugin:
             if self.spec.get("secret_env") and sec:
                 env[self.spec["secret_env"]] = sec
             with tempfile.TemporaryDirectory() as td:
-                r = subprocess.run(argv, cwd=td, capture_output=True, text=True, timeout=600, env=env)
+                # stdin=DEVNULL: a CLI that wants to prompt (e.g. an expired SSO asking "Re-authenticate? (Y/n)")
+                # gets EOF and exits at once instead of hanging the whole 600s waiting for an answer we can't give.
+                r = subprocess.run(argv, cwd=td, capture_output=True, text=True, timeout=600, env=env,
+                                   stdin=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             yield ErrorEvent(message=f"{self.display_name} timed out (600s)"); return
         except Exception as exc:
             yield ErrorEvent(message=f"{self.display_name} error: {exc}"); return
-        out = (r.stdout or "").strip()
+        # A CLI that needs interactive login can't be answered from a captured subprocess — detect that
+        # and return one clear, actionable line instead of leaking the prompt's terminal escape codes.
+        low = _ANSI.sub("", ((r.stdout or "") + "\n" + (r.stderr or ""))).lower()
+        if any(s in low for s in ("authentication required", "re-authenticate", "not authenticated",
+                                  "profile login", "login required", "please log in", "please login",
+                                  "unauthorized", "session expired", "sso credentials", "err_use_after_close")):
+            yield ErrorEvent(message=(f"{self.display_name} needs you to sign in again. Open a terminal "
+                                      f"(Scroll's Terminal works) and re-run this operative's login, then retry."))
+            return
+        out = _ANSI.sub("", (r.stdout or "")).strip()   # strip ANSI so no escape codes leak into the reply
         if r.returncode != 0 and not out:
-            yield ErrorEvent(message=f"{self.display_name} failed: {(r.stderr or 'non-zero exit').strip()[:300]}"); return
+            err = _ANSI.sub("", (r.stderr or "non-zero exit")).strip()
+            yield ErrorEvent(message=f"{self.display_name} failed: {err[:300]}"); return
         for i in range(0, len(out), 400):
             yield TokenEvent(content=out[i:i + 400])
         yield DoneEvent(total_tokens=max(1, len(out) // 4))
@@ -182,32 +201,40 @@ def _slug(pid: str) -> str:
 
 
 def library() -> list[dict]:
-    """The bundled model library (every option is a .md plugin), with an `installed` flag."""
+    """The model library (every option is a .md plugin), with an `installed` flag. Merges the
+    bundled in-repo library with the user's PRIVATE ~/.scroll/plugin-library (private operatives
+    live there, never in the public repo). Private entries win on id collision."""
     installed = {p.stem for p in _DIR.glob("*.md")} if _DIR.exists() else set()
-    items = []
-    if _LIB.is_dir():
-        for p in sorted(_LIB.glob("*.md")):
+    items, seen = [], set()
+    for base in (_PRIVLIB, _LIB):
+        if not base.is_dir():
+            continue
+        for p in sorted(base.glob("*.md")):
             spec = _parse(p.read_text(encoding="utf-8", errors="replace"))
-            if not spec:
+            if not spec or spec["id"] in seen:
                 continue
+            seen.add(spec["id"])
             items.append({
                 "id": spec["id"], "name": spec.get("name", spec["id"]),
                 "kind": spec.get("kind", "command"), "model": spec.get("model", ""),
                 "needs_secret": bool(spec.get("secret_env")),
                 "doc": (spec.get("doc", "").strip()[:220]),
                 "installed": _slug(spec["id"]) in installed,
+                "private": base == _PRIVLIB,
             })
     return items
 
 
 def install(plugin_id: str) -> dict:
-    """Install a bundled library model by id (copies its .md into _DIR + registers it)."""
-    if not _LIB.is_dir():
-        return {"ok": False, "error": "no library bundled"}
-    for p in _LIB.glob("*.md"):
-        spec = _parse(p.read_text(encoding="utf-8", errors="replace"))
-        if spec and spec["id"] == plugin_id:
-            return import_path(str(p))
+    """Install a library model by id — searches the private library first, then the bundled one
+    (copies its .md into _DIR + registers it)."""
+    for base in (_PRIVLIB, _LIB):
+        if not base.is_dir():
+            continue
+        for p in base.glob("*.md"):
+            spec = _parse(p.read_text(encoding="utf-8", errors="replace"))
+            if spec and spec["id"] == plugin_id:
+                return import_path(str(p))
     return {"ok": False, "error": f"unknown library id {plugin_id!r}"}
 
 
