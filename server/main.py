@@ -144,6 +144,8 @@ app.add_middleware(
 async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue[AgentEvent | None] = asyncio.Queue()
+    import threading
+    stop = threading.Event()   # set when the client disconnects/stops → cancels the worker, frees the GEN lock
 
     def _run():
         try:
@@ -177,6 +179,7 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
                 max_tokens=req.max_tokens,
                 temperature=req.temperature,
                 max_iterations=req.max_iterations,
+                stop=stop,
             ):
                 asyncio.run_coroutine_threadsafe(queue.put(event), loop)
         except Exception as exc:
@@ -193,15 +196,18 @@ async def _stream_agent(req: ChatRequest) -> AsyncGenerator[str, None]:
 
     total = 0
     tool_calls = 0
-    while True:
-        event = await queue.get()
-        if event is None:
-            break
-        if event.type == "done":
-            total = event.total_tokens
-        elif event.type == "tool_call":
-            tool_calls += 1
-        yield f"data: {event.model_dump_json()}\n\n"
+    try:
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            if event.type == "done":
+                total = event.total_tokens
+            elif event.type == "tool_call":
+                tool_calls += 1
+            yield f"data: {event.model_dump_json()}\n\n"
+    finally:
+        stop.set()   # client disconnected/stopped (GeneratorExit) → cancel the worker + free the lock
 
     from server import ledger
     prompt = next((m.content for m in reversed(req.messages) if m.role == "user"), "") or ""
@@ -245,10 +251,8 @@ async def _stream_dual(req: DualAgentRequest) -> AsyncGenerator[str, None]:
 
     def _run():
         try:
-            # Lazy-load critic model on first /v1/dual request
-            if not agent_mod.is_loaded("critic"):
-                agent_mod.load_model(req.critic_model, "critic")
-
+            # The critic is a ROLE on the already-resident primary model — do NOT load a second
+            # MLX model (a 7B critic beside the 32B primary OOMs Metal → SIGABRT, "Services quit").
             messages = [m.model_dump(exclude_none=True) for m in req.messages]
             for event in dual_mod.run_dual_agent(
                 messages=messages,
@@ -256,6 +260,7 @@ async def _stream_dual(req: DualAgentRequest) -> AsyncGenerator[str, None]:
                 max_tokens=req.max_tokens,
                 temperature=req.temperature,
                 revision=req.revision,
+                critic_slot="primary",
             ):
                 asyncio.run_coroutine_threadsafe(queue.put(event), loop)
         except Exception as exc:
@@ -584,9 +589,13 @@ async def pty_ws(ws: WebSocket):
     pid, fd = pty_session.spawn(cwd, cols, rows)
     loop = asyncio.get_event_loop()
 
-    async def _send(data: bytes):
+    async def _flush(data: bytes):
         try:
             await ws.send_bytes(data)
+        except Exception:
+            return                     # ws gone — stop; the receive loop tears down the session
+        try:
+            loop.add_reader(fd, _on_read)   # re-arm ONLY after this chunk flushed → backpressure
         except Exception:
             pass
 
@@ -602,7 +611,11 @@ async def pty_ws(ws: WebSocket):
                 pass
             asyncio.create_task(_close_ws())
             return
-        asyncio.create_task(_send(data))
+        try:
+            loop.remove_reader(fd)     # pause reading until the chunk is sent (no unbounded task pileup)
+        except Exception:
+            pass
+        asyncio.create_task(_flush(data))
 
     async def _close_ws():
         try:

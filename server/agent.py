@@ -253,8 +253,12 @@ def _run_agent(
     slot: str = "primary",
     system_prompt: str | None = None,
     tools: bool = True,
+    stop=None,
 ) -> Generator[AgentEvent, None, None]:
-    """Synchronous generator — yields AgentEvent objects, runs inference on calling thread."""
+    """Synchronous generator — yields AgentEvent objects, runs inference on calling thread.
+    `stop` (optional threading.Event) lets the caller cancel mid-run when the client disconnects."""
+    def _stopped():
+        return stop is not None and stop.is_set()
     model, tokenizer = _get_slot(slot)
     _tune_memory()
     max_tokens = max(256, min(int(max_tokens), 8192))  # bound generation KV so Metal can't OOM-abort (raised so Deep/Max effort can finish long files)
@@ -265,6 +269,8 @@ def _run_agent(
     total_tokens = 0
 
     for iteration in range(max_iterations):
+        if _stopped():                              # client disconnected / Stop pressed → end the run
+            free_mem(); yield DoneEvent(total_tokens=total_tokens); return
         history = _trim_history(history)           # keep the working set bounded across tool loops
         prompt = _build_prompt(history, tools=tools, slot=slot)
         response_text = ""
@@ -283,6 +289,8 @@ def _run_agent(
                 tok = chunk if isinstance(chunk, str) else getattr(chunk, "text", str(chunk))
                 response_text += tok
                 total_tokens += 1
+                if total_tokens % 8 == 0 and _stopped():
+                    break                          # stop mid-stream when the client goes away
 
                 # Once a tool call (tagged or bare JSON) appears, suppress the rest of the visible stream
                 if not suppress and ("<tool_call>" in response_text or _BARE_TOOL_RE.search(response_text)):
@@ -297,6 +305,7 @@ def _run_agent(
         except Exception as exc:
             free_mem()
             yield ErrorEvent(message=f"Generation failed ({type(exc).__name__}: {exc}). Memory was cleared — try again or shorten the request.")
+            yield DoneEvent(total_tokens=total_tokens)  # finalize the turn so the ledger records spent tokens
             return
         finally:
             free_mem()  # release this turn's KV cache before the next iteration
