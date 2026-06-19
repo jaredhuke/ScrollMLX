@@ -54,8 +54,8 @@ from server.schemas import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
-    # Scroll.app is a GUI app — its PATH is the minimal launchd one, so npm/node/redacted/git
-    # aren't found. Graft on the login-shell PATH so every subprocess (terminal, git, redacted)
+    # Scroll.app is a GUI app — its PATH is the minimal launchd one, so npm/node/git
+    # aren't found. Graft on the login-shell PATH so every subprocess (terminal, git)
     # resolves binaries the way Terminal.app does.
     try:
         from server import env as env_mod
@@ -93,7 +93,7 @@ _STATIC = Path(__file__).parent.parent / "static"
 def _origin_ok(origin: str) -> bool:
     """True if the request Origin is same-origin / loopback / private-LAN (so the app and a LAN
     phone are allowed) — but a real public website's origin is refused. Powerful endpoints (shell,
-    PTY, redacted setup) use this: CORS is allow_origins=["*"] and the server is on loopback, which
+    PTY) use this: CORS is allow_origins=["*"] and the server is on loopback, which
     does NOT stop a public page the user visits from cross-origin POSTing to run a command."""
     if not origin:
         return True  # same-origin fetches don't send Origin
@@ -559,115 +559,6 @@ async def provider_plugins_secret(payload: dict):
     if not pid:
         raise HTTPException(400, "missing id")
     return provider_plugins.set_secret(pid, payload.get("secret", ""))
-
-
-@app.get("/v1/redacted/status")
-async def redacted_status():
-    """Is the EPAM redacted CLI available? (No API key — auth is the CLI's SSO session.)"""
-    import shutil, subprocess
-    from server import env as env_mod
-    binp = shutil.which("redacted-cli", path=env_mod.login_path()) or shutil.which("redacted-cli")
-    if not binp:
-        return {"available": False, "detail": "redacted-cli CLI not installed"}
-    ver = ""
-    try:
-        r = subprocess.run([binp, "--version"], capture_output=True, text=True, timeout=15, env=env_mod.login_env())
-        ver = (r.stdout or r.stderr or "").strip().splitlines()[0][:40] if r.returncode == 0 else ""
-    except Exception:
-        ver = ""
-    return {"available": True, "bin": binp, "version": ver}
-
-
-# The 4 documented redacted setup commands — single source of truth (steps UI + Terminal script).
-redacted_STEPS = [
-    {"cmd": "npm install -g @redacted/code", "note": "install the CLI"},
-    {"cmd": "redacted setup", "note": "EPAM SSO + pick Claude Opus"},
-    {"cmd": "redacted install claude", "note": "wire up the claude shim"},
-    {"cmd": "redacted profile login", "note": "sign in (re-auth every 24h)"},
-]
-
-
-def _redacted_setup_script() -> str:
-    """A .command script that runs the redacted setup in Terminal.app. The interactive SSO /
-    model-pick steps need a real TTY + browser, which the embedded (no-PTY) terminal can't do."""
-    shell = os.environ.get("SHELL") or "/bin/zsh"
-    chain = " && \\\n  ".join(s["cmd"] for s in redacted_STEPS)
-    return (
-        f"#!{shell}\n"
-        "echo '── Scroll · redacted (EPAM) setup ──'\n"
-        "echo 'Finish the EPAM sign-in below, then return to Scroll and click Re-check.'\n"
-        "echo\n"
-        f"  {chain}\n"
-        "echo\n"
-        "echo '✓ redacted setup finished — back to Scroll → Re-check.'\n"
-    )
-
-
-@app.post("/v1/redacted/setup")
-async def redacted_setup(request: Request, payload: dict | None = None):
-    """One button: write the setup script and open it in Terminal.app so the user can complete
-    EPAM SSO in a real terminal. Commands are fixed constants (no user input → no injection)."""
-    _guard_local(request)
-    payload = payload or {}
-    import subprocess
-    script = Path.home() / ".scroll" / "redacted-setup.command"
-    try:
-        script.parent.mkdir(parents=True, exist_ok=True)
-        script.write_text(_redacted_setup_script(), encoding="utf-8")
-        script.chmod(0o755)
-    except Exception as exc:
-        return {"ok": False, "error": f"could not write setup script: {exc}"}
-    if payload.get("dry_run"):
-        return {"ok": True, "path": str(script), "opened": False, "steps": redacted_STEPS}
-    try:
-        # `open <file>.command` launches Terminal.app and runs it — no extra automation perms.
-        subprocess.run(["open", str(script)], check=False, timeout=8)
-    except Exception as exc:
-        return {"ok": False, "error": f"could not open Terminal: {exc}", "path": str(script)}
-    return {"ok": True, "path": str(script), "opened": True, "steps": redacted_STEPS}
-
-
-def _redacted_plugin_md() -> str:
-    """A self-contained redacted provider plugin (.md). EPAM-private: it lives in the runtime
-    plugin dir (outside this repo) and is shared via git.epam.com, never the public GitHub."""
-    return (
-        "---\n"
-        "type: provider\n"
-        "id: redacted\n"
-        "name: redacted · Claude Opus\n"
-        "kind: command\n"
-        "command: redacted-cli -p {prompt}\n"
-        "---\n\n"
-        "# redacted · Claude Opus (EPAM)\n\n"
-        "Routes Claude Opus through EPAM's redacted CLI (corporate SSO + budget). No API key —\n"
-        "auth is the CLI's SSO session. **EPAM-private: share via git.epam.com, not GitHub.**\n\n"
-        "Setup (run once in a terminal):\n\n"
-        + "".join(f"{i+1}. `{s['cmd']}`  — {s['note']}\n" for i, s in enumerate(redacted_STEPS))
-    )
-
-
-@app.post("/v1/redacted/plugin")
-async def redacted_plugin(request: Request, payload: dict | None = None):
-    """Save redacted as a droppable provider plugin into the EPAM-private runtime dir
-    (~/.scroll/provider-plugins/redacted.md) so it travels with the EPAM group, not GitHub.
-    Optionally reveal it in Finder so it can be dropped into a git.epam.com repo."""
-    _guard_local(request)
-    payload = payload or {}
-    from server import provider_plugins
-    dest = provider_plugins._DIR / "redacted.md"
-    try:
-        provider_plugins._DIR.mkdir(parents=True, exist_ok=True)
-        dest.write_text(_redacted_plugin_md(), encoding="utf-8")
-        provider_plugins.register_all()
-    except Exception as exc:
-        return {"ok": False, "error": f"could not write plugin: {exc}"}
-    if payload.get("reveal"):
-        try:
-            import subprocess
-            subprocess.run(["open", "-R", str(dest)], check=False, timeout=8)
-        except Exception:
-            pass
-    return {"ok": True, "path": str(dest)}
 
 
 # ── Embedded CLI + Apply-code ──────────────────────────────────────────────────

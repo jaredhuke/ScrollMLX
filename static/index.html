@@ -1852,8 +1852,8 @@ function meshMetrics(){
   return{completion,errorRate,drift,vigilance,friction,vigEdits:(typeof VIG!=='undefined'?VIG.edits:0),vigChallenges:(typeof VIG!=='undefined'?VIG.challenges:0),vigWhy:(typeof vigWhyText==='function')?vigWhyText():'',interactions:tc,sources:Object.keys(_srcMap()).length+1};
 }
 // Cloud operative — present when an escalation provider has a key. Code-only access.
-const _CLOUD_META={redacted:['redacted','Claude Opus · redacted'],anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
-const _CLOUD_ORDER=['redacted','anthropic','openai','gemini','groq','cerebras','openrouter'];
+const _CLOUD_META={anthropic:['CLAUDE','Claude Sonnet 4.6'],openai:['GPT-4o','GPT-4o'],gemini:['GEMINI','Gemini 2.0 Flash'],groq:['GROQ','Llama 3.3 70B'],cerebras:['CEREBRAS','Llama 3.3 70B'],openrouter:['OPENROUTER','Llama 3.3 70B']};
+const _CLOUD_ORDER=['anthropic','openai','gemini','groq','cerebras','openrouter'];
 function cloudAgentKey(id){return 'cloud:'+id}
 // Each keyed cloud provider is its own operative object in S.agents['cloud:<id>'].
 function ensureCloudAgent(id){
@@ -2311,7 +2311,6 @@ function driftPct(hm){return Math.round(Math.abs((hm==null?50:hm)-50)/50*100)}  
 // monochrome (greyscale) provider marks — simple line glyphs, distinctive but trademark-safe
 const _PROV_ICON={
   mlx:'<rect x="4" y="4" width="8" height="8" rx="1.3"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2"/>',
-  redacted:'<path d="M8 2l5.5 3.2v5.6L8 14 2.5 10.8V5.2z"/><circle cx="8" cy="8" r="1.5"/>',
   anthropic:'<path d="M8 2.2v11.6M3.2 5l9.6 6M12.8 5l-9.6 6"/>',
   openai:'<path d="M8 2l5.5 3.2v5.6L8 14 2.5 10.8V5.2z"/>',
   gemini:'<path d="M8 1.6c.55 3.6 2.85 5.85 6.4 6.4-3.55.55-5.85 2.85-6.4 6.4-.55-3.55-2.85-5.85-6.4-6.4C5.15 7.45 7.45 5.15 8 1.6z"/>',
@@ -2763,7 +2762,7 @@ function _urlChip(escUrl){
   return `<button class="url-chip" data-url="${escH(real)}" title="${escUrl}" onclick="event.stopPropagation();copyText(this.dataset.url,'Copied '+'${escH(label)}'+' link')">${escH(label)}</button>`;
 }
 // inline code that begins with a known shell verb → also offer a one-click "paste to terminal"
-const _CMD_RE=/^(?:\$\s+)?(npm|npx|yarn|pnpm|bun|git|cd|ls|cat|python3?|uv|pip3?|brew|redacted|node|deno|curl|wget|mkdir|rmdir|rm|mv|cp|chmod|chown|export|source|ssh|scp|docker|kubectl|make|sudo|open|grep|sed|awk|tar|unzip|\.\/)\b/;
+const _CMD_RE=/^(?:\$\s+)?(npm|npx|yarn|pnpm|bun|git|cd|ls|cat|python3?|uv|pip3?|brew|node|deno|curl|wget|mkdir|rmdir|rm|mv|cp|chmod|chown|export|source|ssh|scp|docker|kubectl|make|sudo|open|grep|sed|awk|tar|unzip|\.\/)\b/;
 function _mdInline(x){
   x=escH(x);
   // long URLs → a compact copy-chip (drop a leading "PUSHED:" label too)
@@ -3036,20 +3035,12 @@ async function checkHealth(){
 }
 window.CLOUD={};
 async function refreshKeys(){try{const j=await fetch('/v1/keys').then(r=>r.json());window.CLOUD=j.providers||{}}catch(_){window.CLOUD={}}
-  if(window.redacted&&window.redacted.available)window.CLOUD.redacted=true;   // redacted is CLI/SSO, not key-based — keep it surfaced
-  // If the chosen cloud model has no key but another does, prefer a keyed one (redacted first).
-  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['redacted','groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}
+  // If the chosen cloud model has no key but another does, prefer a keyed one.
+  if(typeof SET!=='undefined'&&!window.CLOUD[SET.cloud]){const order=['groq','cerebras','openrouter','gemini','anthropic','openai'];const avail=order.find(p=>window.CLOUD[p]);if(avail)SET.cloud=avail}
   // surface keyed providers as operatives immediately (left cards + right connectors)
   try{syncCloudAgent();renderCards();renderAISInfo()}catch(_){}}
-// redacted — Claude via EPAM's CLI/SSO (no API key). Detect the CLI and surface it as a provider.
-async function loadredacted(){
-  let s;try{s=await fetch('/v1/redacted/status').then(r=>r.ok?r.json():null)}catch(_){s=null}
-  window.redacted=s||{available:false};
-  window.CLOUD=window.CLOUD||{};
-  if(window.redacted.available)window.CLOUD.redacted=true;else delete window.CLOUD.redacted;
-  try{syncCloudAgent();renderCards();renderAISInfo();updateModelsCount()}catch(_){}
-}
-// ─── PROVIDER PLUGINS — droppable .md providers (redacted-style) ───────────────
+
+// ─── PROVIDER PLUGINS — droppable .md providers ───────────────
 window.PROVIDER_PLUGINS=[];
 async function loadProviderPlugins(){
   let j;try{j=await fetch('/v1/provider-plugins').then(r=>r.ok?r.json():null)}catch(_){j=null}
@@ -3124,52 +3115,12 @@ async function modelLibrary(){
     else{b.disabled=false;b.textContent='Add';artToast('Couldn’t add · '+((r&&r.error)||'unknown'),'err')}
   }));
 }
-function redactedDialog(){
-  closeKeyDialog();
-  const ok=window.redacted&&window.redacted.available,ver=(window.redacted&&window.redacted.version)||'';
-  const steps=[['npm install -g @redacted/code','install the CLI'],['redacted setup','EPAM SSO · pick Claude Opus'],['redacted install claude','wire up the claude shim'],['redacted profile login','sign in · re-auth every 24h']];
-  const stepHTML=steps.map((s,i)=>`<button class="cmd-step" type="button" data-cmd="${escH(s[0])}" title="Copy — then paste into a terminal"><span>${i+1}</span><code>${escH(s[0])}</code><i>${escH(s[1])}</i><b class="cmd-copy">${ICON.copy}</b></button>`).join('');
-  const ov=document.createElement('div');ov.className='kd-overlay';ov.id='kd-overlay';
-  ov.innerHTML=`<div class="kd" role="dialog" aria-modal="true" aria-label="redacted setup">
-    <div class="kd-head"><span class="kd-title">Connect redacted · Claude Opus</span><button class="kd-x" title="Close" aria-label="Close">✕</button></div>
-    <div class="kd-body">
-      <div class="kd-note">${ICON.check}<span>${ok?('Detected '+escH(ver?('· redacted '+ver):'')+' — routes Claude through EPAM redacted (SSO + corporate budget). No API key; nothing leaves EPAM infra.'):'redacted runs Claude Opus through EPAM’s CLI (SSO + corporate budget). No API key needed — set it up once:'}</span></div>
-      ${ok?`<div class="kd-note" style="margin-top:8px">Auth expired (every 24h)? Re-run <code>redacted profile login</code> in a terminal.</div>`
-        :`<button class="kd-hero" id="cm-setup">${ICON.terminal}<span>Open Terminal &amp; run setup</span></button>
-          <div class="kd-hint">Sign-in opens your browser (EPAM SSO), so setup runs in Terminal — Scroll’s in-app terminal can’t complete the interactive login. Prefer to do it yourself? Click a step to copy it:</div>
-          <div class="cmd-list">${stepHTML}</div>`}
-    </div>
-    <div class="kd-foot"><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary">Re-check</button></div>
-  </div>`;
-  document.body.appendChild(ov);
-  ov.querySelector('.kd-x').onclick=closeKeyDialog;
-  ov.querySelector('.kd-cancel').onclick=closeKeyDialog;
-  ov.addEventListener('mousedown',e=>{if(e.target===ov)closeKeyDialog()});
-  ov.querySelectorAll('.cmd-step').forEach(b=>b.addEventListener('click',()=>copyText(b.dataset.cmd,'Copied — paste into a terminal')));
-  const setupBtn=ov.querySelector('#cm-setup');if(setupBtn)setupBtn.onclick=redactedSetup;
-  ov.querySelector('.kd-save').onclick=async()=>{await loadredacted();const okk=!!(window.redacted&&window.redacted.available);artToast(okk?'redacted connected':'redacted still not detected',okk?'ok':'err');closeKeyDialog();if(okk)redactedDialog()};
-}
-// One button: write + open the setup script in Terminal.app so the user can finish EPAM SSO
-// (the embedded terminal has no PTY/browser for the interactive sign-in).
-async function redactedSetup(){
-  artToast('Opening Terminal…','ok');
-  let r;try{r=await fetch('/v1/redacted/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
-  if(r&&r.ok)notify('Terminal opened — finish the EPAM sign-in there, then click Re-check.','ok');
-  else notify('Couldn’t open Terminal'+(r&&r.error?' — '+r.error:''),'err');
-}
-// redacted travels with the EPAM group, not GitHub — export it as a droppable plugin .md.
-async function saveredactedPlugin(){
-  let r;try{r=await fetch('/v1/redacted/plugin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reveal:true})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
-  if(r&&r.ok)artToast('Saved redacted plugin — drop it into your EPAM (git.epam.com) repo','ok');
-  else artToast('Couldn’t save plugin'+(r&&r.error?' — '+r.error:''),'err');
-}
 
 // ─── SECURE KEY DIALOG — paste a key once; it goes straight to the OS keychain ──
-const PROV_LABEL={redacted:'redacted',groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
+const PROV_LABEL={groq:'Groq',openrouter:'OpenRouter',cerebras:'Cerebras',gemini:'Gemini',anthropic:'Anthropic',openai:'OpenAI'};
 function keyDialog(provider){
   if(typeof closeModels==='function')closeModels();   // don't leave the model popover lingering behind the dialog
   provider=(provider||'anthropic').toLowerCase();
-  if(provider==='redacted'){return redactedDialog();}   // redacted is CLI/SSO, not an API key
   const name=PROV_LABEL[provider]||provider, link=KEYLINKS[provider];
   const free=['groq','openrouter','cerebras','gemini'].includes(provider);
   const mac=/Mac/i.test(navigator.platform||navigator.userAgent||'');
@@ -3285,10 +3236,10 @@ async function escalate(){
   if(!S.msgs.some(m=>m.role==='assistant')){notify('Send a message first — escalate hands that reply to a cloud model','err');return}
   // use the selected cloud model if it's keyed, else the first keyed one; else prompt for a key
   let prov=(typeof SET!=='undefined'&&SET.cloud&&window.CLOUD&&window.CLOUD[SET.cloud])?SET.cloud:null;
-  if(!prov)prov=['redacted','anthropic','openai','gemini','groq','cerebras','openrouter'].find(p=>window.CLOUD&&window.CLOUD[p])||null;
-  if(!prov){notify('No cloud model connected — set up redacted or add a key to escalate','err');redactedDialog();return}
+  if(!prov)prov=['anthropic','openai','gemini','groq','cerebras','openrouter'].find(p=>window.CLOUD&&window.CLOUD[p])||null;
+  if(!prov){notify('No cloud model connected — add a key or a model plugin to escalate','err');return}
   if(typeof SET!=='undefined')SET.cloud=prov;
-  const provName={redacted:'redacted · Claude Opus',anthropic:'Claude',openai:'GPT-4o',gemini:'Gemini',groq:'Groq · Llama 3.3',openrouter:'OpenRouter · Llama 3.3',cerebras:'Cerebras · Llama 3.3'}[prov]||prov;
+  const provName={anthropic:'Claude',openai:'GPT-4o',gemini:'Gemini',groq:'Groq · Llama 3.3',openrouter:'OpenRouter · Llama 3.3',cerebras:'Cerebras · Llama 3.3'}[prov]||prov;
   const _rq=reqStart('escalate · '+provName);
   const dest=lastThreadBody();
   dest.appendChild(buildMsgEl({type:'phase',phase:'escalation',model:provName}));
@@ -3552,7 +3503,7 @@ function _imgDrop(e){
   e.preventDefault();imgs.forEach(_addImageFromFile);mds.forEach(_installDroppedPlugin);
 }
 function _readText(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||''));r.onerror=rej;r.readAsText(f)})}
-// drop a provider .md (e.g. redacted.md) into the chat → install it as an operative
+// drop a provider .md into the chat → install it as an operative
 async function _installDroppedPlugin(f){
   let text;try{text=await _readText(f)}catch(_){return}
   if(!/^\s*---[\s\S]*?type:\s*provider/i.test(text)){
@@ -4306,9 +4257,7 @@ function renderSettings(){
     return`<div class="sm-row"><span class="sm-dot ${m.key?'cloud':'local'}"></span><div class="sm-meta"><div class="sm-label">${escH(m.label)}${m.free?'<span class="sm-free">free</span>':''}</div><div class="sm-host">${escH(m.host)} · ${escH(m.role)}</div></div>${needsKey?`<button class="icon-btn primary sm-addkey" onclick="keyDialog('${m.key}')">${ICON.plus}Add key</button>`:`<button class="icon-btn ${isActive?'':'primary'} sm-use" data-prov="${m.provider}" ${isActive?'disabled':''}>${isActive?'Active':'Use'}</button>`}</div>`;
   }).join('');
   document.querySelectorAll('.sm-use').forEach(b=>b.addEventListener('click',()=>useModel(b.dataset.prov)));
-  const cmOk=!!(window.redacted&&window.redacted.available);
-  const cmRow=`<div class="sk-row"><span class="sm-dot ${cmOk?'ready':''}"></span><span class="sk-name" style="text-transform:none">redacted · Claude Opus <span class="ds-sub">EPAM SSO · no key</span></span><span class="sk-actions">${cmOk?'<span class="sk-set">✓ detected</span>':''}<button class="icon-btn ${cmOk?'':'primary'} sk-add" onclick="redactedDialog()">${cmOk?'Manage':ICON.plus+'Set up'}</button></span></div>`;
-  document.getElementById('set-keys').innerHTML=cmRow+['groq','openrouter','cerebras','gemini','anthropic','openai'].map(p=>{
+  document.getElementById('set-keys').innerHTML=['groq','openrouter','cerebras','gemini','anthropic','openai'].map(p=>{
     const has=keys[p],link=KEYLINKS[p];
     const freeKey=['groq','openrouter','cerebras','gemini'].includes(p);
     const right=has?`<span class="sk-set">✓ set</span><button class="sk-remove" title="Remove key" onclick="removeKey('${p}')">✕</button>`:`<span class="sk-actions">${link?`<a class="sk-link" href="${link}" target="_blank" rel="noopener">${freeKey?'get free key ↗':'get key ↗'}</a>`:''}<button class="icon-btn primary sk-add" onclick="keyDialog('${p}')">${ICON.plus}Add key</button></span>`;
@@ -4347,7 +4296,7 @@ msgIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){const p=do
 msgIn.addEventListener('input',()=>{msgIn.style.height='auto';msgIn.style.height=Math.min(msgIn.scrollHeight,120)+'px';updateAtPop()});
 msgIn.addEventListener('blur',()=>setTimeout(()=>document.getElementById('at-pop')?.setAttribute('hidden',''),140));
 // @-mention autocomplete — discoverable model targeting
-const _AT_OPTS=[['all','Everyone'],['local','Local · 32B'],['redacted','redacted'],['claude','Claude'],['gpt','GPT-4o'],['gemini','Gemini'],['groq','Groq'],['cerebras','Cerebras'],['openrouter','OpenRouter']];
+const _AT_OPTS=[['all','Everyone'],['local','Local · 32B'],['claude','Claude'],['gpt','GPT-4o'],['gemini','Gemini'],['groq','Groq'],['cerebras','Cerebras'],['openrouter','OpenRouter']];
 function _atToken(){const v=msgIn.value,c=msgIn.selectionStart||0;const m=/(^|\s)@([a-z0-9_.-]*)$/i.exec(v.slice(0,c));return m?{word:m[2],start:c-m[2].length-1,end:c}:null}
 function updateAtPop(){const p=document.getElementById('at-pop');if(!p)return;const t=_atToken();
   if(!t){p.setAttribute('hidden','');return}
@@ -4498,14 +4447,14 @@ async function send(){const raw=msgIn.value.trim();if(!raw)return;
   await streamRun(text,th);
 }
 // ─── MULTI-MODEL — tag several models, get a response from each, side by side ───
-const _MODEL_LABEL={mlx:'Local · 32B',redacted:'redacted',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
+const _MODEL_LABEL={mlx:'Local · 32B',gemini:'Gemini',groq:'Groq',cerebras:'Cerebras',openrouter:'OpenRouter',anthropic:'Claude',openai:'GPT-4o'};
 function fanoutModels(){
   const sel=S.fanout&&S.fanout.length?S.fanout:['mlx'];
   return sel.filter(id=>id==='mlx'||(window.CLOUD&&window.CLOUD[id])).map(id=>({id,label:_MODEL_LABEL[id]||id}));
 }
 // @-targeting — "@claude fix this" routes only to Claude; "@all" to every available model.
-const _MODEL_ALIAS={redacted:'redacted',cdme:'redacted',epam:'redacted',opus:'redacted',claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
-function _availIds(){return ['mlx'].concat(['redacted','anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id])).concat((window.PROVIDER_PLUGINS||[]).filter(p=>window.CLOUD&&window.CLOUD[p.id]).map(p=>p.id))}
+const _MODEL_ALIAS={claude:'anthropic',anthropic:'anthropic',sonnet:'anthropic',gpt:'openai',gpt4o:'openai',openai:'openai',gemini:'gemini',google:'gemini',groq:'groq',cerebras:'cerebras',openrouter:'openrouter',or:'openrouter',local:'mlx',mlx:'mlx',qwen:'mlx',primary:'mlx',ondevice:'mlx'};
+function _availIds(){return ['mlx'].concat(['anthropic','openai','gemini','groq','cerebras','openrouter'].filter(id=>window.CLOUD&&window.CLOUD[id])).concat((window.PROVIDER_PLUGINS||[]).filter(p=>window.CLOUD&&window.CLOUD[p.id]).map(p=>p.id))}
 function parseTargets(text){
   const re=/(^|\s)@([a-z0-9_.-]+)/gi;let m,all=false;const ids=new Set(),strip=[];
   while((m=re.exec(text))){const key=m[2].toLowerCase().replace(/[._-]/g,'');
@@ -4517,7 +4466,7 @@ function parseTargets(text){
 }
 function _modelCatalog(){
   const out=[{id:'mlx',label:'Local · Qwen 32B',sub:'on-device · full context',avail:true}];
-  [['redacted','redacted','Claude Opus · EPAM SSO'],['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','direct key · paid'],['openai','GPT-4o','paid']]
+  [['gemini','Gemini','free · vision'],['groq','Groq','free · fast'],['cerebras','Cerebras','free · fastest'],['openrouter','OpenRouter','free open models'],['anthropic','Claude','direct key · paid'],['openai','GPT-4o','paid']]
     .forEach(([id,label,sub])=>out.push({id,label,sub,avail:!!(window.CLOUD&&window.CLOUD[id])}));
   (window.PROVIDER_PLUGINS||[]).forEach(p=>out.push({id:p.id,label:p.name||p.id,sub:'plugin'+(p.needs_secret&&!p.secret_set?' · needs password':''),avail:!!(window.CLOUD&&window.CLOUD[p.id])}));
   return out;
@@ -4754,7 +4703,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray(); renderNarration(); setInterval(renderNarration,800);
-loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadredacted(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
+loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────

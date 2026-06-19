@@ -257,92 +257,9 @@ class OpenAICompatProvider(Provider):
         yield DoneEvent(total_tokens=total)
 
 
-# ── redacted (EPAM) — Claude via the corporate CLI/SSO, no API key ──────────────
-
-class redactedProvider(Provider):
-    """Routes Claude (Opus) through EPAM redacted's `redacted-cli` CLI in print mode.
-    Auth is the CLI's own SSO session (no API key); spending goes to the corporate budget.
-    Runs in a throwaway working dir so an escalation answer can't touch the user's files —
-    the code it needs is already in the prompt."""
-    id = "redacted"
-    display_name = "redacted · Claude"
-
-    def __init__(self, model: str = "claude-opus (redacted)") -> None:
-        self.model = model
-
-    @staticmethod
-    def _bin() -> str | None:
-        import shutil
-        from server import env as env_mod
-        return shutil.which("redacted-cli", path=env_mod.login_path()) or shutil.which("redacted-cli")
-
-    def available(self) -> bool:
-        return self._bin() is not None
-
-    def stream(self, messages, max_tokens, temperature, tools=None):
-        import subprocess, tempfile, os, select, time
-        binp = self._bin()
-        if not binp:
-            yield ErrorEvent(message="redacted CLI not found — install it (npm i -g @redacted/code; redacted install claude) then sign in (redacted profile login)")
-            return
-        parts = []
-        for m in messages:
-            role, c = m.get("role", "user"), (m.get("content") or "").strip()
-            if not c:
-                continue
-            parts.append(c if role in ("system", "user") else f"Assistant (earlier): {c}")
-        prompt = "\n\n".join(parts) or "Respond."
-        from server import env as env_mod
-        # Stream the CLI's stdout as it's produced (os.read on the fd → whatever is available),
-        # so token burn updates in REAL TIME instead of spiking once at the end.
-        total = 0
-        try:
-            with tempfile.TemporaryDirectory() as td:
-                # `redacted-cli` wraps Claude Code; `-p` leaks the wrapper's banner/greeting into
-                # stdout. `--silent --task <prompt>` runs a clean one-shot and prints only the answer.
-                proc = subprocess.Popen([binp, "--silent", "--task", prompt], cwd=td,
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                        env=env_mod.login_env())
-                fd = proc.stdout.fileno()
-                deadline = time.monotonic() + 600
-                while True:
-                    if time.monotonic() > deadline:
-                        proc.kill()
-                        yield ErrorEvent(message="redacted timed out after 600s")
-                        return
-                    rl, _, _ = select.select([fd], [], [], 0.5)
-                    if rl:
-                        chunk = os.read(fd, 4096)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        yield TokenEvent(content=chunk.decode("utf-8", "replace"))
-                    elif proc.poll() is not None:
-                        break
-                rest = proc.stdout.read()
-                if rest:
-                    total += len(rest)
-                    yield TokenEvent(content=rest.decode("utf-8", "replace"))
-                rc = proc.wait()
-        except Exception as exc:
-            yield ErrorEvent(message=f"redacted error: {exc}")
-            return
-        if rc != 0 and total == 0:
-            err = ""
-            try:
-                err = (proc.stderr.read() or b"").decode("utf-8", "replace").strip()[:400]
-            except Exception:
-                pass
-            yield ErrorEvent(message="redacted failed: " + (err or "non-zero exit") +
-                             " — your SSO may have expired (run: redacted profile login)")
-            return
-        yield DoneEvent(total_tokens=max(1, total // 4))
-
-
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 _REGISTRY: dict[str, Provider] = {
-    "redacted":    redactedProvider(),
     "mlx":        MLXProvider(),
     "openai":     OpenAIProvider(),
     "anthropic":  AnthropicProvider(),

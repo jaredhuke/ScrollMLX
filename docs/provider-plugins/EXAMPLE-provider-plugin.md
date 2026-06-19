@@ -39,5 +39,5 @@ secret_env: MYAPI_KEY
 ```
 
 > Note: provider plugins specific to a private/corporate environment (e.g. an internal SSO CLI)
-> should be kept out of public repos. Generate and share those through your own private remote —
-> see the in-app redacted dialog's "Save as EPAM plugin" for that pattern.
+> should be kept out of public repos — keep those as runtime plugins under ~/.scroll/provider-plugins
+> and share them privately, not in this repo.

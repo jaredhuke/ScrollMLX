@@ -4,7 +4,7 @@ A real PTY-backed shell session for the embedded terminal.
 The old terminal POSTed one command at a time to /v1/shell (subprocess.run) — no persistent
 shell, no `cd` memory, no interactive programs. This bridges a genuine pseudo-terminal to a
 WebSocket, so Scroll's terminal is as capable as Terminal.app: a persistent login shell,
-interactive TUIs (vim, htop, `redacted setup`, ssh), colors, job control, the works.
+interactive TUIs (vim, htop, ssh), colors, job control, the works.
 """
 from __future__ import annotations
 
