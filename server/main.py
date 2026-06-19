@@ -703,6 +703,24 @@ async def prd_post(payload: dict):
     return prd.write(payload.get("cwd") or ".", payload.get("content") or "")
 
 
+@app.get("/v1/orbit/status")
+async def orbit_status():
+    """Is ORBIT 3's knowledge graph reachable?"""
+    from server import orbit
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, orbit.ping)
+
+
+@app.post("/v1/orbit/push")
+async def orbit_push(request: Request, payload: dict):
+    """Mirror this project into ORBIT 3's KG (WorkStream/Requirement/Agent/CodeCommit).
+    Additive MERGE only — never deletes; respects the shared Neo4j (scroll-namespaced nodes)."""
+    _guard_local(request)
+    from server import orbit
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, orbit.push, payload.get("cwd") or ".", payload.get("name") or "Ad hoc")
+
+
 @app.get("/v1/versions")
 async def artifacts_versions(path: str = "", cwd: str = "."):
     """Readable version history for a file (newest first); the live filename is unchanged."""

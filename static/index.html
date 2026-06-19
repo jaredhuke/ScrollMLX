@@ -4120,7 +4120,7 @@ async function planModal(){
   ov.innerHTML=`<div class="kd kd-wide" role="dialog" aria-modal="true" aria-label="Project plan">
     <div class="kd-head"><span class="kd-title">Plan — ${escH(name)} <span class="ds-sub">${escH(stat)}</span></span><button class="kd-x" aria-label="Close">✕</button></div>
     <div class="kd-body"><div id="plan-view" class="prose"></div><textarea id="plan-edit" class="din" spellcheck="false" style="display:none;width:100%;box-sizing:border-box;min-height:46vh;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5"></textarea></div>
-    <div class="kd-foot"><button class="kd-cmd" id="plan-ask"><span>Ask the operative to update it</span></button><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary" id="plan-edit-btn">Edit</button></div>
+    <div class="kd-foot"><button class="kd-cmd" id="plan-ask"><span>Ask the operative to update it</span></button><button class="kd-cmd" id="plan-orbit"><span>Push to ORBIT 3</span></button><span class="spacer"></span><button class="kd-cancel">Close</button><button class="kd-save primary" id="plan-edit-btn">Edit</button></div>
   </div>`;
   document.body.appendChild(ov);
   const view=ov.querySelector('#plan-view'),edit=ov.querySelector('#plan-edit'),btn=ov.querySelector('#plan-edit-btn');
@@ -4134,6 +4134,14 @@ async function planModal(){
     if(r&&r.ok){artToast('Plan saved'+(r.total?(' · '+r.done+'/'+r.total+' done'):''),'ok');closeKeyDialog()}else artToast('Couldn’t save the plan','err');
   };
   ov.querySelector('#plan-ask').onclick=()=>{closeKeyDialog();const mi=document.getElementById('msg-in');if(mi){mi.value='Update PRD.md — review what we’ve built so far, refresh the requirements, and mark each item’s status. Keep it concise and in plain language.';mi.focus();try{mi.dispatchEvent(new Event('input'))}catch(_){}}artToast('Added to the message box — press send','ok')};
+  ov.querySelector('#plan-orbit').onclick=()=>pushToOrbit(name);
+}
+// push this project (workstream + requirements + commits + operatives) into ORBIT 3's graph
+async function pushToOrbit(name){
+  artToast('Pushing to ORBIT 3…','run');
+  let r;try{r=await fetch('/v1/orbit/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,name:name||S.activeProject||'Ad hoc'})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
+  if(r&&r.ok)notify('Sent to ORBIT 3 — '+r.requirements+' requirement'+(r.requirements===1?'':'s')+', '+r.commits+' commits, '+r.completionPct+'% done.','ok');
+  else notify('Couldn’t reach ORBIT 3'+(r&&r.error?' — '+r.error:'')+' (is its Neo4j running?)','err');
 }
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
 function renderProjects(){
