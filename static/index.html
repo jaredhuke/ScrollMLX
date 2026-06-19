@@ -1956,8 +1956,11 @@ function _renderMesh(AC,W,H,big,state){
   _act.forEach((k,idx)=>{const ag=S.agents[k],busy=ag.status==='working',err=ag.status==='error';
     const a=-Math.PI/2+(_act.length>1?(idx/_act.length)*Math.PI*2:0),rr=R*0.56;
     const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,sx=cx+Math.cos(a)*(coreR+3),sy=cy+Math.sin(a)*(coreR+3);
-    // spoke to core — warm + a travelling pip while working, otherwise a quiet neutral link
-    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.4)':'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();
+    // spoke to core — the LINK only exists while engaged; a cloud op draws a dashed *escalation*
+    // link (external), a local op a solid resident one. A pip travels in while working.
+    const _isCloud=k.indexOf('cloud')===0;
+    if(_isCloud&&busy)AC.setLineDash([3,3]);
+    AC.beginPath();AC.moveTo(sx,sy);AC.lineTo(x,y);AC.strokeStyle=busy?'rgba(207,122,46,.45)':'rgba(120,124,132,.18)';AC.lineWidth=big?(busy?1:0.7):(busy?1.5:1);AC.stroke();AC.setLineDash([]);
     if(busy){const pt=(t%1.4)/1.4,bx=sx+(x-sx)*pt,by=sy+(y-sy)*pt;AC.beginPath();AC.arc(bx,by,2.3,0,Math.PI*2);AC.fillStyle='rgba(207,122,46,.9)';AC.fill();}
     const rN=k==='primary'?10:8;
     // node body — "breathes" while working (alpha pulse) so active vs idle reads instantly
@@ -1982,25 +1985,30 @@ function _renderMesh(AC,W,H,big,state){
     meshHits.push({x,y,r:rN+9,key:k});
     if(k==='primary')_primaryPos={x,y,rN,a};
   });
-  // ── skills wired to the AGENT that uses them (the author), lit warm while in use ──
-  const _sk=(S.skills||[]).slice(0,6),_anchor=_primaryPos||{x:cx,y:cy-coreR,rN:coreR,a:-Math.PI/2};
-  _sk.forEach((sk,i)=>{const spread=Math.PI*0.95,a=_anchor.a+(-spread/2+(_sk.length>1?(i/(_sk.length-1)):0.5)*spread);
-    const rr=_anchor.rN+15,x=_anchor.x+Math.cos(a)*rr,y=_anchor.y+Math.sin(a)*rr,live=anyBusy;
+  // ── skills the author uses — fanned FURTHER OUT (room for a longer list), each lighting up
+  //    while work runs (staggered twinkle + a pip travelling out along its link = being used) ──
+  const _sk=(S.skills||[]).slice(0,12),_anchor=_primaryPos||{x:cx,y:cy-coreR,rN:coreR,a:-Math.PI/2};
+  _sk.forEach((sk,i)=>{const spread=Math.min(Math.PI*1.7,Math.PI*0.55+_sk.length*0.17),a=_anchor.a+(-spread/2+(_sk.length>1?(i/(_sk.length-1)):0.5)*spread);
+    const rr=_anchor.rN+(big?58:34),x=_anchor.x+Math.cos(a)*rr,y=_anchor.y+Math.sin(a)*rr;
+    const pulse=anyBusy?(0.55+0.45*Math.sin(t*3-i*0.6)):0,lit=pulse>0.4;   // staggered "in use" glow
     AC.beginPath();AC.moveTo(_anchor.x+Math.cos(a)*(_anchor.rN+2),_anchor.y+Math.sin(a)*(_anchor.rN+2));AC.lineTo(x,y);
-    AC.strokeStyle=live?'rgba(207,122,46,.32)':'rgba(120,124,132,.22)';AC.lineWidth=1;AC.stroke();
-    AC.beginPath();AC.arc(x,y,2.1,0,Math.PI*2);AC.fillStyle=live?'rgba(207,122,46,.85)':'rgba(120,124,132,.6)';AC.fill();
-    AC.font='500 '+_mf(6)+'px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle='rgba(80,84,92,.6)';
-    AC.fillText(sk.length>10?sk.slice(0,9)+'…':sk,x+(Math.cos(a)<0?-4:4),y+2);
+    AC.strokeStyle=lit?`rgba(207,122,46,${.22+.4*pulse})`:'rgba(120,124,132,.18)';AC.lineWidth=lit?1.2:0.8;AC.stroke();
+    if(anyBusy){const pt=(t*0.7+i*0.37)%1,bx=_anchor.x+(x-_anchor.x)*pt,by=_anchor.y+(y-_anchor.y)*pt;AC.beginPath();AC.arc(bx,by,1.6,0,Math.PI*2);AC.fillStyle=`rgba(207,122,46,${.7*(1-pt)})`;AC.fill();}
+    AC.beginPath();AC.arc(x,y,lit?2.7:2.0,0,Math.PI*2);AC.fillStyle=lit?`rgba(207,122,46,${.55+.4*pulse})`:'rgba(120,124,132,.55)';AC.fill();
+    AC.font='500 '+_mf(6)+'px -apple-system,system-ui,sans-serif';AC.textAlign=Math.cos(a)<0?'right':'left';AC.fillStyle=lit?'rgba(156,84,15,.92)':'rgba(80,84,92,.6)';
+    AC.fillText(sk.length>12?sk.slice(0,11)+'…':sk,x+(Math.cos(a)<0?-4:4),y+2);
     meshHits.push({x,y,r:7,key:'__skills__'});});
-  if(_idle.length){AC.save();AC.setLineDash([3,5]);AC.beginPath();AC.moveTo(w-32,18);AC.lineTo(w-32,h-18);AC.strokeStyle='rgba(120,124,132,.26)';AC.lineWidth=1;AC.stroke();AC.restore();}
+  // ── AVAILABLE operatives — keyed/loaded but NOT engaged: parked OUTSIDE the active ring,
+  //    cool + dashed (no link to the core). They move in + link only when escalated. Click to enlist. ──
   _idle.forEach((k,idx)=>{const ag=S.agents[k];
-    const a=-Math.PI*0.28+(_idle.length>1?(idx/(_idle.length-1)):0.5)*Math.PI*0.56,rr=R*0.86;
-    const x=Math.min(cx+Math.cos(a)*rr,w-16),y=cy+Math.sin(a)*rr,rN=5;
-    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.05)';AC.fill();
-    AC.strokeStyle='rgba(120,124,132,.45)';AC.lineWidth=1;AC.stroke();
-    AC.beginPath();AC.arc(x,y,1.6,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.5)';AC.fill();
-    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='right';AC.fillStyle='rgba(110,114,124,.7)';
-    AC.fillText(ag.label,x-rN-3,y+3);
+    const a=-Math.PI*0.42+(_idle.length>1?(idx/(_idle.length-1)):0.5)*Math.PI*0.84,rr=R*1.05;
+    const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,rN=4.5,right=Math.cos(a)>=0;
+    AC.save();AC.setLineDash([2,3]);
+    AC.beginPath();AC.arc(x,y,rN,0,Math.PI*2);AC.strokeStyle='rgba(120,124,132,.5)';AC.lineWidth=1;AC.stroke();
+    AC.restore();
+    AC.beginPath();AC.arc(x,y,1.5,0,Math.PI*2);AC.fillStyle='rgba(120,124,132,.5)';AC.fill();
+    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign=right?'left':'right';AC.fillStyle='rgba(110,114,124,.7)';
+    AC.fillText(ag.label,x+(right?(rN+3):-(rN+3)),y+3);
     meshHits.push({x,y,r:rN+9,key:k,idle:true});});
   // ── OUTPUT artifacts — files produced; drawn as small rounded rectangles ──
   const _arts=(typeof artifactNodes==='function'?artifactNodes():[]).slice(-6);
