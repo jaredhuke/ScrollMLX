@@ -2021,6 +2021,14 @@ function _renderMesh(AC,W,H,big,state){
    AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=gAct?'#cf7a2e':'rgba(26,28,34,.4)';
    AC.fillText(gAct?(gg.op||'git'):'git',gx,gy+13);
    meshHits.push({x:gx,y:gy,r:10,key:'__git__'});}
+  // ── ORBIT 3 connector node — lights when this project is linked / pushed to ORBIT's KG ──
+  {const ob=S.orbit||{},oAct=ob.pushing||(Date.now()-(ob.last||0)<1700),oLink=oAct||!!ob.linked,oX=15,oY=cy+30;
+   if(oAct){const br=.5+.5*Math.sin(t*4);AC.beginPath();AC.arc(oX,oY,5+br*5,0,Math.PI*2);AC.strokeStyle=`rgba(96,124,180,${.34*(1-br)})`;AC.lineWidth=1;AC.stroke();}
+   AC.beginPath();AC.arc(oX,oY,5,0,Math.PI*2);AC.fillStyle=oLink?'rgba(96,124,180,.18)':'rgba(26,28,34,.05)';AC.fill();
+   AC.strokeStyle=oLink?'rgba(96,124,180,.9)':'rgba(26,28,34,.26)';AC.lineWidth=1.3;AC.stroke();
+   AC.font='500 '+_mf(7)+'px -apple-system,system-ui,sans-serif';AC.textAlign='center';AC.fillStyle=oLink?'rgb(78,106,158)':'rgba(26,28,34,.4)';
+   AC.fillText('ORBIT',oX,oY+13);
+   meshHits.push({x:oX,y:oY,r:10,key:'__orbit__'});}
   // (cloud operatives are drawn in the unified operative layout above — active inner, idle at the right edge)
   // ── clean center well: nothing crosses the completion circle ──
   const vigR=coreR+4; // still — no bouncing (ch'an)
@@ -2057,6 +2065,7 @@ const aisTip=document.getElementById('ais-tip');
 function _meshTipText(hit){
   if(!hit)return null;
   if(hit.key==='__git__'){const g=S.git||{};return `GitHub / git\nReads:  ${g.reads||0}\nWrites/PR: ${g.writes||0}\nLast:   ${g.op||'—'}`;}
+  if(hit.key==='__orbit__'){const o=S.orbit||{};return `ORBIT 3 — ${o.linked?'linked':(o.reachable===false?'graph offline':'not pushed yet')}\nClick to push this project to ORBIT's graph`;}
   if(hit.key==='__core__'){const m=meshMetrics(),n=(S.requests||[]).length;return `${Math.round(m.completion*100)}% complete`+(n?`\n${n} request${n>1?'s':''} in flight`:'')+`\nClick to expand the mesh`;}
   if(hit.key&&hit.key.indexOf('art:')===0)return (hit.art&&hit.art.name||'file')+'\noutput · click to preview';
   if(hit.key==='__skills__')return 'Active skills feeding the workflow\nClick to manage skills';
@@ -2083,6 +2092,7 @@ AIS.addEventListener('click',e=>{
 // shared click routing for a mesh hit (docked + full-screen)
 function _meshAction(hh){
   if(hh.key==='__git__')openGitHub();
+  if(hh.key==='__orbit__')pushToOrbit(S.activeProject);
   else if(hh.key==='__core__')openFullAIS();
   else if(hh.key==='__skills__')openDrawer();
   else if(hh.key&&hh.key.indexOf('art:')===0)previewArtifact(hh.art.path||hh.art.name,hh.art.name);
@@ -4136,11 +4146,14 @@ async function planModal(){
   ov.querySelector('#plan-ask').onclick=()=>{closeKeyDialog();const mi=document.getElementById('msg-in');if(mi){mi.value='Update PRD.md — review what we’ve built so far, refresh the requirements, and mark each item’s status. Keep it concise and in plain language.';mi.focus();try{mi.dispatchEvent(new Event('input'))}catch(_){}}artToast('Added to the message box — press send','ok')};
   ov.querySelector('#plan-orbit').onclick=()=>pushToOrbit(name);
 }
+// ORBIT 3 linkage state for the mesh node
+function orbitMark(){S.orbit=S.orbit||{};S.orbit.linked=true;S.orbit.reachable=true;S.orbit.pushing=true;S.orbit.last=Date.now();clearTimeout(S.orbit._t);S.orbit._t=setTimeout(()=>{S.orbit.pushing=false},1800)}
+async function loadOrbit(){S.orbit=S.orbit||{};let j;try{j=await fetch('/v1/orbit/status').then(r=>r.ok?r.json():null)}catch(_){j=null}if(j&&j.ok){S.orbit.reachable=true;S.orbit.linked=(j.scroll_workstreams||0)>0}else{S.orbit.reachable=false}}
 // push this project (workstream + requirements + commits + operatives) into ORBIT 3's graph
 async function pushToOrbit(name){
   artToast('Pushing to ORBIT 3…','run');
   let r;try{r=await fetch('/v1/orbit/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,name:name||S.activeProject||'Ad hoc'})}).then(x=>x.ok?x.json():{ok:false,error:'server route missing — restart the server'})}catch(_){r={ok:false,error:'request failed'}}
-  if(r&&r.ok)notify('Sent to ORBIT 3 — '+r.requirements+' requirement'+(r.requirements===1?'':'s')+', '+r.commits+' commits, '+r.completionPct+'% done.','ok');
+  if(r&&r.ok){orbitMark();notify('Sent to ORBIT 3 — '+r.requirements+' requirement'+(r.requirements===1?'':'s')+', '+r.commits+' commits, '+r.completionPct+'% done.','ok');}
   else notify('Couldn’t reach ORBIT 3'+(r&&r.error?' — '+r.error:'')+' (is its Neo4j running?)','err');
 }
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
@@ -4711,7 +4724,7 @@ initBG(); drawBG();
 resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray(); renderNarration(); setInterval(renderNarration,800);
-loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); checkHealth(); setInterval(checkHealth,5000);
+loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); loadOrbit(); checkHealth(); setInterval(checkHealth,5000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────
