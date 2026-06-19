@@ -57,12 +57,25 @@ def close(pid: int, fd: int) -> None:
         os.close(fd)
     except Exception:
         pass
-    for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGKILL):
-        try:
-            os.kill(pid, sig)
-        except Exception:
-            break
     try:
-        os.waitpid(pid, os.WNOHANG)
+        os.kill(pid, signal.SIGHUP)   # ask the shell to exit (it owns the now-closed PTY)
+    except ProcessLookupError:
+        return                         # already gone
+    except Exception:
+        pass
+    # REAP the child so it doesn't linger as a zombie. Poll briefly, then SIGKILL + blocking reap.
+    import time as _t
+    for _ in range(20):               # ~0.2s grace for a clean exit
+        try:
+            if os.waitpid(pid, os.WNOHANG)[0] == pid:
+                return
+        except ChildProcessError:
+            return                     # already reaped
+        except Exception:
+            return
+        _t.sleep(0.01)
+    try:
+        os.kill(pid, signal.SIGKILL)
+        os.waitpid(pid, 0)            # blocking — child is killed, returns at once; no zombie
     except Exception:
         pass

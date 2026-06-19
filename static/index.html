@@ -4388,7 +4388,13 @@ function newThread(promptText){
   th.querySelector('.thread-head').addEventListener('click',()=>th.classList.toggle('open'));
   th.querySelector('.thread-proj').addEventListener('click',e=>{e.stopPropagation();moveThreadMenu(th,e.currentTarget)});
   th.querySelector('.thread-arch').addEventListener('click',e=>{e.stopPropagation();toggleArchive(th)});
-  timeline.appendChild(th);renderThreadScope();timeline.scrollTop=timeline.scrollHeight;
+  timeline.appendChild(th);
+  // Cap retained thread DOM — a session's transcript grows without bound otherwise and the
+  // WKWebView content process gets jettisoned (reads as a crash). S.msgs keeps the full history;
+  // we only drop the oldest non-live thread *elements* (the data + search stay intact server-side).
+  try{const MAXT=50;let ts=timeline.querySelectorAll('.thread:not(.live)');
+    for(let n=ts.length;n>MAXT;n--){ts[0].remove();ts=timeline.querySelectorAll('.thread:not(.live)');}}catch(_){}
+  renderThreadScope();timeline.scrollTop=timeline.scrollHeight;
   return {el:th,body:th.querySelector('.thread-body'),summary:th.querySelector('.thread-summary'),meta:th.querySelector('.thread-meta')};
 }
 // Threads are scoped to the active project — switching projects shows only that project's chats.
