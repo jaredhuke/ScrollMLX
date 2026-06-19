@@ -3,12 +3,12 @@ Login-shell PATH resolution.
 
 Scroll.app is a GUI app (launched by Finder/launchd), so the server it spawns inherits
 the *minimal* launchd PATH (/usr/bin:/bin:/usr/sbin:/sbin) — NOT the PATH a Terminal.app
-login shell sees. That's why `npm`, `node`, `redacted`, Homebrew tools, etc. come back as
+login shell sees. That's why `npm`, `node`, Homebrew tools, etc. come back as
 "command not found" in the embedded terminal even though they work fine in Terminal.app.
 
 We fix it at the root: on startup we ask the user's login shell for its real PATH (the
 exact one Terminal.app uses) and graft it onto this process, so every subprocess — the
-embedded terminal, git, redacted-cli, npm — resolves binaries the same way.
+embedded terminal, git, npm — resolves binaries the same way.
 """
 from __future__ import annotations
 

@@ -5,11 +5,11 @@ A plugin is a single .md with a small frontmatter block. Two kinds:
 
     ---
     type: provider
-    id: redacted
-    name: redacted · Claude Opus
+    id: my-cli
+    name: My CLI · Some Model
     kind: command
-    command: redacted-cli -p {prompt}
-    secret_env: redacted_TOKEN        # optional — the "password"; injected into the env
+    command: my-llm-cli -p {prompt}
+    secret_env: MYCLI_TOKEN          # optional — the "password"; injected into the env
     ---
     Docs / notes for humans.
 
