@@ -1,7 +1,7 @@
 from .filesystem import read_file, write_file, list_dir
 from .shell import run_command
 from .search import grep_codebase, find_files
-from .web import fetch_url
+from .web import fetch_url, search_images
 from .files import edit_file, append_file, read_data, read_pdf
 
 TOOL_REGISTRY: dict = {
@@ -16,6 +16,7 @@ TOOL_REGISTRY: dict = {
     "grep_codebase": grep_codebase,
     "find_files": find_files,
     "fetch_url": fetch_url,
+    "search_images": search_images,
 }
 
 TOOL_DEFINITIONS = [
@@ -124,6 +125,21 @@ TOOL_DEFINITIONS = [
                     "max_chars": {"type": "integer", "default": 20000, "description": "Truncate response to this many chars"},
                 },
                 "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_images",
+            "description": "Search for real, embeddable photo URLs (CC-licensed). Use when a design needs actual photography — hero images, products, food, places — and put the returned URLs directly into <img src>.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "What the photo should show, e.g. 'espresso pour latte art'"},
+                    "count": {"type": "integer", "default": 6, "description": "How many results (max 12)"},
+                },
+                "required": ["query"],
             },
         },
     },

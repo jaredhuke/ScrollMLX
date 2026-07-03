@@ -41,6 +41,39 @@ def entries(project: str | None = None) -> list:
     return [x for x in e if x.get("project") == project] if project else e
 
 
+def roster() -> dict:
+    """Cross-project, lifetime aggregates per operative (keyed by ledger `mode`: 'local' = the local
+    author; a provider name = that cloud operative). Powers the per-agent personal cards: how much
+    each operative has done, and WHICH projects it worked on — so you know who to use where."""
+    import os
+    e = _load()
+    modes: dict[str, dict] = {}
+    for x in e:
+        m = x.get("mode", "local") or "local"
+        proj = x.get("project", ".") or "."
+        tok = int(x.get("tokens", 0))
+        d = modes.setdefault(m, {"prompts": 0, "tokens": 0, "tools": 0, "iterations": 0,
+                                 "projects": {}, "first_ts": None, "last_ts": None})
+        d["prompts"] += 1
+        d["tokens"] += tok
+        d["tools"] += int(x.get("tools", 0))
+        d["iterations"] += int(x.get("iterations", 0))
+        pj = d["projects"].setdefault(proj, {"tokens": 0, "prompts": 0})
+        pj["tokens"] += tok
+        pj["prompts"] += 1
+        ts = x.get("ts") or 0
+        if ts:
+            if not d["first_ts"] or ts < d["first_ts"]:
+                d["first_ts"] = ts
+            if not d["last_ts"] or ts > d["last_ts"]:
+                d["last_ts"] = ts
+    for d in modes.values():
+        d["projects"] = sorted(
+            [{"name": (os.path.basename(p.rstrip("/")) or p), "path": p, **v} for p, v in d["projects"].items()],
+            key=lambda z: -z["tokens"])
+    return {"modes": modes}
+
+
 def summary(project: str | None = None) -> dict:
     e = entries(project)
     n = len(e)

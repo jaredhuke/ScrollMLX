@@ -155,14 +155,31 @@ def import_path(raw: str) -> dict:
     return {"ok": True, "added": added, "names": names, "skipped": skipped}
 
 
+# Skills are injected into EVERY prompt — so they must stay small. Uncapped, a few long skill
+# files (e.g. multi-KB governance docs) balloon the prompt to tens of thousands of tokens, which
+# makes the local model crawl (minutes to first token) AND drowns the actual task → thin output.
+# Cap each skill's contribution and the combined total to keep prompts lean and fast.
+_SKILL_PER_CHARS = 1200      # max chars injected per skill (front-loaded rules are what matter)
+_SKILL_TOTAL_CHARS = 6000    # max combined skill text per prompt (~1.5k tokens)
+
+
 def as_system_text() -> str:
-    """Combined enabled skills for injection into a run."""
-    parts = []
+    """Combined enabled skills for injection into a run — bounded so the prompt stays fast."""
+    parts, used, dropped = [], 0, 0
     for s in list_skills():
-        if s["enabled"]:
-            c = get(s["name"]).strip()
-            if c:
-                parts.append(f"## Skill: {s['name']}\n{c}")
+        if not s["enabled"]:
+            continue
+        c = get(s["name"]).strip()
+        if not c:
+            continue
+        snippet = c if len(c) <= _SKILL_PER_CHARS else c[:_SKILL_PER_CHARS].rstrip() + " …(truncated)"
+        if used + len(snippet) > _SKILL_TOTAL_CHARS:
+            dropped += 1
+            continue
+        used += len(snippet)
+        parts.append(f"## Skill: {s['name']}\n{snippet}")
     if not parts:
         return ""
-    return "Active skills — capabilities & rules to follow:\n\n" + "\n\n".join(parts)
+    foot = (f"\n\n(+{dropped} more enabled skill(s) omitted to keep the prompt fast — "
+            f"disable skills you don't need)") if dropped else ""
+    return "Active skills — capabilities & rules to follow (concise):\n\n" + "\n\n".join(parts) + foot

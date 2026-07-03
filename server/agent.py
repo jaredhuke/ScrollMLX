@@ -6,7 +6,9 @@ Flow:
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import re
 import threading
 import uuid
@@ -15,10 +17,14 @@ from typing import Generator, Any
 import mlx_lm
 from mlx_lm.sample_utils import make_sampler
 try:
+    from mlx_lm.models.cache import make_prompt_cache, can_trim_prompt_cache, trim_prompt_cache
+except Exception:  # pragma: no cover
+    make_prompt_cache = can_trim_prompt_cache = trim_prompt_cache = None
+try:
     import mlx.core as mx  # noqa: PLC0415
 except Exception:  # pragma: no cover
     mx = None
-from server.config import SYSTEM_PROMPT
+from server.config import SYSTEM_PROMPT, TOP_P
 
 # Serialize ALL local MLX generation. mlx_lm/Metal is NOT safe for concurrent generate calls on
 # the same device — two overlapping runs (a queued message, the background narration/clarify call,
@@ -56,6 +62,60 @@ _BARE_TOOL_RE = re.compile(r'\{\s*"(?:name|tool|function)"\s*:\s*"')
 # Named model registry — supports multiple models loaded simultaneously
 # Keys are slot names (e.g. "primary", "critic"); values are (model, tokenizer)
 _registry: dict[str, tuple] = {}
+
+# ── Prompt-prefix cache ─────────────────────────────────────────────────────────
+# The static prefix (system prompt + injected skills, ~3k tokens) was re-prefilled on EVERY
+# generation (~10ms/tok → ~40s to first token). This keeps each slot's KV and reprocesses only
+# the new SUFFIX. Correctness is sacred: ANY anomaly (fingerprint change, history trim, broken
+# invariant, error) RESETS the cache → byte-identical to the uncached path, just slower.
+SCROLL_PROMPT_CACHE = (os.environ.get("SCROLL_PROMPT_CACHE", "1") != "0") and make_prompt_cache is not None
+_PROMPT_CACHE_CEIL = int(os.environ.get("SCROLL_PROMPT_CACHE_CEIL", "28000"))
+_prefix_cache: dict[str, dict] = {}   # slot -> {"cache": list, "ids": list[int], "fp": str}
+
+
+def _cache_fingerprint(sys_prompt: str, tools: bool) -> str:
+    # the shared 'primary' slot serves author/critic/revision with different prompts → must differ
+    return f"{int(tools)}:{hashlib.sha1(sys_prompt.encode('utf-8')).hexdigest()[:16]}"
+
+
+def _drop_cache(slot: str) -> None:
+    _prefix_cache.pop(slot, None)
+
+
+def _resolve_cache(model, slot, full_ids, fp, max_tokens):
+    """Return (cache, suffix_ids), reusing the cached KV prefix. RESET on ANY anomaly."""
+    def _reset():
+        return make_prompt_cache(model), list(full_ids)
+    if len(full_ids) + max_tokens > _PROMPT_CACHE_CEIL:   # bound KV (free_mem no longer reclaims it)
+        _drop_cache(slot); return _reset()
+    rec = _prefix_cache.get(slot)
+    if rec is None or rec.get("fp") != fp:
+        return _reset()
+    try:
+        cache, cids = rec["cache"], rec["ids"]
+        if not cache or cache[0].offset != len(cids):     # invariant catches aborted/half-updated runs
+            return _reset()
+        L = 0
+        for a, b in zip(cids, full_ids):
+            if a != b:
+                break
+            L += 1
+        if L == 0:
+            return _reset()
+        if L < len(cids):                                  # diverged → drop the stale tail past L
+            if not can_trim_prompt_cache(cache):
+                return _reset()
+            n = cache[0].offset - L
+            if n > 0:
+                if trim_prompt_cache(cache, n) != n:
+                    return _reset()
+                rec["ids"] = cids[:L]
+        suffix = full_ids[L:]
+        if not suffix:                                     # empty suffix is unsafe (div-by-zero)
+            return _reset()
+        return cache, suffix
+    except Exception:
+        return _reset()
 
 # Compat alias so server/main.py health check still works
 @property  # type: ignore[misc]
@@ -270,26 +330,40 @@ def _run_agent(
 
     for iteration in range(max_iterations):
         if _stopped():                              # client disconnected / Stop pressed → end the run
-            free_mem(); yield DoneEvent(total_tokens=total_tokens); return
+            _drop_cache(slot); free_mem(); yield DoneEvent(total_tokens=total_tokens); return
         history = _trim_history(history)           # keep the working set bounded across tool loops
         prompt = _build_prompt(history, tools=tools, slot=slot)
         response_text = ""
         suppress = False  # stop streaming once a tool-call begins — never surface code/JSON to the chat
 
+        # Prompt-prefix cache: reuse the shared prefix's KV, prefill only the new suffix tokens.
+        use_cache = SCROLL_PROMPT_CACHE
+        gen_prompt = prompt
+        gen_kwargs = {"max_tokens": max_tokens, "sampler": make_sampler(temp=temperature, top_p=TOP_P)}
+        full_ids = cache = fp = None
+        if use_cache:
+            try:
+                fp = _cache_fingerprint(sys_prompt, tools)
+                full_ids = tokenizer.encode(prompt, add_special_tokens=False)
+                cache, gen_prompt = _resolve_cache(model, slot, full_ids, fp, max_tokens)
+                gen_kwargs["prompt_cache"] = cache  # pass List[int] suffix → BOS branch never runs
+            except Exception:
+                use_cache = False; gen_prompt = prompt; gen_kwargs.pop("prompt_cache", None)
+        gen_ids: list[int] = []
+        stopped_mid = False
+
         # Stream tokens from mlx-lm (0.31+ uses sampler= not temperature=)
         try:
-            for chunk in mlx_lm.stream_generate(
-                model,
-                tokenizer,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                sampler=make_sampler(temp=temperature),
-            ):
-                # stream_generate yields str chunks
+            for chunk in mlx_lm.stream_generate(model, tokenizer, prompt=gen_prompt, **gen_kwargs):
                 tok = chunk if isinstance(chunk, str) else getattr(chunk, "text", str(chunk))
+                if use_cache:
+                    _t = getattr(chunk, "token", None)
+                    if _t is not None:
+                        gen_ids.append(int(_t))
                 response_text += tok
                 total_tokens += 1
                 if total_tokens % 8 == 0 and _stopped():
+                    stopped_mid = True
                     break                          # stop mid-stream when the client goes away
 
                 # Once a tool call (tagged or bare JSON) appears, suppress the rest of the visible stream
@@ -302,13 +376,20 @@ def _run_agent(
                 visible = _THINK_RE.sub("", tok)
                 if visible:
                     yield TokenEvent(content=visible)
+            # commit the extended prefix ONLY on a clean, non-aborted completion (never in finally)
+            if use_cache and not stopped_mid and full_ids is not None:
+                _prefix_cache[slot] = {"cache": cache, "ids": full_ids + gen_ids, "fp": fp}
         except Exception as exc:
+            if use_cache:
+                _drop_cache(slot)              # half-updated cache → guaranteed reset next call
             free_mem()
             yield ErrorEvent(message=f"Generation failed ({type(exc).__name__}: {exc}). Memory was cleared — try again or shorten the request.")
             yield DoneEvent(total_tokens=total_tokens)  # finalize the turn so the ledger records spent tokens
             return
         finally:
-            free_mem()  # release this turn's KV cache before the next iteration
+            free_mem()  # frees the Metal reuse pool; cached KV arrays survive (held by _prefix_cache)
+        if use_cache and stopped_mid:
+            _drop_cache(slot)                  # partial unrecorded tokens remain in the live cache
 
         # Clean up internal reasoning tokens from stored history
         clean_response = _strip_think(response_text)

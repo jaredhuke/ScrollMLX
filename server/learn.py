@@ -62,6 +62,29 @@ def reject(project: str, note: str) -> dict:
     return t
 
 
+_QUALITY = _DIR / "quality.json"
+
+
+def quality() -> dict:
+    """Per-operative verdict tallies the critic has handed out — a free, local, durable quality score
+    that accretes across sessions/projects (the personal card's 'how good is this operative' line)."""
+    return _load(_QUALITY, {})
+
+
+def record_verdict(key: str, verdict: str) -> dict:
+    """Tally one critic verdict (LGTM/ISSUES/CRITICAL) against an operative's output."""
+    v = (verdict or "").strip().lower()
+    if v not in ("lgtm", "issues", "critical"):
+        return quality()
+    d = _load(_QUALITY, {})
+    r = d.setdefault(key or "primary", {"lgtm": 0, "issues": 0, "critical": 0, "runs": 0, "last_ts": 0})
+    r[v] = r.get(v, 0) + 1
+    r["runs"] = r.get("runs", 0) + 1
+    r["last_ts"] = time.time()
+    _save(_QUALITY, d)
+    return d
+
+
 def note(project: str, text: str) -> None:
     """Append a learned note WITHOUT touching critic trust.
 

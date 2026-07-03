@@ -323,9 +323,33 @@ def _code_version() -> str:
 _CODE_VERSION = _code_version()
 
 
+def _code_mtime() -> float:
+    """Newest mtime across the server code + web UI on DISK. Compared against the value captured
+    at import, this catches the stale-engine trap the git hash can't: uncommitted edits don't move
+    HEAD, so a long-running process can silently serve old code while newer code sits on disk."""
+    newest = 0.0
+    try:
+        root = _STATIC.parent
+        for p in list((root / "server").glob("*.py")) + [_STATIC / "index.html"]:
+            try:
+                m = p.stat().st_mtime
+                if m > newest:
+                    newest = m
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return newest
+
+
+_RUNNING_MTIME = _code_mtime()
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": _CODE_VERSION, "loaded_slots": list(agent_mod._registry.keys())}
+    stale = _code_mtime() > _RUNNING_MTIME + 1.0   # newer code on disk than in this process
+    return {"status": "ok", "version": _CODE_VERSION, "stale": stale,
+            "loaded_slots": list(agent_mod._registry.keys())}
 
 
 # ── Provider endpoints ────────────────────────────────────────────────────────
@@ -976,7 +1000,7 @@ async def reset_all(payload: dict = None):
     base = Path.home() / ".scroll"
     removed = []
     for t in ("context", "versions", "provider-plugins", "skills",
-              "ledger.json", "learned.json", "trust.json", "skills.json", "projects.json"):
+              "ledger.json", "learned.json", "trust.json", "quality.json", "skills.json", "projects.json"):
         p = base / t
         try:
             if p.is_dir():
@@ -1486,6 +1510,23 @@ async def get_ledger(project: str = ""):
     from server import ledger
     proj = project or None
     return {"entries": list(reversed(ledger.entries(proj)))[:80], "summary": ledger.summary(proj)}
+
+
+@app.get("/v1/agents/roster")
+async def agents_roster():
+    """Lifetime per-operative aggregates + projects + durable reputation (quality verdicts, critic trust)."""
+    from server import ledger, learn
+    r = ledger.roster()
+    r["quality"] = learn.quality()
+    r["trust"] = {"critic": learn.trust()}
+    return r
+
+
+@app.post("/v1/agents/verdict")
+async def agents_verdict(payload: dict):
+    """Record a critic verdict (LGTM/ISSUES/CRITICAL) against an operative → durable quality score."""
+    from server import learn
+    return {"ok": True, "quality": learn.record_verdict(payload.get("key", "primary"), payload.get("verdict", ""))}
 
 
 @app.get("/v1/status")
