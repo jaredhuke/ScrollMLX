@@ -82,6 +82,20 @@ async def lifespan(app: FastAPI):
         await loop.run_in_executor(None, agent_mod.load_model, MODEL, "primary")
     else:
         print("[mlx] primary model not downloaded yet — onboarding will install it; serving now.")
+    # KG (Neo4j) autostart — fire-and-forget, NEVER awaited: Neo4j/JVM cold start can take
+    # 5-30s+ and must not delay this server's own /health readiness (the native app's boot
+    # screen waits on that). status() polls live regardless of how far autostart has gotten.
+    try:
+        from server import kg as kg_mod
+        _kg_fut = loop.run_in_executor(None, kg_mod.autostart)
+        def _log_kg_exc(f):
+            try:
+                f.result()
+            except Exception as exc:
+                print(f"[kg] autostart failed: {exc}")
+        _kg_fut.add_done_callback(_log_kg_exc)
+    except Exception as exc:
+        print(f"[kg] autostart skipped: {exc}")
     yield
 
 
@@ -724,7 +738,15 @@ async def prd_get(cwd: str = ".", name: str = ""):
 async def prd_post(payload: dict):
     """Save the project's living plan (PRD.md)."""
     from server import prd
-    return prd.write(payload.get("cwd") or ".", payload.get("content") or "")
+    cwd = payload.get("cwd") or "."
+    result = prd.write(cwd, payload.get("content") or "")
+    if result.get("ok"):
+        try:
+            from server import kg_staging
+            kg_staging.capture(cwd)  # completed requirements → KG staging log, always
+        except Exception:
+            pass
+    return result
 
 
 @app.get("/v1/orbit/status")
@@ -743,6 +765,71 @@ async def orbit_push(request: Request, payload: dict):
     from server import orbit
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, orbit.push, payload.get("cwd") or ".", payload.get("name") or "Ad hoc")
+
+
+# ── Agent-memory KG — Neo4j lifecycle, on/off toggle, staging→merge ────────────
+# The Neo4j server itself (reachability/restart) is independent from whether the
+# agent actually USES the graph (kg_enabled) — never conflate the two. Writes never
+# reach Neo4j except via an explicit /v1/kg/merge call.
+
+@app.get("/v1/kg/status")
+async def kg_status():
+    """Supervisor state for the agent-memory KG's Neo4j instance, plus the toggle."""
+    from server import kg as kg_mod
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, kg_mod.status)
+
+
+@app.post("/v1/kg/restart")
+async def kg_restart(request: Request):
+    """Kill+relaunch if Scroll owns the process; silently degrades to a reconnect
+    probe for a shared instance Scroll didn't start (never kills what it doesn't own)."""
+    _guard_local(request)
+    from server import kg as kg_mod
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, kg_mod.restart)
+
+
+@app.post("/v1/kg/toggle")
+async def kg_toggle(request: Request, payload: dict):
+    """Turn the agent's KG usage on/off — independent of Neo4j reachability."""
+    _guard_local(request)
+    from server import kg as kg_mod
+    return kg_mod.set_enabled(bool(payload.get("enabled")))
+
+
+@app.get("/v1/kg/staging")
+async def kg_staging_get(cwd: str = "."):
+    """Pending staged records (requirements/commits/corrections) not yet merged."""
+    from server import kg_staging
+    loop = asyncio.get_event_loop()
+    records = await loop.run_in_executor(None, kg_staging.pending, cwd)
+    return {"records": records}
+
+
+@app.post("/v1/kg/merge")
+async def kg_merge(request: Request, payload: dict):
+    """Explicitly merge selected (or all) pending staged records into Neo4j — the
+    ONLY path that ever writes to the graph. Never automatic, even with the KG on."""
+    _guard_local(request)
+    from server import kg_staging, orbit
+    cwd = payload.get("cwd") or "."
+    name = payload.get("name") or "Ad hoc"
+    ids = payload.get("ids")
+    loop = asyncio.get_event_loop()
+    all_pending = await loop.run_in_executor(None, kg_staging.pending, cwd)
+    if ids and ids != "all":
+        wanted = set(ids)
+        selected = [r for r in all_pending if r["id"] in wanted]
+    else:
+        selected = all_pending
+    if not selected:
+        return {"ok": True, "merged": 0}
+    result = await loop.run_in_executor(None, orbit.merge_staged, cwd, name, selected)
+    if result.get("ok"):
+        merged_ids = {r["id"] for r in selected}
+        await loop.run_in_executor(None, kg_staging.mark_merged, cwd, merged_ids, result.get("workstream"))
+    return result
 
 
 @app.get("/v1/versions")
@@ -1171,6 +1258,11 @@ async def standing_post(payload: dict):
     elif payload.get("learn"):
         from server import learn
         learn.note(project, payload["learn"])  # edit/challenge friction → learned correction
+        try:
+            from server import kg_staging
+            kg_staging.capture(project)
+        except Exception:
+            pass
     return steering.view(project)
 
 
@@ -1323,7 +1415,14 @@ async def critique_endpoint(payload: dict):
 async def critic_accept(payload: dict):
     """User agreed with the critic → remember it for PRIMARY + raise critic trust."""
     from server import learn
-    return learn.accept(payload.get("project") or ".", payload.get("note", ""))
+    project = payload.get("project") or "."
+    result = learn.accept(project, payload.get("note", ""))
+    try:
+        from server import kg_staging
+        kg_staging.capture(project)
+    except Exception:
+        pass
+    return result
 
 
 @app.post("/v1/critic/reject")

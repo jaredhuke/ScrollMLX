@@ -19,6 +19,8 @@ try:
 except Exception:  # pragma: no cover
     mx = None
 from server.config import SYSTEM_PROMPT
+from server import evidence
+from server import authority
 
 # Serialize ALL local MLX generation. mlx_lm/Metal is NOT safe for concurrent generate calls on
 # the same device — two overlapping runs (a queued message, the background narration/clarify call,
@@ -238,8 +240,31 @@ def run_agent(*args, **kwargs) -> Generator[AgentEvent, None, None]:
     if not _GEN_LOCK.acquire(timeout=1.0):
         yield ErrorEvent(message="The local model is busy with another request — it runs one at a time. Try again in a moment.")
         return
+    trace_id = None
     try:
-        yield from _run_agent(*args, **kwargs)
+        slot = kwargs.get("slot", "primary")
+        agmo = authority.normalize(kwargs.get("agmo") or authority.default_for("mlx"))
+        kwargs["agmo"] = agmo
+        try:
+            trace_id = evidence.new_trace(agent_id=slot, workflow_id=kwargs.get("workflow_id"))
+            kwargs["trace_id"] = trace_id
+        except Exception:
+            trace_id = None  # the spine is best-effort; never break generation on a write failure
+        if trace_id is not None:
+            try:
+                evidence.event(trace_id, evidence.AGMO, level=agmo)
+            except Exception:
+                pass
+        total = 0
+        for ev in _run_agent(*args, **kwargs):
+            if ev.type == "done":
+                total = ev.total_tokens
+            yield ev
+        if trace_id is not None:
+            try:
+                evidence.event(trace_id, evidence.RUN_DONE, total_tokens=total, slot=slot)
+            except Exception:
+                pass
     finally:
         _GEN_LOCK.release()
 
@@ -254,6 +279,8 @@ def _run_agent(
     system_prompt: str | None = None,
     tools: bool = True,
     stop=None,
+    trace_id: str | None = None,
+    agmo: str | None = None,
 ) -> Generator[AgentEvent, None, None]:
     """Synchronous generator — yields AgentEvent objects, runs inference on calling thread.
     `stop` (optional threading.Event) lets the caller cancel mid-run when the client disconnects."""
@@ -337,19 +364,39 @@ def _run_agent(
 
             yield ToolCallEvent(id=call_id, name=name, arguments=args)
 
-            fn = TOOL_REGISTRY.get(name)
-            if fn is None:
-                output = f"ERROR: unknown tool '{name}'"
+            if trace_id is not None:
+                try:  # compact args so a big write_file body never bloats the spine
+                    _ev = {k: (v[:200] + "…" if isinstance(v, str) and len(v) > 200 else v)
+                           for k, v in (args or {}).items()}
+                    evidence.event(trace_id, evidence.TOOL_CALL, name=name, arguments=_ev)
+                except Exception:
+                    pass
+
+            if agmo is not None and not authority.allowed(agmo, name):
+                output = f"ERROR: tool '{name}' not authorized at AGMO {authority.normalize(agmo)}"
                 error = True
             else:
-                try:
-                    output = str(fn(cwd=cwd, **args))
-                    error = output.startswith("ERROR:")
-                except Exception as exc:
-                    output = f"ERROR: {exc}"
+                fn = TOOL_REGISTRY.get(name)
+                if fn is None:
+                    output = f"ERROR: unknown tool '{name}'"
                     error = True
+                else:
+                    try:
+                        output = str(fn(cwd=cwd, **args))
+                        error = output.startswith("ERROR:")
+                    except Exception as exc:
+                        output = f"ERROR: {exc}"
+                        error = True
 
             yield ToolResultEvent(id=call_id, name=name, output=output, error=error)
+
+            if trace_id is not None:
+                try:
+                    evidence.event(trace_id, evidence.TOOL_RESULT, name=name, error=error,
+                                   output_len=len(output),
+                                   output_preview=(output[:200] if output else ""))
+                except Exception:
+                    pass
 
             hist_out = output
             if len(hist_out) > _TOOL_OUTPUT_CAP:  # full output already streamed to the UI; cap what re-enters context
