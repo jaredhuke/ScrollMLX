@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Scroll</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg"/>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* Keyboard focus is always visible (overrides base outline:none — accessibility) */
@@ -32,6 +29,12 @@
   /* ZERO monospace — code & data use the humanist sans, with tabular numerals where alignment matters */
   --mono:-apple-system,'SF Pro Text',system-ui,sans-serif;
   --hh:50px;--lw:260px;--rw:256px;--r:8px;--r2:10px;
+  /* Swiss-style legibility scale — a 4px spacing grid + an 11px type floor.
+     Applied so far to the five components flagged as cramped; not yet a mechanical
+     sweep of the whole file (see docs/PRD.md roadmap). */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-7:32px;
+  --fs-1:11px;--fs-2:12px;--fs-3:13px;--fs-4:15px;--fs-5:18px;--fs-6:24px;
+  --lh-tight:1.3;--lh-body:1.5;
 }
 
 @keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(207,122,46,.4)}70%{box-shadow:0 0 0 5px rgba(207,122,46,0)}}
@@ -73,14 +76,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 #spill-lbl{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;font-weight:500}
 #hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 #sysbar{margin-left:auto;display:flex;align-items:center;gap:40px;flex-shrink:0}
-.sg{display:flex;flex-direction:column;gap:3px;width:58px;flex-shrink:0}
-.sg.wide{width:90px}
+.sg{display:flex;flex-direction:column;gap:var(--sp-1);width:64px;flex-shrink:0}
+.sg.wide{width:96px}
 .sg-spark{width:100%;height:15px;display:block}
-.sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:4px;line-height:1}
-.sg-k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost)}
-.sg-v{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
+.sg-lab{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-1);line-height:var(--lh-tight)}
+.sg-k{font-size:var(--fs-1);letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost)}
+.sg-v{font-size:var(--fs-2);color:var(--text);font-variant-numeric:tabular-nums;font-weight:500}
 .sg-v.warn{color:var(--amber-ink)}.sg-v.alert{color:var(--red-ink);font-weight:700}.sg-v.na{color:var(--text-ghost);font-weight:400}
-.sg-mk{font-size:7px;margin-right:2px;vertical-align:1px}   /* non-colour pressure cue (shape) so warn/alert isn't colour-alone */
+.sg-mk{font-size:var(--fs-1);margin-right:2px;vertical-align:1px}   /* non-colour pressure cue (shape) so warn/alert isn't colour-alone */
 .sg{border-radius:6px;padding:9px 5px;margin:-7px -2px;transition:background .15s;min-height:44px;box-sizing:border-box;justify-content:center}   /* >=44px hit target within the 50px header */
 .sg:hover,.sg:focus-visible{background:var(--bg3);outline:none}
 .sg:focus-visible{box-shadow:inset 0 0 0 1.5px var(--accent-line)}
@@ -671,7 +674,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .url-chip::before{content:'↗';font-size:9px;opacity:.7}
 .url-chip::after{content:'⧉';font-size:10px;opacity:.65;margin-left:1px}
 .msg.assistant{gap:5px}
-.msg-steps{display:flex;flex-direction:column;gap:3px;margin:1px 0 3px}
+.msg-steps{display:flex;flex-direction:column;gap:var(--sp-1);margin:1px 0 3px}
 .step-line{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);transition:opacity .3s,color .3s}
 .step-line .ic{width:13px;height:13px;color:var(--text-ghost);flex-shrink:0}
 .step-line.active{color:var(--text);font-weight:500}.step-line.active .ic{color:var(--accent)}
@@ -792,12 +795,12 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .kd-eye{position:absolute;right:6px;background:none;border:none;color:var(--text-ghost);cursor:pointer;padding:6px;display:flex}.kd-eye:hover{color:var(--accent)}.kd-eye .ic{width:15px;height:15px}
 .kd-note{display:flex;align-items:flex-start;gap:7px;margin-top:12px;font-size:11px;line-height:1.55;color:var(--text-soft)}
 .cmd-list{margin-top:10px;display:flex;flex-direction:column;gap:5px}
-.cmd-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font-size:11px;color:var(--text-soft);background:transparent;border:1px solid transparent;border-radius:var(--r);padding:5px 8px;cursor:pointer;font-family:var(--font);transition:background .15s,border-color .15s}
+.cmd-step{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font-size:11px;color:var(--text-soft);background:transparent;border:1px solid transparent;border-radius:var(--r);padding:var(--sp-2) var(--sp-3);cursor:pointer;font-family:var(--font);transition:background .15s,border-color .15s}
 .cmd-step:hover{background:var(--accent-soft);border-color:var(--border-mid)}
-.cmd-step>span{flex-shrink:0;width:16px;height:16px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cmd-step>span{flex-shrink:0;width:16px;height:16px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);font-size:var(--fs-1);font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 .cmd-step:hover>span{background:var(--accent);color:#fff}
-.cmd-step code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:5px;padding:2px 7px}
-.cmd-step i{color:var(--text-ghost);font-style:normal;font-size:10px}
+.cmd-step code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:var(--fs-1);color:var(--text);background:rgba(26,28,34,.06);border:1px solid var(--border-mid);border-radius:5px;padding:2px 7px}
+.cmd-step i{color:var(--text-ghost);font-style:normal;font-size:var(--fs-1)}
 .cmd-step .cmd-copy{margin-left:auto;display:inline-flex;align-items:center;color:var(--text-ghost);opacity:0;transition:opacity .15s}
 .cmd-step:hover .cmd-copy{opacity:.85}
 .cmd-step .cmd-copy svg{width:12px;height:12px}
@@ -866,19 +869,19 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 
 /* token/burn ledger + efficiency tips */
 .lburn{display:flex;align-items:center;gap:8px;padding:7px 11px 9px}
-.lburn-lbl{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);flex-shrink:0}
+.lburn-lbl{font-size:var(--fs-1);letter-spacing:.12em;text-transform:uppercase;color:var(--text-ghost);flex-shrink:0}
 .lburn-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
 .lburn-fill{height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .4s ease,background .3s}
 .lburn-fill.hot{background:var(--amber)}.lburn-fill.over{background:var(--red)}
 .lburn-val{font-size:9px;color:var(--text-dim);font-variant-numeric:tabular-nums;width:48px;text-align:right;flex-shrink:0}
 /* AIS governance strip — the steward watching live agentic values */
-#ais-gov{display:flex;align-items:center;gap:8px;padding:7px 11px;border-top:1px solid var(--border);background:var(--bg2);font-size:9px;cursor:pointer}
+#ais-gov{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);border-top:1px solid var(--border);background:var(--bg2);font-size:var(--fs-1);cursor:pointer}
 #ais-gov .gov-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
 #ais-gov.watch .gov-dot{background:var(--amber)}#ais-gov.intervene .gov-dot{background:var(--red);animation:dotPulse 1.6s infinite}
 #ais-gov .gov-state{font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-mid)}
 #ais-gov.intervene .gov-state{color:var(--red)}#ais-gov.watch .gov-state{color:var(--amber)}
 #ais-gov .gov-why{flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#ais-gov .gov-stop{background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:5px;cursor:pointer;flex-shrink:0}
+#ais-gov .gov-stop{background:var(--red);color:#fff;border:none;font-family:var(--font);font-size:var(--fs-1);font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:var(--sp-1) var(--sp-3);border-radius:5px;cursor:pointer;flex-shrink:0}
 .ais-a-row{cursor:pointer}
 .ac{cursor:pointer}
 /* agent detail modal */
@@ -1114,11 +1117,11 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .pjm-row.adhoc.active .pjm-dot{box-shadow:0 0 0 3px rgba(176,121,26,.15)}
 .pjm-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);flex-shrink:0;transition:box-shadow .15s}
 .pjm-dot.up{background:var(--accent);animation:dotPulse 1.8s infinite}.pjm-dot.starting{background:var(--amber)}
-.pjm-name{flex:1;font-size:11.5px;color:var(--text);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pjm-name{flex:1;font-size:var(--fs-2);color:var(--text);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pjm-go{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:2px;display:flex;align-items:center;border-radius:4px;flex-shrink:0}
 .pjm-go:hover{color:var(--accent)}.pjm-go.stop:hover{color:var(--red)}
 .pjm-ic{width:12px;height:12px;fill:currentColor}
-.pjm-tag{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-ghost);border:1px solid var(--border-mid);border-radius:8px;padding:1px 6px;flex-shrink:0}
+.pjm-tag{font-size:var(--fs-1);letter-spacing:.06em;text-transform:uppercase;color:var(--text-ghost);border:1px solid var(--border-mid);border-radius:8px;padding:var(--sp-1) var(--sp-2);flex-shrink:0}
 .pjm-row.adhoc .pjm-dot{background:var(--amber)}
 .pjm-chev{width:11px;height:11px;flex-shrink:0;fill:none;stroke:var(--text-ghost);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.6;transition:transform .18s}
 .pjm-row.open .pjm-chev{transform:rotate(180deg);stroke:var(--accent);opacity:1}
@@ -1126,7 +1129,7 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .pjm-d-path{font-size:9.5px;color:var(--text-ghost);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
 .pjm-d-cmd{font-size:10px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pjm-d-cmd.warn{color:var(--amber)}
-.pjm-d-st{font-size:8px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);align-self:center;margin-right:auto}
+.pjm-d-st{font-size:var(--fs-1);letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);align-self:center;margin-right:auto}
 .pjm-d-st.on{color:var(--accent)}
 .pjm-d-acts{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:2px}
 .pjm-d-acts .pj-b{font-size:9px;padding:4px 9px;min-height:24px}
@@ -1222,10 +1225,10 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .lf-card{border:1px solid var(--border);border-radius:var(--r2);padding:15px 16px;background:var(--bg2)}
 .lf-card-h{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:11px;display:flex;align-items:center;gap:8px}
 .lf-ct{font-variant-numeric:tabular-nums;color:var(--text-dim);letter-spacing:0}
-.lf-an{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:5px;cursor:pointer}
+.lf-an{margin-left:auto;background:none;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:var(--fs-1);letter-spacing:.06em;text-transform:uppercase;padding:var(--sp-1) var(--sp-2);border-radius:5px;cursor:pointer}
 .lf-an:hover{border-color:var(--accent);color:var(--accent)}
 #lf-spark{display:block;width:100%;height:120px}
-.lf-card-sub{font-size:8.5px;letter-spacing:.04em;text-transform:none;color:var(--text-ghost);font-weight:400;margin-left:auto}
+.lf-card-sub{font-size:var(--fs-1);letter-spacing:.04em;text-transform:none;color:var(--text-ghost);font-weight:400;margin-left:auto}
 .lf-legend{display:flex;gap:16px;margin-top:9px;font-size:10px;color:var(--text-dim)}
 .lf-leg{display:flex;align-items:center;gap:5px}
 .lf-leg.off{opacity:.5}
@@ -1328,6 +1331,29 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
 .fsl-item{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text-ghost);letter-spacing:.06em}
 .fsl-dot{width:7px;height:7px;border-radius:50%}
 #fs-node-tip{position:fixed;display:none;z-index:300;background:var(--bg);border:1px solid var(--border-mid);color:var(--text);font-family:var(--font);font-size:10px;line-height:1.65;padding:9px 13px;border-radius:10px;pointer-events:none;box-shadow:0 6px 24px rgba(26,28,34,.18);white-space:pre;min-width:140px}
+
+/* Agent-memory KG — Neo4j connectivity is independent from the on/off toggle; never conflate them */
+#kg-cluster{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-2);border:1px solid var(--border);border-radius:20px;flex-shrink:0}
+#kg-dot{width:6px;height:6px;border-radius:50%;background:var(--border-mid);transition:background .3s;flex-shrink:0}
+#kg-dot.up{background:var(--teal)}
+#kg-dot.starting{background:var(--amber);animation:dotPulse 2s infinite}
+#kg-dot.err{background:var(--red)}
+#kg-state-lbl{font-size:var(--fs-1);letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;font-weight:500;white-space:nowrap}
+.kg-toggle-btn{background:transparent;border:1px solid var(--border-mid);color:var(--text-dim);font-family:var(--font);font-size:var(--fs-1);font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:12px;cursor:pointer;transition:all .18s}
+.kg-toggle-btn.on{background:rgba(47,156,139,.12);color:var(--teal);border-color:rgba(47,156,139,.4)}
+.kg-mini-btn{background:transparent;border:none;color:var(--text-dim);font-size:var(--fs-2);cursor:pointer;min-width:22px;min-height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.kg-mini-btn:hover{background:var(--bg3);color:var(--text)}
+.kg-mini-btn.pending{color:var(--accent-ink);font-weight:700}
+#kg-merge-panel{position:fixed;z-index:520;background:var(--bg2);border:1px solid var(--border-mid);border-radius:var(--r2);box-shadow:0 14px 44px rgba(26,28,34,.28);padding:var(--sp-3);width:320px;max-height:380px;overflow-y:auto;display:none}
+#kg-merge-panel.open{display:block}
+#kg-merge-panel .kgm-h{font-size:var(--fs-1);letter-spacing:.1em;text-transform:uppercase;color:var(--text-ghost);margin-bottom:var(--sp-2);display:flex;align-items:center;justify-content:space-between}
+.kgm-row{display:flex;align-items:flex-start;gap:var(--sp-2);padding:var(--sp-2) 0;border-top:1px solid var(--border)}
+.kgm-row:first-of-type{border-top:none}
+.kgm-row input{margin-top:2px;flex-shrink:0}
+.kgm-title{font-size:var(--fs-2);color:var(--text);line-height:var(--lh-body)}
+.kgm-type{font-size:var(--fs-1);color:var(--text-ghost);text-transform:uppercase;letter-spacing:.06em}
+.kgm-empty{font-size:var(--fs-2);color:var(--text-ghost);padding:var(--sp-3) 0;text-align:center}
+.kgm-foot{display:flex;gap:var(--sp-2);margin-top:var(--sp-3);padding-top:var(--sp-2);border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -1354,9 +1380,25 @@ code.md-ic.copyable:hover{background:var(--accent-soft);color:var(--accent-ink)}
     <div class="sg" id="sg-fan"><canvas class="sg-spark"></canvas><div class="sg-lab"><span class="sg-k">FAN</span><span class="sg-v na">—</span></div></div>
   </div>
   <div id="hdr-right">
+    <div id="kg-cluster">
+      <div id="kg-dot" data-tip="Neo4j — the agent-memory knowledge graph's database"></div>
+      <span id="kg-state-lbl">KG</span>
+      <button id="kg-toggle" class="kg-toggle-btn" onclick="toggleKG()" aria-pressed="false" data-tip="Turn the agent's use of the knowledge graph on or off — independent of whether Neo4j is running">Off</button>
+      <button id="kg-restart-btn" class="kg-mini-btn" onclick="restartKG()" data-tip="Restart Neo4j" hidden>↻</button>
+      <button id="kg-merge-btn" class="kg-mini-btn" onclick="toggleKGMerge(event)" data-tip="Pending items ready to merge into the graph" hidden>0</button>
+    </div>
     <button class="hb" onclick="openArtifacts()" data-tip="Artifacts — files the agent built">Artifacts<span id="art-hdr-ct" class="hb-ct" style="display:none"></span></button>
     <button class="hb" onclick="openDrawer()" data-tip="Skills, tools &amp; plugins">Skills</button>
     <button class="hb" onclick="openSettings()" data-tip="Models, API keys, git">Settings</button>
+  </div>
+</div>
+
+<div id="kg-merge-panel" role="dialog" aria-label="Pending knowledge-graph merges">
+  <div class="kgm-h"><span>Pending → merge into KG</span><button class="nb-x" onclick="closeKGMerge()" aria-label="Close" style="min-width:auto;min-height:auto">✕</button></div>
+  <div id="kgm-list"></div>
+  <div class="kgm-foot">
+    <button class="hb" onclick="mergeKGSelected('all')">Merge all</button>
+    <button class="hb" onclick="mergeKGSelected()">Merge selected</button>
   </div>
 </div>
 
@@ -4316,6 +4358,87 @@ async function pushToOrbit(name){
   if(r&&r.ok){orbitMark();notify('Sent to ORBIT 3 — '+r.requirements+' requirement'+(r.requirements===1?'':'s')+', '+r.commits+' commits, '+r.completionPct+'% done.','ok');}
   else notify('Couldn’t reach ORBIT 3'+(r&&r.error?' — '+r.error:'')+' (is its Neo4j running?)','err');
 }
+
+// ─── Agent-memory KG — Neo4j status/restart + on/off toggle + staging→merge ───
+// Connectivity (S.kg.state) and the toggle (S.kg.kg_enabled) are always rendered
+// as two separate signals — never collapsed into one, so a healthy-but-off Neo4j
+// and an unreachable-but-on toggle both stay legible.
+S.kg={state:'unreachable',kg_enabled:false,pending:0};
+async function pollKG(){
+  let j;try{j=await fetch('/v1/kg/status').then(r=>r.ok?r.json():null)}catch(_){j=null}
+  if(j)S.kg=Object.assign(S.kg,j);
+  renderKG();
+}
+function renderKG(){
+  const dot=document.getElementById('kg-dot'),lbl=document.getElementById('kg-state-lbl'),
+        tog=document.getElementById('kg-toggle'),rb=document.getElementById('kg-restart-btn'),
+        mb=document.getElementById('kg-merge-btn');
+  if(!dot)return;
+  const st=S.kg.state||'unreachable';
+  dot.className=(st==='running_ours'||st==='running_external')?'up':(st==='starting'?'starting':(st==='error'?'err':''));
+  const labels={not_installed:'KG · not installed',starting:'KG · starting',running_ours:'KG',running_external:'KG · shared',unreachable:'KG · offline',error:'KG · error'};
+  lbl.textContent=labels[st]||'KG';
+  const cluster=document.getElementById('kg-cluster');if(cluster)cluster.setAttribute('data-tip',st==='not_installed'?'Neo4j isn’t installed — brew install neo4j':(S.kg.detail||labels[st]||'Neo4j — the agent-memory knowledge graph’s database'));
+  tog.classList.toggle('on',!!S.kg.kg_enabled);
+  tog.textContent=S.kg.kg_enabled?'On':'Off';
+  tog.setAttribute('aria-pressed',String(!!S.kg.kg_enabled));
+  if(S.kg.can_restart){rb.hidden=false;rb.setAttribute('data-tip','Restart Neo4j')}
+  else if(S.kg.can_reconnect){rb.hidden=false;rb.setAttribute('data-tip','Reconnect — Neo4j is managed outside Scroll, this won’t restart it')}
+  else rb.hidden=true;
+  const n=S.kg.pending||0;
+  mb.hidden=n===0;mb.textContent=String(n);mb.classList.toggle('pending',n>0);
+}
+async function toggleKG(){
+  const next=!S.kg.kg_enabled;
+  let j;try{j=await fetch('/v1/kg/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:next})}).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  if(j&&j.ok){S.kg.kg_enabled=j.enabled;renderKG();notify('Knowledge graph turned '+(j.enabled?'on':'off')+'.','ok')}
+  else notify('Couldn’t reach the local engine to change the KG toggle.','err');
+}
+async function restartKG(){
+  const wasExternal=S.kg.state==='running_external';
+  artToast(wasExternal?'Reconnecting to Neo4j…':'Restarting Neo4j…','run');
+  let j;try{j=await fetch('/v1/kg/restart',{method:'POST'}).then(r=>r.ok?r.json():{ok:false,error:'server route missing — restart the server'})}catch(_){j={ok:false,error:'request failed'}}
+  if(j&&j.state)S.kg=Object.assign(S.kg,j.state);
+  renderKG();
+  if(j&&j.reconnected)notify(j.note||'Neo4j is managed outside Scroll — reconnected.','ok');
+  else if(j&&j.ok)notify('Neo4j restarted.','ok');
+  else notify('Restart failed'+(j&&j.error?' — '+j.error:'')+'.','err');
+}
+async function loadKGStaging(){
+  let j;try{j=await fetch('/v1/kg/staging?cwd='+encodeURIComponent(S.cwd||'.')).then(r=>r.ok?r.json():null)}catch(_){j=null}
+  S.kgStaging=(j&&j.records)||[];
+  S.kg.pending=S.kgStaging.length;
+  renderKG();
+  renderKGMergeList();
+}
+function renderKGMergeList(){
+  const el=document.getElementById('kgm-list');if(!el)return;
+  const recs=S.kgStaging||[];
+  if(!recs.length){el.innerHTML='<div class="kgm-empty">Nothing pending — everything captured so far is already merged.</div>';return}
+  el.innerHTML=recs.map(r=>`<label class="kgm-row"><input type="checkbox" class="kgm-check" value="${r.id}" checked><span><div class="kgm-title">${(r.title||'').replace(/</g,'&lt;')}</div><div class="kgm-type">${r.type.replace(/_/g,' ')}</div></span></label>`).join('');
+}
+function toggleKGMerge(ev){
+  const panel=document.getElementById('kg-merge-panel');if(!panel)return;
+  if(panel.classList.contains('open')){closeKGMerge();return}
+  loadKGStaging();
+  const btn=document.getElementById('kg-merge-btn'),r=btn.getBoundingClientRect();
+  panel.style.top=(r.bottom+8)+'px';panel.style.right=(window.innerWidth-r.right)+'px';panel.style.left='auto';
+  panel.classList.add('open');
+  if(ev)ev.stopPropagation();
+  setTimeout(()=>document.addEventListener('click',_kgMergeOutside),0);
+}
+function closeKGMerge(){const panel=document.getElementById('kg-merge-panel');if(panel)panel.classList.remove('open');document.removeEventListener('click',_kgMergeOutside)}
+function _kgMergeOutside(ev){const panel=document.getElementById('kg-merge-panel');if(panel&&!panel.contains(ev.target)&&ev.target.id!=='kg-merge-btn')closeKGMerge()}
+async function mergeKGSelected(mode){
+  let ids;
+  if(mode==='all')ids='all';
+  else ids=Array.from(document.querySelectorAll('.kgm-check:checked')).map(c=>c.value);
+  if(ids!=='all'&&!ids.length){notify('Nothing selected.','err');return}
+  artToast('Merging into the knowledge graph…','run');
+  let j;try{j=await fetch('/v1/kg/merge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cwd:S.cwd,name:S.activeProject||'Ad hoc',ids})}).then(r=>r.ok?r.json():{ok:false,error:'server route missing — restart the server'})}catch(_){j={ok:false,error:'request failed'}}
+  if(j&&j.ok){notify('Merged '+(j.merged||0)+' item'+(j.merged===1?'':'s')+' into the KG.','ok');closeKGMerge();loadKGStaging()}
+  else notify('Merge failed'+(j&&j.error?' — '+j.error:'')+'.','err');
+}
 function updateProjectsBtn(){const b=document.getElementById('projects-btn');if(!b)return;const running=(S.projects||[]).filter(p=>p.running).length;b.textContent=S.activeProject?('Projects · '+S.activeProject):'Projects';b.classList.toggle('live',running>0)}
 function renderProjects(){
   const el=document.getElementById('pj-list');if(!el)return;
@@ -4891,6 +5014,7 @@ resizeAIS(); resizeBuild(); drawBuildGraph();
 if(document.getElementById('empty'))timeline.innerHTML=emptyHTML();   // upgrade the static placeholder with starter chips
 loadPref(); loadEffort(); loadVig(); renderCtx(); loadStanding(); renderCards(); updateAEM(); drawAIS(); renderAISInfo(); renderTray(); renderNarration(); setInterval(renderNarration,800);
 loadWorkspace(); loadProviders(); loadTools(); refreshKeys(); loadProviderPlugins(); loadLedger(); paintIcons(); renderAdded(); initCopyUX(); updateModelsCount(); loadProjects(); updateArtBadge(); loadOrbit(); checkHealth(); setInterval(checkHealth,5000);
+pollKG(); setInterval(pollKG,4000); loadKGStaging(); setInterval(loadKGStaging,15000);
 refreshSkillsCache(); renderActiveOps(); setInterval(refreshSkillsCache,15000);
 setInterval(()=>{if(!document.getElementById('pjdrawer')?.classList.contains('open')&&(S.projects||[]).some(p=>p.running))loadProjects()},5000); // keep left-panel project dots live
 // ─── HEADER SYSTEM GAUGES — live CPU · MEM · TEMP · FAN micro-sparklines ────────

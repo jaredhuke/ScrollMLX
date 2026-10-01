@@ -120,3 +120,50 @@ def push(cwd: str, name: str) -> dict:
         return {"ok": False, "error": str(exc)[:200]}
     return {"ok": True, "workstream": ws_id, "requirements": len(reqs),
             "commits": len(commits), "agents": len(agents), "completionPct": pct}
+
+
+_REL_BY_LABEL = {
+    "Requirement": ("INCLUDES", "ws->node"),
+    "CodeCommit": ("ADDRESSES", "node->ws"),
+    "Insight": ("NOTED_IN", "node->ws"),
+    "Decision": ("NOTED_IN", "node->ws"),
+}
+
+
+def merge_staged(cwd: str, name: str, records: list[dict]) -> dict:
+    """Merge pre-shaped KG-staging records (server/kg_staging.py) into ORBIT's graph.
+    Same discipline as push(): MERGE-by-id, scroll:-namespaced, never deletes. Each
+    record's graph_hint={label, props} was shaped at capture time so this stays a
+    dumb UNWIND+MERGE — no re-deriving anything from PRD.md/git here."""
+    name = name or "Ad hoc"
+    ws_id = f"scroll:ws:{_slug(name)}"
+    if not records:
+        return {"ok": True, "merged": 0, "workstream": ws_id}
+
+    by_label: dict[str, list[dict]] = {}
+    for r in records:
+        hint = r.get("graph_hint") or {}
+        label = re.sub(r"[^A-Za-z0-9_]", "", hint.get("label") or "")
+        if not label:
+            continue
+        props = dict(hint.get("props") or {})
+        props.setdefault("id", r["id"])
+        props["source"] = "scroll"
+        by_label.setdefault(label, []).append(props)
+
+    stmts = [{"statement":
+        "MERGE (ws:WorkStream {id:$id}) SET ws.source='scroll' "
+        "ON CREATE SET ws.title=$title, ws.status='active'",
+        "parameters": {"id": ws_id, "title": name}}]
+    for label, items in by_label.items():
+        rel, direction = _REL_BY_LABEL.get(label, ("RELATES_TO", "node->ws"))
+        edge = (f"WITH n MATCH (ws:WorkStream {{id:$ws}}) MERGE (ws)-[:{rel}]->(n)" if direction == "ws->node"
+                else f"WITH n MATCH (ws:WorkStream {{id:$ws}}) MERGE (n)-[:{rel}]->(ws)")
+        stmts.append({"statement":
+            f"UNWIND $items AS it MERGE (n:{label} {{id:it.id}}) SET n += it {edge}",
+            "parameters": {"items": items, "ws": ws_id}})
+    try:
+        _post(stmts)
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
+    return {"ok": True, "merged": len(records), "workstream": ws_id}
